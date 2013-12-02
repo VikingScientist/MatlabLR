@@ -82,6 +82,63 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	}
 
 
+	// Refine basisfunctions
+	if (!strcmp("refine_basis", cmd)) {
+		// Check parameters
+		if (nlhs < 0 || nrhs < 3)
+			mexErrMsgTxt("Refine_basis: Unexpected arguments.");
+
+		// rewrap results into vector array
+		double *b = mxGetPr(prhs[2]);
+		int m = mxGetM(prhs[2]);
+		int n = mxGetN(prhs[2]);
+		vector<int> basis(m*n);
+		for(size_t i=0; i<n*m; i++)
+			basis[i] = floor(b[i]-1);
+		
+		lr->refineBasisFunction(basis);
+		return;
+	}
+
+
+	// Refine elements
+	if (!strcmp("refine_elements", cmd)) {
+		// Check parameters
+		if (nlhs < 0 || nrhs < 3)
+			mexErrMsgTxt("Refine_elements: Unexpected arguments.");
+
+		// rewrap results into vector array
+		double *el = mxGetPr(prhs[2]);
+		int m = mxGetM(prhs[2]);
+		int n = mxGetN(prhs[2]);
+		vector<int> elements(m*n);
+		for(size_t i=0; i<n*m; i++)
+			elements[i] = floor(el[i]-1);
+		
+		lr->refineElement(elements);
+		return;
+	}
+
+
+
+	// Point
+	if (!strcmp("point", cmd)) {
+		// Check parameters
+		if (nlhs < 1 || nrhs < 3)
+			mexErrMsgTxt("Point: Unexpected arguments.");
+
+		double *u = mxGetPr(prhs[2]);
+		vector<double> vResult;
+		lr->point(vResult, u[0], u[1]);
+		plhs[0] = mxCreateDoubleMatrix(vResult.size(),1, mxREAL);
+		double *dResult  = mxGetPr(plhs[0]);
+		for(size_t i=0; i<vResult.size(); i++)
+			dResult[i] = vResult[i];
+
+		return;
+	}
+
+
 	// update primitives
 	if (!strcmp("get_primitives", cmd)) {
 		// Check parameters
@@ -115,7 +172,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 					knots[(j+p1+1)*n+i] = (**it)[1][j]; // knot vector in v-direction
 				if(nlhs>1)
 					for(int j=0; j<dim; j++)
-						cp[i*2+j] = (**it).cp(j); // control points
+						cp[i*dim+j] = (**it).cp(j); // control points
 				if(nlhs>2)
 					w[i] = (**it).w(); // weights
 			}
@@ -167,6 +224,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 					mxSetCell(plhs[5], i, arraySupport);
 				}
 			}
+		}
+		if(nlhs > 6) {
+			int n = lr->nElements();
+			plhs[6] = mxCreateDoubleMatrix(2, 1, mxREAL);
+			double *p = mxGetPr(plhs[6]);
+			p[0] = lr->order(0);
+			p[1] = lr->order(1);
 		}
 		return;
 	}

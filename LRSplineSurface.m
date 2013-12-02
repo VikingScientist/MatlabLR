@@ -3,6 +3,7 @@ classdef LRSplineSurface < handle
 %     detailed description goes here
 
 	properties(SetAccess = private, Hidden = false)
+		p        % polynomial degree
 		knots    % knot vectors
 		cp       % control points
 		w        % weights
@@ -45,12 +46,69 @@ classdef LRSplineSurface < handle
 
 
 		function delete(this)
-		% LRSplineSurface destructor
+		% LRSplineSurface destructor clears object from memory
 			lrsplinesurface_interface('delete', this.objectHandle);
 		end
 
+
 		function print(this)
 			lrsplinesurface_interface('print', this.objectHandle);
+		end
+
+
+		function refine(this, indices, varargin)
+		% REFINE performs local refinement of elements or basis functions
+		% LRSplineSurface.refine(indices)
+		% LRSplineSurface.refine(indices, 'elements')
+		% LRSplineSurface.refine(indices, 'basis')
+		%
+		%   parameters:
+		%     indices - index of the basis function or elements to refine
+		%   returns
+		%     none
+			if(nargin > 2)
+				if(strcmp(varargin{1}, 'elements'))
+					lrsplinesurface_interface('refine_elements', this.objectHandle, indices);
+				elseif(strcmp(varargin{1}, 'basis'))
+					lrsplinesurface_interface('refine_basis', this.objectHandle, indices);
+				else
+					throw(MException('LRSplineSurface:refine',  'Error: Unknown refine parameter'));
+				end
+			else 
+				lrsplinesurface_interface('refine_basis', this.objectHandle, indices);
+			end
+			this.updatePrimitives();
+		end
+
+
+		function x = point(this, u, v)
+		% POINT evaluates the mapping from parametric to physical space
+		% x = LRSplineSurface.point(u,v)
+		%
+		%   parameters:
+		%     u - first parametric coordinate
+		%     v - second parametric coordinate
+		%   returns
+		%     the parametric point mapped to physical space
+			x = lrsplinesurface_interface('point', this.objectHandle, [u,v]);
+		end
+
+
+		function H = plot(this, varargin)
+			nPtsPrLine = 41;
+			nLines     = size(this.lines, 1);
+			x = zeros(nPtsPrLine, nLines);
+			y = zeros(nPtsPrLine, nLines);
+			for i=1:nLines
+				u = linspace(this.lines(i,1), this.lines(i,3), nPtsPrLine);
+				v = linspace(this.lines(i,2), this.lines(i,4), nPtsPrLine);
+				for j=1:nPtsPrLine
+					res = this.point(u(j), v(j));
+					x(j,i) = res(1);
+					y(j,i) = res(2);
+				end
+			end
+			H = plot(x,y, varargin{:});
 		end
 
 
@@ -59,10 +117,9 @@ classdef LRSplineSurface < handle
 
 	methods (Access = private, Hidden = true)
 		function updatePrimitives(this)
-			disp 'Matlab class function updatePrimitives()';
 			[this.knots, this.cp, this.w, ...
 			 this.lines, this.elements,   ...
-			 this.support] = lrsplinesurface_interface('get_primitives', this.objectHandle);
+			 this.support, this.p] = lrsplinesurface_interface('get_primitives', this.objectHandle);
 		end
 	end
 end
