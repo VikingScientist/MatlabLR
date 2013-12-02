@@ -82,6 +82,61 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	}
 
 
+	// Get Element Containing
+	if (!strcmp("get_element_containing", cmd)) {
+		// Check parameters
+		if (nlhs < 1 || nrhs < 3)
+			mexErrMsgTxt("compute_basis: Unexpected arguments.");
+		double *u = mxGetPr(prhs[2]);
+
+		int id = lr->getElementContaining(u[0], u[1]); // always search for element and return sparse result
+		plhs[0] = mxCreateDoubleScalar(id+1);
+		return;
+	}
+
+
+	// Compuate Basisfunctions
+	if (!strcmp("compute_basis", cmd)) {
+		// Check parameters
+		if (nlhs < 1 || nrhs < 3)
+			mexErrMsgTxt("compute_basis: Unexpected arguments.");
+		int derivs = 0;
+		if(nrhs > 3)
+			derivs = floor(mxGetScalar(prhs[3]));
+		double *u = mxGetPr(prhs[2]);
+
+		int id = lr->getElementContaining(u[0], u[1]); // always search for element and return sparse result
+
+		vector<vector<double> > vResult;
+		lr->computeBasis(u[0], u[1], vResult, derivs, id);
+		plhs[0] = mxCreateDoubleMatrix(vResult[0].size(),vResult.size(), mxREAL);
+		double *dResult = mxGetPr(plhs[0]);
+		for(size_t i=0; i<vResult.size(); i++)
+			copy(vResult[i].begin(), vResult[i].end(), dResult+i*vResult[0].size());
+		
+		return;
+	}
+
+
+	// Get Bezier Extraction Matrix
+	if (!strcmp("get_bezier_extraction", cmd)) {
+		// Check parameters
+		if (nlhs < 1 || nrhs < 3)
+			mexErrMsgTxt("compute_basis: Unexpected arguments.");
+
+		int iEl          = floor(mxGetScalar(prhs[2])) + 1;
+		Element *element = lr->getElement(iEl);
+
+		vector<double> vResult;
+		lr->getBezierExtraction(iEl, vResult);
+		plhs[0] = mxCreateDoubleMatrix(element->nBasisFunctions(),lr->order(0)*lr->order(1), mxREAL);
+		double *dResult = mxGetPr(plhs[0]);
+		copy(vResult.begin(), vResult.end(), dResult);
+		
+		return;
+	}
+
+
 	// Refine basisfunctions
 	if (!strcmp("refine_basis", cmd)) {
 		// Check parameters
@@ -132,8 +187,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		lr->point(vResult, u[0], u[1]);
 		plhs[0] = mxCreateDoubleMatrix(vResult.size(),1, mxREAL);
 		double *dResult  = mxGetPr(plhs[0]);
-		for(size_t i=0; i<vResult.size(); i++)
-			dResult[i] = vResult[i];
+		copy(vResult.begin(), vResult.end(), dResult);
 
 		return;
 	}
@@ -229,8 +283,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			int n = lr->nElements();
 			plhs[6] = mxCreateDoubleMatrix(2, 1, mxREAL);
 			double *p = mxGetPr(plhs[6]);
-			p[0] = lr->order(0);
-			p[1] = lr->order(1);
+			p[0] = lr->order(0)-1;
+			p[1] = lr->order(1)-1;
 		}
 		return;
 	}

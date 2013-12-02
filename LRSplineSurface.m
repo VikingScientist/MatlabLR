@@ -17,7 +17,17 @@ classdef LRSplineSurface < handle
 
 	methods
 		function this = LRSplineSurface(n, p, varargin)
-		% LRSplineSurface constructor
+		% LRSplineSurface constructor, initialize a tensor product LRSplinSurface object
+		% LRSplineSurface(n,p)
+		% LRSplineSurface(n,p, knotU, knotV)
+		% LRSplineSurface(n,p, knotU, knotV, controlpoint)
+		% 
+		%   parameters 
+		%     n            - number of basis functions in each direction (2 components)
+		%     p            - polynomial degree in each direction (2 components)
+		%     knotU        - global open knot vector in u-direction (n(1)+p(1)+1 components)
+		%     knotV        - global open knot vector in v-direction (n(2)+p(2)+1 components)
+		%     controlpoint - list of control points (matrix of size dim x n(1)*n(2)), where dim is dimension in physical space
 
 			% error check input
 			if(nargin ~= 2 && nargin ~=4 && nargin ~= 5)
@@ -91,6 +101,47 @@ classdef LRSplineSurface < handle
 		%   returns
 		%     the parametric point mapped to physical space
 			x = lrsplinesurface_interface('point', this.objectHandle, [u,v]);
+		end
+
+
+		function N = computeBasis(this, u, v, varargin)
+		% computeBasis evaluates all basis functions at a given parametric point, as well as their derivatives
+		% N = LRSplineSurface.computeBasis(u, v)
+		% N = LRSplineSurface.computeBasis(u, v, derivs)
+		%
+		%   parameters:
+		%     u      - first parametric coordinate
+		%     v      - second parametric coordinate
+		%     derivs - number of derivatives (greater or equal to 0)
+		%   returns
+		%     the value of all nonzero basis functions at a given point
+		%     in case of derivatives, a cell is returned with all derivatives requested
+			N = lrsplinesurface_interface('compute_basis', this.objectHandle, [u, v], varargin{:});
+		end
+
+
+		function C = getBezierExtraction(this, element)
+		% getBezierExtraction returns the bezier extraction matrix for this element
+		% C = LRSplineSurface.getBezierExtraction(element)
+		%
+		%   parameters:
+		%     element - global index to the element 
+		%   returns
+		%     a matrix with as many rows as there is active basis functions and (p(1)+1)*(p(2)+1) columns
+			C = lrsplinesurface_interface('get_bezier_extraction', this.objectHandle, element);
+		end
+
+
+		function iel = getElementContaining(this, u,v)
+		% getElementContaining returns the index of the element containing the parametric point (u,v)
+		% iel = getElementContaining(u,v)
+		%
+		%   parameters:
+		%     u - first parametric coordinate
+		%     v - second parametric coordinate
+		%   returns
+		%     index to the element containint this parametric point
+			iel = lrsplinesurface_interface('get_element_containing', this.objectHandle, [u,v]);
 		end
 
 
