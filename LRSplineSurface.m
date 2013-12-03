@@ -145,6 +145,25 @@ classdef LRSplineSurface < handle
 		end
 
 
+		function basis = getEdge(this, edge)
+			if(edge == 1)
+				umin = min(this.knots(:,1));
+				basis = find(this.knots(:, this.p(1)+1) == umin);
+			elseif(edge == 2)
+				umax = max(this.knots(:,this.p(1)+2));
+				basis = find(this.knots(:, 2) == umax);
+			elseif(edge == 3)
+				vmin = min(this.knots(:,this.p(1)+3));
+				basis = find(this.knots(:, end-1) == vmin);
+			elseif(edge == 4)
+				vmax = max(this.knots(:,end));
+				basis = find(this.knots(:, this.p(1)+4) == vmax);
+			else
+				throw(MException('LRSplineSurface:getEdge',  'Error: Invalid edge enumeration'));
+			end
+		end
+
+
 		function H = plot(this, varargin)
 			nPtsPrLine = 41;
 			nLines     = size(this.lines, 1);
