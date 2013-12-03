@@ -1,6 +1,28 @@
 classdef LRSplineSurface < handle
 % LRSplineSurface Matlab wrapper class for c++ LR-spline object
-%     detailed description goes here
+%     Locally Refined (LR) B-splines is a technique to achive local adaptivity while using smooth spline 
+%     functions. This is a sample library which implements these techniques and can be used for geometric
+%     representations or isogeometric analysis.
+%     
+% LRSplineSurface Properties: 
+%     p        - polynomial degree
+%     knots    - knot vectors
+%     cp       - control points
+%     w        - weights
+%     lines    - mesh lines, (u0,v0, u1,v1, m), where m is the multiplicity
+%     elements - fintite elements (u0, v0, u1, v1)
+%     support  - element to basis function support list
+%    
+% LRSplineSurface Methods:
+%     print                - Prints raw c++ lr data structure
+%     refine               - Performs local refinements
+%     getEdge              - Extracts functions with support on one of the four parametric edges
+%     getElementContaining - Get element index at parametric point (u,v)
+%     point                - Evaluates the physical coordinates (x,y) corresponding to a parametric point (u,v)
+%     computeBasis         - Compute all basis functions (and their derivatives)
+%     getBezierExtraction  - Get the bezier extraction matrix for one element
+%     surf                 - Plot scalar results in a surface plot
+%     plot                 - Plot the mesh structure in the physical space
 
 	properties(SetAccess = private, Hidden = false)
 		p        % polynomial degree
@@ -17,7 +39,7 @@ classdef LRSplineSurface < handle
 
 	methods
 		function this = LRSplineSurface(n, p, varargin)
-		% LRSplineSurface constructor, initialize a tensor product LRSplinSurface object
+		% LRSplineSurface  Constructor, initialize a tensor product LRSplinSurface object
 		% LRSplineSurface(n,p)
 		% LRSplineSurface(n,p, knotU, knotV)
 		% LRSplineSurface(n,p, knotU, knotV, controlpoint)
@@ -56,7 +78,7 @@ classdef LRSplineSurface < handle
 
 
 		function delete(this)
-		% LRSplineSurface destructor clears object from memory
+		% LRSplineSurface  Destructor clears object from memory
 			lrsplinesurface_interface('delete', this.objectHandle);
 		end
 
@@ -67,7 +89,7 @@ classdef LRSplineSurface < handle
 
 
 		function refine(this, indices, varargin)
-		% REFINE performs local refinement of elements or basis functions
+		% REFINE  Performs local refinement of elements or basis functions
 		% LRSplineSurface.refine(indices)
 		% LRSplineSurface.refine(indices, 'elements')
 		% LRSplineSurface.refine(indices, 'basis')
@@ -92,7 +114,7 @@ classdef LRSplineSurface < handle
 
 
 		function x = point(this, u, v)
-		% POINT evaluates the mapping from parametric to physical space
+		% POINT  Evaluates the mapping from parametric to physical space
 		% x = LRSplineSurface.point(u,v)
 		%
 		%   parameters:
@@ -105,7 +127,7 @@ classdef LRSplineSurface < handle
 
 
 		function N = computeBasis(this, u, v, varargin)
-		% computeBasis evaluates all basis functions at a given parametric point, as well as their derivatives
+		% COMPUTEBASIS  Evaluates all basis functions at a given parametric point, as well as their derivatives
 		% N = LRSplineSurface.computeBasis(u, v)
 		% N = LRSplineSurface.computeBasis(u, v, derivs)
 		%
@@ -121,7 +143,7 @@ classdef LRSplineSurface < handle
 
 
 		function C = getBezierExtraction(this, element)
-		% getBezierExtraction returns the bezier extraction matrix for this element
+		% GETBEZIEREXTRACTION  Returns the bezier extraction matrix for this element
 		% C = LRSplineSurface.getBezierExtraction(element)
 		%
 		%   parameters:
@@ -133,7 +155,7 @@ classdef LRSplineSurface < handle
 
 
 		function iel = getElementContaining(this, u,v)
-		% getElementContaining returns the index of the element containing the parametric point (u,v)
+		% GETELEMENTCONTAINING  Returns the index of the element containing the parametric point (u,v)
 		% iel = getElementContaining(u,v)
 		%
 		%   parameters:
@@ -146,6 +168,13 @@ classdef LRSplineSurface < handle
 
 
 		function basis = getEdge(this, edge)
+		% GETEDGE  Returns a list of all basis functions with nonzero value at one of the four parametric edges
+		% basis = LRSplineSurface.getEdge(n)
+		%
+		%   parameters:
+		%     n - the local edge number (umin=1, umax=2, vmin=3, vmax=4)
+		%   returns
+		%     list of all basis function with support on this edge
 			if(edge == 1)
 				umin = min(this.knots(:,1));
 				basis = find(this.knots(:, this.p(1)+1) == umin);
@@ -164,6 +193,14 @@ classdef LRSplineSurface < handle
 		end
 
 		function H = plot(this, varargin)
+		% PLOT  Creates a plot of the LRSplineSurface as mapped into the physical coordinate space
+		% H = LRSplineSurface.plot()
+		% H = LRSplineSurface.plot('enumeration')
+		%
+		%   parameters:
+		%     'enumeration' - tags all elements with their corresponding enumeration index
+		%   returns
+		%     handle to the figure
 			nPtsPrLine = 41;
 			nLines     = size(this.lines, 1);
 			x = zeros(nPtsPrLine, nLines);
@@ -189,8 +226,24 @@ classdef LRSplineSurface < handle
 			end
 		end
 
-		function H = surf(this, u)
+		function H = surf(this, u, varargin)
+		% SURF  Creates a surface plot of scalar results u given by control point values
+		% H = LRSplineSurface.surf(u)
+		% H = LRSplineSurface.surf(u, 'nviz', n)
+		%
+		%   parameters:
+		%     u       - control point results
+		%     'nviz'  - sets the plotting resolution to n points per element
+		%   returns
+		%     handle to the figure
 			nviz = 6; % evaluation points per element
+			if(nargin > 2)
+				if(strcmp(varargin{1}, 'nviz'))
+					nviz = varargin{2};
+				else 
+					throw(MException('LRSplineSurface:surf',  'Error: Unknown input parameter'));
+				end
+			end
 			xg = linspace(-1,1,nviz);
 			u = u(:)'; % make u a row vector
 
