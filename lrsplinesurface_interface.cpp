@@ -124,7 +124,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		if (nlhs < 1 || nrhs < 3)
 			mexErrMsgTxt("compute_basis: Unexpected arguments.");
 
-		int iEl          = floor(mxGetScalar(prhs[2])) + 1;
+		int iEl          = floor(mxGetScalar(prhs[2])) - 1;
 		Element *element = lr->getElement(iEl);
 
 		vector<double> vResult;
@@ -239,15 +239,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			int i=0;
 			for(it=lr->meshlineBegin(); it!=lr->meshlineEnd(); ++it, ++i) {
 				if((**it).span_u_line_) {
-					meshline[i+0*n] = (**it).const_par_;
-					meshline[i+1*n] = (**it).start_;
-					meshline[i+2*n] = (**it).const_par_;
-					meshline[i+3*n] = (**it).stop_;
-				} else {
 					meshline[i+0*n] = (**it).start_;
 					meshline[i+1*n] = (**it).const_par_;
 					meshline[i+2*n] = (**it).stop_;
 					meshline[i+3*n] = (**it).const_par_;
+				} else {
+					meshline[i+0*n] = (**it).const_par_;
+					meshline[i+1*n] = (**it).start_;
+					meshline[i+2*n] = (**it).const_par_;
+					meshline[i+3*n] = (**it).stop_;
 				}
 				meshline[i+4*n] = (**it).multiplicity_;
 			}

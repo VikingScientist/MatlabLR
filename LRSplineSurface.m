@@ -163,7 +163,6 @@ classdef LRSplineSurface < handle
 			end
 		end
 
-
 		function H = plot(this, varargin)
 			nPtsPrLine = 41;
 			nLines     = size(this.lines, 1);
@@ -178,11 +177,58 @@ classdef LRSplineSurface < handle
 					y(j,i) = res(2);
 				end
 			end
-			H = plot(x,y, varargin{:});
+			H = plot(x,y, 'k-');
+
+			if(nargin > 1 && strcmp(varargin{1}, 'enumeration'))
+				hold on;
+				for i=1:size(this.elements, 1),
+					x = this.point(sum(this.elements(i, [1,3]))/2, sum(this.elements(i,[2,4]))/2);
+					text(x(1), x(2), num2str(i));
+				end
+				hold off;
+			end
 		end
 
+		function H = surf(this, u)
+			nviz = 6; % evaluation points per element
+			xg = linspace(-1,1,nviz);
+			u = u(:)'; % make u a row vector
 
+			bezierKnot1 = [ones(1, this.p(1)+1)*-1, ones(1, this.p(1)+1)];
+			bezierKnot2 = [ones(1, this.p(2)+1)*-1, ones(1, this.p(2)+1)];
+			[bezNu, bezNu_diff] = getBSplineBasisAndDerivative(this.p(1), xg, bezierKnot1); 
+			[bezNv, bezNv_diff] = getBSplineBasisAndDerivative(this.p(2), xg, bezierKnot2); 
+			for iel=1:length(this.elements)
+				umin = this.elements(iel,1);
+				vmin = this.elements(iel,2);
+				umax = this.elements(iel,3);
+				vmax = this.elements(iel,4);
+				ind  = this.support{iel}; % indices to nonzero basis functions
+				C = this.getBezierExtraction(iel);
+				X = zeros(nviz);
+				Y = zeros(nviz);
+				U = zeros(nviz);
+				% for all gauss points
+				for i=1:nviz
+					for j=1:nviz
+						% compute all basis functions
+						N = bezNu(:,i) * bezNv(:,j)';
+						N = N(:); % and make results colum vector
 
+						% evaluates physical mapping and solution
+						x = this.cp(:,ind) * C * N;
+						X(i,j) = x(1);
+						Y(i,j) = x(2);
+						U(i,j) = u(ind) * C * N;
+					end
+				end
+				H = surf(X,Y,U, 'EdgeColor', 'none'); hold on;
+				plot3(X(1,:),   Y(1,:),   U(1,:),   'k-');
+				plot3(X(end,:), Y(end,:), U(end,:), 'k-');
+				plot3(X(:,1),   Y(:,1),   U(:,1),   'k-');
+				plot3(X(:,end), Y(:,end), U(:,end), 'k-');
+			end
+		end
 	end
 
 	methods (Access = private, Hidden = true)
