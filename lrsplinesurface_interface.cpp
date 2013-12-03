@@ -151,17 +151,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	// Refine basisfunctions
 	if (!strcmp("refine_basis", cmd)) {
 		// Check parameters
-		if (nlhs < 0 || nrhs < 3)
+		if (nlhs < 0 || nrhs < 4)
 			mexErrMsgTxt("Refine_basis: Unexpected arguments.");
 
 		// rewrap results into vector array
 		double *b = mxGetPr(prhs[2]);
 		int m = mxGetM(prhs[2]);
 		int n = mxGetN(prhs[2]);
+		int mult = floor(mxGetScalar(prhs[3]));
 		vector<int> basis(m*n);
 		for(size_t i=0; i<n*m; i++)
 			basis[i] = floor(b[i]-1);
 		
+		lr->setRefMultiplicity(mult);
 		lr->refineBasisFunction(basis);
 		return;
 	}
@@ -170,16 +172,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	// Refine elements
 	if (!strcmp("refine_elements", cmd)) {
 		// Check parameters
-		if (nlhs < 0 || nrhs < 3)
+		if (nlhs < 0 || nrhs < 4)
 			mexErrMsgTxt("Refine_elements: Unexpected arguments.");
 
 		double *el = mxGetPr(prhs[2]);
-		int m = mxGetM(prhs[2]);
-		int n = mxGetN(prhs[2]);
+		int m    = mxGetM(prhs[2]);
+		int n    = mxGetN(prhs[2]);
+		int mult = floor(mxGetScalar(prhs[3]));
 		vector<int> elements(m*n);
 		for(size_t i=0; i<n*m; i++)
 			elements[i] = floor(el[i]-1);
 		
+		lr->setRefMultiplicity(mult);
 		lr->refineElement(elements);
 		return;
 	}

@@ -107,21 +107,36 @@ classdef LRSplineSurface < handle
 		% LRSplineSurface.refine(indices)
 		% LRSplineSurface.refine(indices, 'elements')
 		% LRSplineSurface.refine(indices, 'basis')
+		% LRSplineSurface.refine(indices, 'continuity', n)
 		%
 		%   parameters:
-		%     indices - index of the basis function or elements to refine
+		%     indices      - index of the basis function or elements to refine
+		%     'elements'   - perform full span refinement on the input elements
+		%     'basis'      - perform structure mesh refinement on the input functions
+		%     'continuity' - set the refinement continuity to n (less than polynomial degree)
 		%   returns
 		%     none
-			if(nargin > 2)
-				if(strcmp(varargin{1}, 'elements'))
-					lrsplinesurface_interface('refine_elements', this.objectHandle, indices);
-				elseif(strcmp(varargin{1}, 'basis'))
-					lrsplinesurface_interface('refine_basis', this.objectHandle, indices);
+			mult = 1;
+			i=0;
+			while(i<nargin-2)
+				i=i+1;
+				if     strcmp(varargin{i}, 'elements')
+				elseif strcmp(varargin{i}, 'basis')
+				elseif strcmp(varargin{i}, 'continuity')
+					mult = max(this.p)-varargin{i+1};
+					i=i+1;
 				else
 					throw(MException('LRSplineSurface:refine',  'Error: Unknown refine parameter'));
 				end
+			end
+			if(nargin > 2)
+				if(strcmp(varargin{1}, 'elements'))
+					lrsplinesurface_interface('refine_elements', this.objectHandle, indices, mult);
+				elseif(strcmp(varargin{1}, 'basis'))
+					lrsplinesurface_interface('refine_basis', this.objectHandle, indices, mult);
+				end
 			else 
-				lrsplinesurface_interface('refine_basis', this.objectHandle, indices);
+				lrsplinesurface_interface('refine_basis', this.objectHandle, indices, mult);
 			end
 			this.updatePrimitives();
 		end
