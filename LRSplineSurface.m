@@ -214,6 +214,7 @@ classdef LRSplineSurface < handle
 					y(j,i) = res(2);
 				end
 			end
+			holdOnReturn = ishold;
 			H = plot(x,y, 'k-');
 
 			if(nargin > 1 && strcmp(varargin{1}, 'enumeration'))
@@ -222,14 +223,19 @@ classdef LRSplineSurface < handle
 					x = this.point(sum(this.elements(i, [1,3]))/2, sum(this.elements(i,[2,4]))/2);
 					text(x(1), x(2), num2str(i));
 				end
+			end
+			if ~holdOnReturn
 				hold off;
 			end
 		end
 
 		function H = surf(this, u, varargin)
-		% SURF  Creates a surface plot of scalar results u given by control point values
+		% SURF  Creates a surface plot of scalar results u given by control point values OR per element values
 		% H = LRSplineSurface.surf(u)
 		% H = LRSplineSurface.surf(u, 'nviz', n)
+		%
+		% If the number of components passed is equal to the number of elements, this is interpreted as per-element
+		% results (i.e. error norms). Else, it is treated as scalar control-point variables (i.e. primary solution field)
 		%
 		%   parameters:
 		%     u       - control point results
@@ -246,6 +252,16 @@ classdef LRSplineSurface < handle
 			end
 			xg = linspace(-1,1,nviz);
 			u = u(:)'; % make u a row vector
+			per_element_result = false;
+			if(numel(u) == size(this.elements,1))
+				per_element_result = true;
+			end
+			holdOnReturn = ishold;
+			H = gcf;
+			axes(  'XLim', [min(this.cp(1,:)), max(this.cp(1,:))], ...
+			       'YLim', [min(this.cp(2,:)), max(this.cp(2,:))], ...
+			       'ZLim', [min(u),            max(u)]);
+			hold on;
 
 			bezierKnot1 = [ones(1, this.p(1)+1)*-1, ones(1, this.p(1)+1)];
 			bezierKnot2 = [ones(1, this.p(2)+1)*-1, ones(1, this.p(2)+1)];
@@ -272,14 +288,26 @@ classdef LRSplineSurface < handle
 						x = this.cp(:,ind) * C * N;
 						X(i,j) = x(1);
 						Y(i,j) = x(2);
-						U(i,j) = u(ind) * C * N;
+						if(per_element_result)
+							U(i,j) = u(iel);
+						else
+							U(i,j) = u(ind) * C * N;
+						end
 					end
 				end
-				H = surf(X,Y,U, 'EdgeColor', 'none'); hold on;
+				surf(X,Y,U, 'EdgeColor', 'none');
 				plot3(X(1,:),   Y(1,:),   U(1,:),   'k-');
 				plot3(X(end,:), Y(end,:), U(end,:), 'k-');
 				plot3(X(:,1),   Y(:,1),   U(:,1),   'k-');
 				plot3(X(:,end), Y(:,end), U(:,end), 'k-');
+			end
+			if(per_element_result)
+				view(2);
+			else	
+				view(3);
+			end
+			if ~holdOnReturn
+				hold off;
 			end
 		end
 	end
