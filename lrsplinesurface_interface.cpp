@@ -59,14 +59,25 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			mexWarnMsgTxt("Delete: Unexpected arguments ignored.");
 		return;
 	}
+
+
+	// Get the class instance pointer from the second input
+	LRSplineSurface *lr = convertMat2Ptr<LRSplineSurface>(prhs[1]);
+
+
+	// Copy
+	if (!strcmp("copy", cmd)) {
+		// Warn if other commands were ignored
+		if (nlhs != 1 || nrhs != 2)
+			mexWarnMsgTxt("Copy: Unexpected arguments ignored.");
+		plhs[0] = convertPtr2Mat<LRSplineSurface>(lr->copy());
+		return;
+	}
 	
 
 	/*********************************************************
 	 *******      Call the various class methods           ***
 	 ********************************************************/
-
-	// Get the class instance pointer from the second input
-	LRSplineSurface *lr = convertMat2Ptr<LRSplineSurface>(prhs[1]);
 
 
 	// Print    
@@ -162,7 +173,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		if (nlhs < 0 || nrhs < 3)
 			mexErrMsgTxt("Refine_elements: Unexpected arguments.");
 
-		// rewrap results into vector array
 		double *el = mxGetPr(prhs[2]);
 		int m = mxGetM(prhs[2]);
 		int n = mxGetN(prhs[2]);
@@ -174,6 +184,39 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		return;
 	}
 
+
+	// Refine basisfunctions
+	if (!strcmp("raise_order", cmd)) {
+		// Check parameters
+		if (nlhs < 1 || nrhs < 4)
+			mexErrMsgTxt("Raise_order: Unexpected arguments.");
+
+		int dp = floor(mxGetScalar(prhs[2]));
+		int dq = floor(mxGetScalar(prhs[3]));
+		
+		plhs[0] = convertPtr2Mat<LRSplineSurface>(lr->getRaiseOrderSpace(dp, dq));
+		return;
+	}
+
+
+	// Refine basisfunctions
+	if (!strcmp("set_control_points", cmd)) {
+		// Check parameters
+		if (nlhs < 0 || nrhs < 3)
+			mexErrMsgTxt("Set_control_points: Unexpected arguments.");
+
+		double *data = mxGetPr(prhs[2]);
+		int     m    = mxGetM(prhs[2]);
+		int     n    = mxGetN(prhs[2]);
+
+		if(m != lr->dimension() || n != lr->nBasisFunctions())
+			mexErrMsgTxt("Set_control_points: invalid controlpoint size ");
+
+		vector<double> cps(m*n);
+		copy(data, data+m*n, cps.begin());
+		lr->setControlPoints(cps);
+		return;
+	}
 
 
 	// Point
