@@ -241,28 +241,53 @@ classdef LRSplineSurface < handle
 		end
 
 
-		function basis = getEdge(this, edge)
+		function index = getEdge(this, edge, varargin)
 		% GETEDGE  Returns a list of all basis functions with nonzero value at one of the four parametric edges
-		% basis = LRSplineSurface.getEdge(n)
+		% index = LRSplineSurface.getEdge(n)
+		% index = LRSplineSurface.getEdge(n, 'elements')
 		%
 		%   parameters:
 		%     n - the local edge number (umin=1, umax=2, vmin=3, vmax=4)
 		%   returns
-		%     list of all basis function with support on this edge
+		%     list of all elements or basis function with support on this edge
+			elements = false;
+			if(nargin > 2)
+				if(strcmp(varargin{1}, 'elements'))
+					elements = true;
+				else 
+					throw(MException('LRSplineSurface:getEdge', 'Error: Unkown parameters'));
+				end
+			end
 			if(edge == 1)
-				umin = min(this.knots(:,1));
-				basis = find(this.knots(:, this.p(1)+1) == umin);
+				umin = min(this.elements(:,1));
+				if(elements)
+					index = find(this.elements(:,1) == umin);
+				else
+					index = find(this.knots(:, this.p(1)+1) == umin);
+				end
 			elseif(edge == 2)
-				umax = max(this.knots(:,this.p(1)+2));
-				basis = find(this.knots(:, 2) == umax);
+				umax = max(this.elements(:,3));
+				if(elements)
+					index = find(this.elements(:,3) == umax);
+				else
+					index = find(this.knots(:, 2) == umax);
+				end
 			elseif(edge == 3)
-				vmin = min(this.knots(:,this.p(1)+3));
-				basis = find(this.knots(:, end-1) == vmin);
+				vmin = min(this.elements(:,2));
+				if(elements)
+					index = find(this.elements(:,2) == vmin);
+				else
+					index = find(this.knots(:, end-1) == vmin);
+				end
 			elseif(edge == 4)
-				vmax = max(this.knots(:,end));
-				basis = find(this.knots(:, this.p(1)+4) == vmax);
+				vmax = max(this.elements(:,4));
+				if(elements)
+					index = find(this.elements(:,4) == vmax);
+				else
+					index = find(this.knots(:, this.p(1)+4) == vmax);
+				end
 			else
-				throw(MException('LRSplineSurface:getEdge',  'Error: Invalid edge enumeration'));
+				throw(MException('LRSplineSurface:getEdge', 'Error: Invalid edge enumeration'));
 			end
 		end
 
