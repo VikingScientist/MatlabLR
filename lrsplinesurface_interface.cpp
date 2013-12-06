@@ -218,7 +218,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
 		vector<double> cps(m*n);
 		copy(data, data+m*n, cps.begin());
-		lr->setControlPoints(cps);
+		if(! lr->setControlPoints(cps) )
+			mexErrMsgTxt("Set_control_points: C++ class failed. Unknown error");
 		return;
 	}
 

@@ -90,7 +90,11 @@ classdef LRSplineSurface < handle
 
 
 		function copyObject = copy(this)
-		% LRSplineSurface  Copy peforms a deep copy of the spline object
+		% COPY  peforms a deep copy of the spline object
+		% LRSplineSurface.copy()
+		%
+		%   returns:
+		%     new LRSpline object
 			newHandle  = lrsplinesurface_interface('copy', this.objectHandle);
 			copyObject = LRSplineSurface();
 			copyObject.setHandle(newHandle);
@@ -98,6 +102,11 @@ classdef LRSplineSurface < handle
 
 
 		function print(this)
+		% PRINT  Dumps the backend c++ representation of this LR-spline object to screen
+		% LRSplineSurface.print()
+		%
+		%   parameters:
+		%     none
 			lrsplinesurface_interface('print', this.objectHandle);
 		end
 
@@ -116,12 +125,16 @@ classdef LRSplineSurface < handle
 		%     'continuity' - set the refinement continuity to n (less than polynomial degree)
 		%   returns
 		%     none
-			mult = 1;
-			i=0;
+			mult     = 1;
+			elements = false;
+			i        = 0;
+			% read input parameters
 			while(i<nargin-2)
 				i=i+1;
 				if     strcmp(varargin{i}, 'elements')
+					elements = true;
 				elseif strcmp(varargin{i}, 'basis')
+					elements = false;
 				elseif strcmp(varargin{i}, 'continuity')
 					mult = max(this.p)-varargin{i+1};
 					i=i+1;
@@ -129,15 +142,24 @@ classdef LRSplineSurface < handle
 					throw(MException('LRSplineSurface:refine',  'Error: Unknown refine parameter'));
 				end
 			end
-			if(nargin > 2)
-				if(strcmp(varargin{1}, 'elements'))
-					lrsplinesurface_interface('refine_elements', this.objectHandle, indices, mult);
-				elseif(strcmp(varargin{1}, 'basis'))
-					lrsplinesurface_interface('refine_basis', this.objectHandle, indices, mult);
+
+			if(elements)
+				% error control
+				if(min(indices)<0 || max(indices)>size(this.elements, 1))
+					throw(MException('LRSplineSurface:refine',  'Error: Invalid refinement index'));
 				end
-			else 
+				% perform refinement
+				lrsplinesurface_interface('refine_elements', this.objectHandle, indices, mult);
+			else
+				% error control
+				if(min(indices)<0 || max(indices)>size(this.knots, 1))
+					throw(MException('LRSplineSurface:refine',  'Error: Invalid refinement index'));
+				end
+				% perform refinement
 				lrsplinesurface_interface('refine_basis', this.objectHandle, indices, mult);
 			end
+
+			% new LR-mesh... update static variables
 			this.updatePrimitives();
 		end
 
@@ -199,7 +221,9 @@ classdef LRSplineSurface < handle
 			end
 
 			this.cp = newCP;
+			lrsplinesurface_interface('set_control_points', this.objectHandle, newCP);
 			clear oldGuy;
+			this.updatePrimitives();
 		end
 
 		function x = point(this, u, v)
@@ -324,7 +348,6 @@ classdef LRSplineSurface < handle
 			enumeration = false;
 			parametric  = false;
 
-			nargin
 			i = 1;
 			while i<nargin
 				if strcmp(varargin{i}, 'enumeration')
