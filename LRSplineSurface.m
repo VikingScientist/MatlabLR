@@ -163,6 +163,41 @@ classdef LRSplineSurface < handle
 			this.updatePrimitives();
 		end
 
+
+		function cp = L2project(this, u,v,z, w)
+		% L2project  Performs a global L2 projection into LR spline space
+		% LRSplineSurface.raiseOrder(u,v,z)
+		% LRSplineSurface.raiseOrder(u,v,z,w)
+		%
+		%   parameters:
+		%     u - vector of first parametric point
+		%     v - vector of second parametric point
+		%     z - vector of L2-projection points
+		%     w - [optional] list of weights
+		%   returns
+		%     cp - list of control points corresponding to this projection
+			nCP = size(this.cp,2);
+			if(nCP > length(u))
+				throw(MException('LRSplineSurface:L2project', 'Error: too few evaluation points to do global L2 projection'));
+			end
+			A = sparse(nCP, nCP);
+			b = sparse(nCP, size(z,2));
+			for i=1:length(u)
+				el  = this.getElementContaining(u(i), v(i));
+				ind = this.support{el};
+				N   = this.computeBasis(u(i), v(i));
+				if(nargin > 4) % continuous L2 projection, include weights
+					A(ind, ind) = A(ind, ind) + N'*N      * w(i);
+					b(ind,:)    = b(ind,:)    + N'*z(i,:) * w(i);
+				else
+					A(ind, ind) = A(ind, ind) + N'*N;
+					b(ind,:)    = b(ind,:)    + N'*z(i,:);
+				end
+			end
+			cp = A \ b;
+		end
+
+
 		function raiseOrder(this, dp, dq)
 		% RAISEORDER  Performs global degree elevation
 		% LRSplineSurface.raiseOrder(dp)
