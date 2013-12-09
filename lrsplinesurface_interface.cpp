@@ -9,6 +9,8 @@
 using namespace std;
 using namespace LR;
 
+#define DOUBLE_TOL 1e-12
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	
 	char cmd[64];
@@ -148,6 +150,37 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	}
 
 
+	// insert line
+	if (!strcmp("insert_line", cmd)) {
+		// Check parameters
+		if (nlhs < 0 || nrhs < 4)
+			mexErrMsgTxt("insert_line: Unexpected arguments.");
+
+		// rewrap results into vector array
+		double *start = mxGetPr(prhs[2]);
+		double *stop  = mxGetPr(prhs[3]);
+		for(int i=2; i<4; i++) {
+			int m = mxGetM(prhs[i]);
+			int n = mxGetN(prhs[i]);
+			if(m*n != 2)
+				mexErrMsgTxt("insert_line: Invalid arguments");
+		}
+		int mult = 1;
+		if(nrhs > 3)
+			mult = floor(mxGetScalar(prhs[4]));
+
+		if( fabs(start[0] - stop[0]) < DOUBLE_TOL)
+			lr->insert_const_u_edge(start[0], start[1], stop[1], mult);
+		else if( fabs(start[1] - stop[1]) < DOUBLE_TOL)
+			lr->insert_const_v_edge(start[1], start[0], stop[0], mult);
+		else
+			mexErrMsgTxt("insert_line: Invalid arguments");
+
+		return;
+	}
+
+
+
 	// Refine basisfunctions
 	if (!strcmp("refine_basis", cmd)) {
 		// Check parameters
@@ -220,6 +253,23 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		copy(data, data+m*n, cps.begin());
 		if(! lr->setControlPoints(cps) )
 			mexErrMsgTxt("Set_control_points: C++ class failed. Unknown error");
+		return;
+	}
+
+
+	// Set Continutiy
+	if (!strcmp("set_continuity", cmd)) {
+		// Check parameters
+		if (nlhs < 0 || nrhs < 3)
+			mexErrMsgTxt("set_continuity: Unexpected arguments.");
+
+		double *c = mxGetPr(prhs[2]);
+		int     m    = mxGetM(prhs[2]);
+		int     n    = mxGetN(prhs[2]);
+		if(m*n != 2)
+			mexErrMsgTxt("set_continuity: invalid continuity size ");
+
+		lr->setGlobalContinuity(c[0], c[1]);
 		return;
 	}
 

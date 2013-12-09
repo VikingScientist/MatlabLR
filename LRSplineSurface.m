@@ -163,6 +163,22 @@ classdef LRSplineSurface < handle
 			this.updatePrimitives();
 		end
 
+		function setContinuity(this, newCont, newCont2)
+		% SETCONTINUITY  Lowers the global continuity to max C^{newCont}
+		%
+		%   parameters:
+		%     newCont  - new continuity for the global solution space
+		%     newCont2 - new continuity in second parameter direction
+			c = newCont;
+			if nargin > 2
+				c(2) = newCont2;
+			elseif numel(c)==1
+				c(2) = newCont;
+			end
+			lrsplinesurface_interface('set_continuity', this.objectHandle, c);
+			this.updatePrimitives();
+		end
+
 
 		function cp = L2project(this, u,v,z, w)
 		% L2project  Performs a global L2 projection into LR spline space
@@ -437,6 +453,7 @@ classdef LRSplineSurface < handle
 			end
 		end
 
+
 		function H = surf(this, u, varargin)
 		% SURF  Creates a surface plot of scalar results u given by control point values OR per element values
 		% H = LRSplineSurface.surf(u)
@@ -634,6 +651,20 @@ classdef LRSplineSurface < handle
 			else	
 				view(3);
 			end
+		end
+	end
+
+	methods (Hidden = true)
+		function insertLine(this, u,v,m)
+			if(numel(u) ~=2 || numel(v) ~=2)
+				throw(MException('LRSplineSurface:insertLine',  'Error: Invalid arguments'));
+			end
+			if nargin<4
+				m = 1;
+			end
+				
+			lrsplinesurface_interface('insert_line', this.objectHandle, u,v,m);
+			this.updatePrimitives();
 		end
 	end
 
