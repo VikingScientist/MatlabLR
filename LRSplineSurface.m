@@ -406,35 +406,80 @@ classdef LRSplineSurface < handle
 		% SURF  Creates a surface plot of scalar results u given by control point values OR per element values
 		% H = LRSplineSurface.surf(u)
 		% H = LRSplineSurface.surf(u, 'nviz', n)
+		% H = LRSplineSurface.surf(u, 'secondary', f)
 		%
 		% If the number of components passed is equal to the number of elements, this is interpreted as per-element
 		% results (i.e. error norms). Else, it is treated as scalar control-point variables (i.e. primary solution field)
 		%
 		%   parameters:
-		%     u       - control point results
-		%     'nviz'  - sets the plotting resolution to n points per element
+		%     u            - control point results
+		%     'nviz'       - sets the plotting resolution to n points per element
+		%     'diffX'      - plots the derivative with respect to X 
+		%     'diffY'      - plots the derivative with respect to Y
+		%     'secondary'  - plots secondary solutions such as functions of u and dudx
+		%     'parametric' - displays results in parametric space (and parametric derivatives)
 		%   returns
 		%     handle to the figure
-			nviz = 6; % evaluation points per element
-			if(nargin > 2)
-				if(strcmp(varargin{1}, 'nviz'))
-					nviz = varargin{2};
-				else 
+			nviz               = 6;
+			diffX              = false;
+			diffY              = false;
+			parametric         = false;
+			mononomial         = false;
+			per_element_result = false;
+			function_result    = false;
+			secondary          = false;
+			sec_function       = 0;
+
+			i = 1;
+			while i<nargin-1
+				if strcmp(varargin{i}, 'diffX')
+					diffX = true;
+				elseif strcmp(varargin{i}, 'diffY')
+					diffY = true;
+				elseif strcmp(varargin{i}, 'mononomial')
+					mononomial = true;
+				elseif strcmp(varargin{i}, 'secondary')
+					secondary = true;
+					i = i+1;
+					sec_function = varargin{i};
+				elseif strcmp(varargin{i}, 'nviz')
+					i = i+1;
+					nPtsPrLine = varargin{i};
+				elseif strcmp(varargin{i}, 'parametric')
+					parametric = true;
+				else
 					throw(MException('LRSplineSurface:surf',  'Error: Unknown input parameter'));
 				end
+				i = i+1;
 			end
 			xg = linspace(-1,1,nviz);
-			u = u(:)'; % make u a row vector
-			per_element_result = false;
-			if(numel(u) == size(this.elements,1))
-				per_element_result = true;
+
+			if strcmp(class(u), 'function_handle')
+				function_result = true;
+			elseif ~mononomial
+				u = u(:)'; % make u a row vector
+				if(numel(u) == size(this.elements,1))
+					per_element_result = true;
+				end
 			end
+
+			if mononomial,
+				nDOF = size(this.knots,1);
+				grevU = zeros(2, nDOF);
+				grevX = zeros(2, nDOF);
+				for i=1:nDOF
+					grevU(:,i) = [sum(this.knots(i,2:(this.p(1)+1))); sum(this.knots(i,(this.p(1)+4):(end-1)))] ./ this.p;
+					grevX(:,i) = this.point(grevU(1,i), grevU(2,i));
+				end
+			end
+
 			holdOnReturn = ishold;
 			H = gcf;
-			axes(  'XLim', [min(this.cp(1,:)), max(this.cp(1,:))], ...
-			       'YLim', [min(this.cp(2,:)), max(this.cp(2,:))], ...
-			       'ZLim', [min(u),            max(u)]);
 			hold on;
+
+			Xlines = zeros(size(this.elements, 1)*4, nviz);
+			Ylines = zeros(size(this.elements, 1)*4, nviz);
+			Zlines = zeros(size(this.elements, 1)*4, nviz);
 
 			bezierKnot1 = [ones(1, this.p(1)+1)*-1, ones(1, this.p(1)+1)];
 			bezierKnot2 = [ones(1, this.p(2)+1)*-1, ones(1, this.p(2)+1)];
@@ -445,42 +490,114 @@ classdef LRSplineSurface < handle
 				vmin = this.elements(iel,2);
 				umax = this.elements(iel,3);
 				vmax = this.elements(iel,4);
+				hu = umax-umin;
+				hv = vmax-vmin;
 				ind  = this.support{iel}; % indices to nonzero basis functions
-				C = this.getBezierExtraction(iel);
-				X = zeros(nviz);
-				Y = zeros(nviz);
-				U = zeros(nviz);
+				C  = this.getBezierExtraction(iel);
+				X  = zeros(nviz);
+				Y  = zeros(nviz);
+				U  = zeros(nviz);
+				Ux = zeros(nviz);
+				Uy = zeros(nviz);
 				% for all gauss points
 				for i=1:nviz
 					for j=1:nviz
-						% compute all basis functions
-						N = bezNu(:,i) * bezNv(:,j)';
-						N = N(:); % and make results colum vector
+						xi  = (.5*xg(i)+.5)*(umax-umin)+umin;
+						eta = (.5*xg(j)+.5)*(vmax-vmin)+vmin;
 
-						% evaluates physical mapping and solution
-						x = this.cp(:,ind) * C * N;
-						X(i,j) = x(1);
-						Y(i,j) = x(2);
-						if(per_element_result)
+						% compute all basis functions
+						N     = bezNu(:,i)       * bezNv(:,j)';
+						dNdu  = bezNu_diff(:,i)  * bezNv(:,j)';
+						dNdv  = bezNu(:,i)       * bezNv_diff(:,j)';
+						N     = N(:); % and make results colum vector
+						dN    = [dNdu(:)*2/hu, dNdv(:)*2/hv];
+
+						% evaluates physical mapping and jacobian
+						x  = this.cp(:,ind) * C * N;
+						Jt = this.cp(:,ind) * C * dN; % transpose jacobian matrix [dx/du,dy/du; dx/dv, dy/dv]
+
+						% physical derivatives
+						dNdx = dN * inv(Jt'); 
+
+						% write results depending on type of plot
+						if(parametric)
+							X(i,j) = xi;
+							Y(i,j) = eta;
+						else
+							X(i,j) = x(1);
+							Y(i,j) = x(2);
+						end
+						if function_result || secondary
+							if secondary
+								if nargin(sec_function)==2 % input parameters x and u
+									U(i,j) = sec_function(x, u(ind) * C * N);
+								elseif nargin(sec_function)==3 % input parameters x, u and dudx
+									U(i,j) = sec_function(x, u(ind) * C * N, (u(ind) * C * dNdx)');
+								end
+							else
+								U(i,j) = u(x);
+							end
+						elseif per_element_result
 							U(i,j) = u(iel);
+						elseif diffX && parametric
+							U(i,j)  = u(ind) * C * dN(:,1);
+						elseif diffX 
+							U(i,j)  = u(ind) * C * dNdx(:,1);
+						elseif diffY && parametric
+							U(i,j)  = u(ind) * C * dN(:,1);
+						elseif diffY
+							U(i,j)  = u(ind) * C * dNdx(:,2);
+						elseif mononomial
+							nFun = 0;
+							for iBasis=ind
+								if ~isnan( u(1,iBasis) )
+									nFun = nFun + 1;
+									p = sqrt(size(u,1))-1;
+									mon = ones(2,p+1);
+									for k=1:p
+										mon(:,k+1) = mon(:,k) .* (x-grevX(:,iBasis));
+									end
+									monAll = mon(1,:)' * mon(2,:);
+									U(i,j) = U(i,j) + u(:,iBasis)'*monAll(:);
+								end
+							end
+							U(i,j) = U(i,j) / nFun;
 						else
 							U(i,j) = u(ind) * C * N;
 						end
 					end
 				end
+				if sum(sum(isnan(U)))>0,
+					iel
+					U
+					pause;
+				end
 				surf(X,Y,U, 'EdgeColor', 'none');
-				plot3(X(1,:),   Y(1,:),   U(1,:),   'k-');
-				plot3(X(end,:), Y(end,:), U(end,:), 'k-');
-				plot3(X(:,1),   Y(:,1),   U(:,1),   'k-');
-				plot3(X(:,end), Y(:,end), U(:,end), 'k-');
+				Xlines((iel-1)*4+1,:) = X(1,:);
+				Ylines((iel-1)*4+1,:) = Y(1,:);
+				Zlines((iel-1)*4+1,:) = U(1,:);
+
+				Xlines((iel-1)*4+2,:) = X(end,:);
+				Ylines((iel-1)*4+2,:) = Y(end,:);
+				Zlines((iel-1)*4+2,:) = U(end,:);
+
+				Xlines((iel-1)*4+3,:) = X(:,1);
+				Ylines((iel-1)*4+3,:) = Y(:,1);
+				Zlines((iel-1)*4+3,:) = U(:,1);
+
+				Xlines((iel-1)*4+4,:) = X(:,end);
+				Ylines((iel-1)*4+4,:) = Y(:,end);
+				Zlines((iel-1)*4+4,:) = U(:,end);
+				% plot3(X(1,:),   Y(1,:),   U(1,:),   'k-');
+				% plot3(X(end,:), Y(end,:), U(end,:), 'k-');
+				% plot3(X(:,1),   Y(:,1),   U(:,1),   'k-');
+				% plot3(X(:,end), Y(:,end), U(:,end), 'k-');
 			end
+			plot3(Xlines', Ylines', Zlines', 'k-');
 			if(per_element_result)
 				view(2);
 			else	
 				view(3);
-			end
-			if ~holdOnReturn
-				hold off;
 			end
 		end
 	end
