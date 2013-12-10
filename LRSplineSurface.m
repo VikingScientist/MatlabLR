@@ -16,12 +16,15 @@ classdef LRSplineSurface < handle
 % LRSplineSurface Methods:
 %     copy                 - Performs a deep copy of the spline object
 %     refine               - Performs local refinements
+%     raiseOrder           - Performs global degree elevation
 %     getEdge              - Extracts functions with support on one of the four parametric edges
 %     getElementContaining - Get element index at parametric point (u,v)
 %     point                - Evaluates the physical coordinates (x,y) corresponding to a parametric point (u,v)
 %     computeBasis         - Compute all basis functions (and their derivatives)
 %     getBezierExtraction  - Get the bezier extraction matrix for one element
-%     surf                 - Plot scalar results in a surface plot
+%     setContinuity        - Performs global continutiy reduction
+%     L2project            - L2-project results onto the spline basis 
+%     surf                 - Plot scalar results in a surface plot (per element or per controlpoint)
 %     plot                 - Plot the mesh structure 
 %     print                - Prints raw c++ lr data structure
 
@@ -230,49 +233,36 @@ classdef LRSplineSurface < handle
 			this.objectHandle = newHandle;
 			this.updatePrimitives();
 
+			nElms  = size(this.elements,1);
 			nBasis = size(this.knots,1);
 			newCP  = zeros(size(this.cp,1), nBasis);
-			for iBasis=1:nBasis,
-				% get greville point and corresponding element containing this
-				grevPt = [sum(this.knots(iBasis,2:(this.p(1)+1))); sum(this.knots(iBasis,(this.p(1)+4):(end-1)))] ./ this.p;
-				el     = this.getElementContaining(grevPt(1), grevPt(2));
-				sup    = this.support{el};
-				this.elements(el,:);
-				this.knots(sup,:);
+			% ideally we would like to do an greville interpolation, or even quasi interpolation would
+			% work, but sometimes the greville points seem to stack on top of each other. We'll do nxn
+			% evaluation points for each element and hope this suffices for an L2-projection
+			nPts  = ceil(sqrt(nBasis / nElms));
+			uAll  = zeros(nPts*nPts*nElms,1);
+			vAll  = zeros(nPts*nPts*nElms,1);
+			cpAll = zeros(nPts*nPts*nElms,2);
 
-				% figure out how many evaluation points we need to get a solvable system
-				nActive = numel(sup);
-				nPts    = ceil(sqrt(nActive));
-
-				% create the local linear system of equations
-				A = zeros(nPts, nActive);
-				b = zeros(nPts, size(this.cp, 1));
-
+			k = 1;
+			for iEl=1:nElms,
 				% make a tensor grid of evaluation points on this element
-				u = linspace(this.elements(el,1), this.elements(el,3), nPts+2);
-				v = linspace(this.elements(el,2), this.elements(el,4), nPts+2);
+				u = linspace(this.elements(iEl,1), this.elements(iEl,3), nPts+2);
+				v = linspace(this.elements(iEl,2), this.elements(iEl,4), nPts+2);
 				u = u(2:end-1);
 				v = v(2:end-1);
-				for j=1:nPts
-					for i=1:nPts
-						N = this.computeBasis(u(i), v(j));
-						A((j-1)*nPts+i, :) = N;
-						b((j-1)*nPts+i, :) = oldGuy.point(u(i), v(j));
+				for i=1:nPts
+					for j=1:nPts
+						uAll(k)    = u(i);
+						vAll(k)    = v(j);
+						cpAll(k,:) = oldGuy.point(u(i), v(j));
+						k = k+1;
 					end
 				end
-				if(rank(A) ~= nActive) 
-					A
-					b
-					disp 'Well screw that.. it did not work out';
-					throw(MException('LRSplineSurface:raiseOrder',  'Error: algorithm error, blame Kjetil'));
-				end
-				sol = A \ b;
-				
-				newCP(:,iBasis) = sol(find(sup==iBasis),:)';
 			end
+			newCP = this.L2project(uAll, vAll, cpAll);
 
-			this.cp = newCP;
-			lrsplinesurface_interface('set_control_points', this.objectHandle, newCP);
+			lrsplinesurface_interface('set_control_points', this.objectHandle, newCP');
 			clear oldGuy;
 			this.updatePrimitives();
 		end
@@ -537,7 +527,7 @@ classdef LRSplineSurface < handle
 			bezierKnot2 = [ones(1, this.p(2)+1)*-1, ones(1, this.p(2)+1)];
 			[bezNu, bezNu_diff] = getBSplineBasisAndDerivative(this.p(1), xg, bezierKnot1); 
 			[bezNv, bezNv_diff] = getBSplineBasisAndDerivative(this.p(2), xg, bezierKnot2); 
-			for iel=1:length(this.elements)
+			for iel=1:size(this.elements, 1)
 				umin = this.elements(iel,1);
 				vmin = this.elements(iel,2);
 				umax = this.elements(iel,3);
