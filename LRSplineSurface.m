@@ -496,7 +496,7 @@ classdef LRSplineSurface < handle
 					sec_function = varargin{i};
 				elseif strcmp(varargin{i}, 'nviz')
 					i = i+1;
-					nPtsPrLine = varargin{i};
+					nviz = varargin{i};
 				elseif strcmp(varargin{i}, 'parametric')
 					parametric = true;
 				else
