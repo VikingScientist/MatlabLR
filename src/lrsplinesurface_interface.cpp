@@ -223,6 +223,20 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
 
 	// Refine basisfunctions
+	if (!strcmp("get_derivative_space", cmd)) {
+		// Check parameters
+		if (nlhs < 2 || nrhs < 2)
+			mexErrMsgTxt("get_derivative_space: Unexpected arguments.");
+
+		vector<LRSplineSurface*> dlr = lr->getDerivativeSpace();
+		
+		plhs[0] = convertPtr2Mat<LRSplineSurface>(dlr[0]);
+		plhs[1] = convertPtr2Mat<LRSplineSurface>(dlr[1]);
+		return;
+	}
+
+
+	// Refine basisfunctions
 	if (!strcmp("raise_order", cmd)) {
 		// Check parameters
 		if (nlhs < 1 || nrhs < 4)

@@ -216,6 +216,65 @@ classdef LRSplineSurface < handle
 			cp = A \ b;
 		end
 
+		function [dLRdu dLRdv] = getDerivative(this)
+		% GETDERIVATIVE  gets an LRSplineSurface representation of the two derivatives d/du and d/dv
+		% [dLRdu dLRdv] = LRSplineSurface.raiseOrder()
+		%
+		%   parameters:
+		%     none
+		%   returns
+		%     dLRdu - derivative space wrt u. Control points correspond to dx/du and dy/du
+		%     dLRdv - derivative space wrt v. Control points correspond to dx/dv and dy/dv
+			[handle_du handle_dv] = lrsplinesurface_interface('get_derivative_space', this.objectHandle);
+
+			dLRdu = LRSplineSurface();
+			dLRdv = LRSplineSurface();
+			dLRdu.setHandle(handle_du);
+			dLRdv.setHandle(handle_dv);
+			dLRdu.updatePrimitives();
+			dLRdv.updatePrimitives();
+
+			nElms  = size(this.elements,1);
+			nBasis = size(this.knots,1);
+			% ideally we would like to do an greville interpolation, or even quasi interpolation would
+			% work, but sometimes the greville points seem to stack on top of each other. We'll do nxn
+			% evaluation points for each element and hope this suffices for an L2-projection
+			nPts  = ceil(sqrt(nBasis / nElms));
+			uAll  = zeros(nPts*nPts*nElms,1);
+			vAll  = zeros(nPts*nPts*nElms,1);
+			dXdu  = zeros(nPts*nPts*nElms,2);
+			dXdv  = zeros(nPts*nPts*nElms,2);
+
+			k = 1;
+			for iEl=1:nElms,
+				% make a tensor grid of evaluation points on this element
+				u = linspace(this.elements(iEl,1), this.elements(iEl,3), nPts+2);
+				v = linspace(this.elements(iEl,2), this.elements(iEl,4), nPts+2);
+				u = u(2:end-1);
+				v = v(2:end-1);
+				ind = this.support{iEl};
+				for i=1:nPts
+					for j=1:nPts
+						uAll(k)    = u(i);
+						vAll(k)    = v(j);
+						N = this.computeBasis(u(i), v(j), 1);
+						Jt = N(2:3,:) * this.cp(:,ind)'; % transpose jacobian matrix [dx/du,dy/du; dx/dv, dy/dv]
+						dXdu(k,:) = Jt(1,:);
+						dXdv(k,:) = Jt(2,:);
+						k = k+1;
+					end
+				end
+			end
+			newCP = dLRdu.L2project(uAll, vAll, dXdu);
+			lrsplinesurface_interface('set_control_points', dLRdu.objectHandle, newCP');
+			dLRdu.updatePrimitives();
+
+			newCP = dLRdv.L2project(uAll, vAll, dXdv);
+			lrsplinesurface_interface('set_control_points', dLRdv.objectHandle, newCP');
+			dLRdv.updatePrimitives();
+
+		end
+
 
 		function raiseOrder(this, dp, dq)
 		% RAISEORDER  Performs global degree elevation
