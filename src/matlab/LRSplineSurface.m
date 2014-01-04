@@ -44,9 +44,9 @@ classdef LRSplineSurface < handle
 	methods
 		function this = LRSplineSurface(varargin)
 		% LRSplineSurface  Constructor, initialize a tensor product LRSplinSurface object
-		% LRSplineSurface(n,p)
-		% LRSplineSurface(n,p, knotU, knotV)
-		% LRSplineSurface(n,p, knotU, knotV, controlpoint)
+		% LRSplineSurface(p, n)
+		% LRSplineSurface(p, knotU, knotV)
+		% LRSplineSurface(p, knotU, knotV, controlpoint)
 		% 
 		%   parameters 
 		%     n            - number of basis functions in each direction (2 components)
@@ -61,23 +61,24 @@ classdef LRSplineSurface < handle
 				objectHandle = 0;
 				return;
 			end
-			n = varargin{1};
-			p = varargin{2};
-			if(nargin ~= 2 && nargin ~=4 && nargin ~= 5)
+			if(nargin ~= 2 && nargin ~=3 && nargin ~= 4)
 				throw(MException('LRSplineSurface:constructor',  'Error: Invalid number of arguments to LRSplineSurface constructor'));
 			end
-			if(length(p) ~=2 || length(n) ~=2)
-				throw(MException('LRSplineSurface:constructor', 'Error: p and n should have 2 components'));
+
+			p = varargin{1};
+			if(length(p) ~=2)
+				throw(MException('LRSplineSurface:constructor', 'Error: p should have 2 components'));
 			end
-			if(nargin > 3)
-				for i=1:2
-					if(~(size(varargin{i+2}) == [1, p(i)+n(i)+1]) )
-						throw(MException('LRSplineSurface:constructor', 'Error: Knot vector should be a row vector of length p+n+1'));
-					end
+			if(nargin == 2)
+				n = varargin{2};
+				if(length(n) ~=2)
+					throw(MException('LRSplineSurface:constructor', 'Error: n should have 2 components'));
 				end
-			end
-			if(nargin > 4)
-				if(size(varargin{5},2) ~= n(1)*n(2))
+			elseif(nargin == 4)
+				knot1 = varargin{2};
+				knot2 = varargin{3};
+				n = [numel(knot1)-p(1)-1, numel(knot2)-p(2)-1];
+				if(size(varargin{4},2) ~= n(1)*n(2))
 					throw(MException('LRSplineSurface:constructor', 'Error: Control points should have n(1)*n(2) columns'));
 				end
 			end
@@ -437,6 +438,10 @@ classdef LRSplineSurface < handle
 				else
 					index = [index; find(this.knots(:, this.p(1)+4) == vmax)];
 				end
+			end
+			% clear out any duplicates if one requests all edges
+			if(edge == 0)
+				index = unique(index);
 			end
 		end
 

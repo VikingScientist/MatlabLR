@@ -28,14 +28,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			mexErrMsgTxt("New: One output expected.");
 		
 		// fetch input arguments
-		double *n = mxGetPr(prhs[1]);
-		double *p = mxGetPr(prhs[2]);
-		if(nrhs > 4) {
-			double *knotU = mxGetPr(prhs[3]);
-			double *knotV = mxGetPr(prhs[4]);
-			if(nrhs == 6) {
-				double *cp = mxGetPr(prhs[5]);
-				int    dim = mxGetM(prhs[5]);
+		double *p = mxGetPr(prhs[1]);
+		if(nrhs > 3) {
+			double *knotU = mxGetPr(prhs[2]);
+			double *knotV = mxGetPr(prhs[3]);
+			double n[2];
+			n[0] = mxGetN(prhs[2])*mxGetM(prhs[2]) - p[0] - 1;
+			n[1] = mxGetN(prhs[3])*mxGetM(prhs[3]) - p[1] - 1;
+			if(nrhs == 5) {
+				double *cp = mxGetPr(prhs[4]);
+				int    dim = mxGetM(prhs[4]);
 
 		// Return a handle to a new C++ instance
 				plhs[0] = convertPtr2Mat<LRSplineSurface>(new LRSplineSurface(floor(n[0]), floor(n[1]), floor(p[0])+1, floor(p[1])+1, knotU, knotV, cp, dim, false));
@@ -43,6 +45,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 				plhs[0] = convertPtr2Mat<LRSplineSurface>(new LRSplineSurface(floor(n[0]), floor(n[1]), floor(p[0])+1, floor(p[1])+1, knotU, knotV));
 			}
 		} else {
+			double *n = mxGetPr(prhs[2]);
 			plhs[0] = convertPtr2Mat<LRSplineSurface>(new LRSplineSurface(floor(n[0]), floor(n[1]), floor(p[0])+1, floor(p[1])+1));
 		}
 		return;
