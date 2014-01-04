@@ -380,7 +380,8 @@ classdef LRSplineSurface < handle
 		%
 		%   parameters:
 		%     'enumeration' - tags all elements with their corresponding enumeration index
-		%     'parametric'  - prints the elements in the parametric space instead of the physical
+		%     'basis'       - plots control points as dots (greville points if 'parametric' is specified)
+		%     'parametric'  - prints the elements in the parametric space instead of the physical 
 		%     'nviz'        - sets the line resolution for plots to use n points for drawing each line
 		%   returns
 		%     handle to the figure
@@ -388,6 +389,7 @@ classdef LRSplineSurface < handle
 			nPtsPrLine  = 41;
 			enumeration = false;
 			parametric  = false;
+			basis       = false;
 
 			i = 1;
 			while i<nargin
@@ -398,6 +400,8 @@ classdef LRSplineSurface < handle
 					nPtsPrLine = varargin{i};
 				elseif strcmp(varargin{i}, 'parametric')
 					parametric = true;
+				elseif strcmp(varargin{i}, 'basis')
+					basis = true;
 				else
 					throw(MException('LRSplineSurface:plot',  'Error: Unknown input parameter'));
 				end
@@ -427,7 +431,8 @@ classdef LRSplineSurface < handle
 			holdOnReturn = ishold;
 			H = plot(x,y, 'k-');
 
-			if(enumeration)
+			% enumerate elements if specified
+			if(enumeration && ~basis)
 				hold on;
 				for i=1:size(this.elements, 1),
 					if(parametric)
@@ -436,6 +441,22 @@ classdef LRSplineSurface < handle
 						x = this.point(sum(this.elements(i, [1,3]))/2, sum(this.elements(i,[2,4]))/2);
 					end
 					text(x(1), x(2), num2str(i));
+				end
+			end
+
+			% plot basis if specified
+			if basis
+				hold on;
+				for i=1:size(this.knots,1)
+					if parametric
+						x = [sum(this.knots(i,2:(this.p(1)+1))); sum(this.knots(i,(this.p(1)+4):(end-1)))] ./ this.p;
+					else
+						x = this.cp(:,i);
+					end
+					plot(x(1), x(2), 'ko', 'MarkerSize', 10, 'MarkerFaceColor', [0.9843137, 0.8384314, 0.40117648], 'MarkerEdgeColor', 'black');
+					if enumeration
+						text(x(1), x(2), num2str(i));
+					end
 				end
 			end
 			if ~holdOnReturn
