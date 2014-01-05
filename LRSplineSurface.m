@@ -323,14 +323,19 @@ classdef LRSplineSurface < handle
 
 		function index = getEdge(this, edge, varargin)
 		% GETEDGE  Returns a list of all basis functions with nonzero value at one of the four parametric edges
+		% index = LRSplineSurface.getEdge()
 		% index = LRSplineSurface.getEdge(n)
 		% index = LRSplineSurface.getEdge(n, 'elements')
 		%
 		%   parameters:
-		%     n - the local edge number (umin=1, umax=2, vmin=3, vmax=4)
+		%     n - the local edge number (all=0, umin=1, umax=2, vmin=3, vmax=4)
 		%   returns
 		%     list of all elements or basis function with support on this edge
 			elements = false;
+			index = [];
+			if(nargin < 2)
+				edge = 0;
+			end
 			if(nargin > 2)
 				if(strcmp(varargin{1}, 'elements'))
 					elements = true;
@@ -338,36 +343,41 @@ classdef LRSplineSurface < handle
 					throw(MException('LRSplineSurface:getEdge', 'Error: Unkown parameters'));
 				end
 			end
-			if(edge == 1)
+			%%% error test input
+			if(edge~=0 && edge~=1 && edge~=2 && edge~=3 && edge~=4)
+				throw(MException('LRSplineSurface:getEdge', 'Error: Invalid edge enumeration'));
+			end
+			if(edge == 1 || edge == 0)
 				umin = min(this.elements(:,1));
 				if(elements)
-					index = find(this.elements(:,1) == umin);
+					index = [index; find(this.elements(:,1) == umin)];
 				else
-					index = find(this.knots(:, this.p(1)+1) == umin);
+					index = [index; find(this.knots(:, this.p(1)+1) == umin)];
 				end
-			elseif(edge == 2)
+			end
+			if(edge == 2 || edge == 0)
 				umax = max(this.elements(:,3));
 				if(elements)
-					index = find(this.elements(:,3) == umax);
+					index = [index; find(this.elements(:,3) == umax)];
 				else
-					index = find(this.knots(:, 2) == umax);
+					index = [index; find(this.knots(:, 2) == umax)];
 				end
-			elseif(edge == 3)
+			end
+			if(edge == 3 || edge == 0)
 				vmin = min(this.elements(:,2));
 				if(elements)
-					index = find(this.elements(:,2) == vmin);
+					index = [index; find(this.elements(:,2) == vmin)];
 				else
-					index = find(this.knots(:, end-1) == vmin);
+					index = [index; find(this.knots(:, end-1) == vmin)];
 				end
-			elseif(edge == 4)
+			end
+			if(edge == 4 || edge == 0)
 				vmax = max(this.elements(:,4));
 				if(elements)
-					index = find(this.elements(:,4) == vmax);
+					index = [index; find(this.elements(:,4) == vmax)];
 				else
-					index = find(this.knots(:, this.p(1)+4) == vmax);
+					index = [index; find(this.knots(:, this.p(1)+4) == vmax)];
 				end
-			else
-				throw(MException('LRSplineSurface:getEdge', 'Error: Invalid edge enumeration'));
 			end
 		end
 
