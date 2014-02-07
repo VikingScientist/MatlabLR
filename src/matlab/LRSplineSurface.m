@@ -39,6 +39,7 @@ classdef LRSplineSurface < handle
 	end
 	properties(SetAccess = private, Hidden = true)
 		objectHandle;
+		bezierHash;
 	end
 
 	methods
@@ -84,7 +85,9 @@ classdef LRSplineSurface < handle
 			end
 			
 			this.objectHandle = lrsplinesurface_interface('new', varargin{:});
+			this.bezierHash = [];
 			this.updatePrimitives();
+
 		end
 
 		function delete(this)
@@ -147,23 +150,11 @@ classdef LRSplineSurface < handle
 				end
 			end
 
-			if(elements)
-				% error control
-				if(min(indices)<0 || max(indices)>size(this.elements, 1))
-					throw(MException('LRSplineSurface:refine',  'Error: Invalid refinement index'));
-				end
-				% perform refinement
-				lrsplinesurface_interface('refine_elements', this.objectHandle, indices, mult);
-			else
-				% error control
-				if(min(indices)<0 || max(indices)>size(this.knots, 1))
-					throw(MException('LRSplineSurface:refine',  'Error: Invalid refinement index'));
-				end
-				% perform refinement
-				lrsplinesurface_interface('refine_basis', this.objectHandle, indices, mult);
-			end
+			% perform refinement
+			lrsplinesurface_interface('refine_basis', this.objectHandle, indices, mult);
 
 			% new LR-mesh... update static variables
+			this.bezierHash = [];
 			this.updatePrimitives();
 		end
 
@@ -180,6 +171,7 @@ classdef LRSplineSurface < handle
 				c(2) = newCont;
 			end
 			lrsplinesurface_interface('set_continuity', this.objectHandle, c);
+			this.bezierHash = [];
 			this.updatePrimitives();
 		end
 
@@ -232,6 +224,8 @@ classdef LRSplineSurface < handle
 			dLRdv = LRSplineSurface();
 			dLRdu.setHandle(handle_du);
 			dLRdv.setHandle(handle_dv);
+			dLRdu.bezierHash = [];
+			dLRdv.bezierHash = [];
 			dLRdu.updatePrimitives();
 			dLRdv.updatePrimitives();
 
@@ -268,10 +262,12 @@ classdef LRSplineSurface < handle
 			end
 			newCP = dLRdu.L2project(uAll, vAll, dXdu);
 			lrsplinesurface_interface('set_control_points', dLRdu.objectHandle, newCP');
+			dLRdu.bezierHash = [];
 			dLRdu.updatePrimitives();
 
 			newCP = dLRdv.L2project(uAll, vAll, dXdv);
 			lrsplinesurface_interface('set_control_points', dLRdv.objectHandle, newCP');
+			dLRdv.bezierHash = [];
 			dLRdv.updatePrimitives();
 
 		end
@@ -291,6 +287,7 @@ classdef LRSplineSurface < handle
 			newHandle = lrsplinesurface_interface('raise_order', this.objectHandle, dp, dq);
 			lrsplinesurface_interface('delete', this.objectHandle);
 			this.objectHandle = newHandle;
+			this.bezierHash = [];
 			this.updatePrimitives();
 
 			nElms  = size(this.elements,1);
@@ -324,6 +321,7 @@ classdef LRSplineSurface < handle
 
 			lrsplinesurface_interface('set_control_points', this.objectHandle, newCP');
 			clear oldGuy;
+			this.bezierHash = [];
 			this.updatePrimitives();
 		end
 
@@ -364,7 +362,14 @@ classdef LRSplineSurface < handle
 		%     element - global index to the element 
 		%   returns
 		%     a matrix with as many rows as there is active basis functions and (p(1)+1)*(p(2)+1) columns
-			C = lrsplinesurface_interface('get_bezier_extraction', this.objectHandle, element);
+			if numel(this.bezierHash) == size(this.elements,1)
+				if numel(this.bezierHash{element}) == 0
+					this.bezierHash{i} = lrsplinesurface_interface('get_bezier_extraction', this.objectHandle, element);
+				end
+				C = this.bezierHash{element};
+			else
+				C = lrsplinesurface_interface('get_bezier_extraction', this.objectHandle, element);
+			end
 		end
 
 
@@ -636,7 +641,7 @@ classdef LRSplineSurface < handle
 				U  = zeros(nviz);
 				Ux = zeros(nviz);
 				Uy = zeros(nviz);
-				% for all gauss points
+				% for all visualization points
 				for i=1:nviz
 					for j=1:nviz
 						xi  = (.5*xg(i)+.5)*(umax-umin)+umin;
@@ -704,11 +709,12 @@ classdef LRSplineSurface < handle
 						end
 					end
 				end
-				if sum(sum(isnan(U)))>0,
-					iel
-					U
-					pause;
-				end
+				%%% error test for wierd alpha guys %%%
+				% if sum(sum(isnan(U)))>0,
+				% 	iel
+				% 	U
+				% 	pause;
+				% end
 				surf(X,Y,U, 'EdgeColor', 'none');
 				Xlines((iel-1)*4+1,:) = X(1,:);
 				Ylines((iel-1)*4+1,:) = Y(1,:);
@@ -740,16 +746,54 @@ classdef LRSplineSurface < handle
 	end
 
 	methods (Hidden = true)
-		function insertLine(this, u,v,m)
-			if(numel(u) ~=2 || numel(v) ~=2)
+		function insertLine(this, start,stop,m)
+			if(numel(start) ~=2 || numel(stop) ~=2)
 				throw(MException('LRSplineSurface:insertLine',  'Error: Invalid arguments'));
 			end
 			if nargin<4
 				m = 1;
 			end
 				
-			lrsplinesurface_interface('insert_line', this.objectHandle, u,v,m);
+			lrsplinesurface_interface('insert_line', this.objectHandle, start,stop,m);
+			this.bezierHash = [];
 			this.updatePrimitives();
+		end
+
+		function [oldIndex, oldElms] = removeLshape(this)
+			newIndex    = 1:size(this.knots,1);
+			oldIndex    = 1:size(this.knots,1);
+			oldElms     = 1:size(this.elements,1);
+			removeEl = [];
+			for i=1:size(this.elements,1)
+				if(this.elements(i,1) >=0 && this.elements(i,4) <= 0)
+					removeEl = [removeEl, i];
+				end
+			end
+			this.elements(removeEl,:) = [];
+			oldElms(removeEl)         = [];
+
+			removeBasis = [];
+			for i=1:size(this.knots,1)
+				if(this.knots(i,1) >=0 && this.knots(i,end) <= 0)
+					removeBasis = [removeBasis, i];
+				end
+			end
+			this.knots(removeBasis,:) = [];
+			this.cp(:,removeBasis)    = [];
+			this.w(removeBasis)       = [];
+			oldIndex(removeBasis)     = [];
+
+			for i=1:numel(removeBasis)
+				newIndex(removeBasis(i):end) = newIndex(removeBasis(i):end) - 1;
+			end
+
+			for i=1:numel(this.support)
+				for j=1:numel(this.support{i})
+					this.support{i}(j) = newIndex(this.support{i}(j));
+				end
+			end
+			this.support(removeEl)    = [];
+			this.bezierHash(removeEl) = [];
 		end
 	end
 
@@ -758,6 +802,10 @@ classdef LRSplineSurface < handle
 			[this.knots, this.cp, this.w, ...
 			 this.lines, this.elements,   ...
 			 this.support, this.p] = lrsplinesurface_interface('get_primitives', this.objectHandle);
+			this.bezierHash = cell(size(this.elements,1),1);
+			for i=1:numel(this.bezierHash)
+				this.bezierHash{i} = lrsplinesurface_interface('get_bezier_extraction', this.objectHandle, i);
+			end
 		end
 
 		function setHandle(this, handle)
@@ -765,7 +813,9 @@ classdef LRSplineSurface < handle
 				lrsplinesurface_interface('delete', this.objectHandle);
 			end
 			this.objectHandle = handle;
+			this.bezierHash = [];
 			this.updatePrimitives();
 		end
+
 	end
 end

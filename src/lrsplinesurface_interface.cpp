@@ -196,8 +196,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		int n = mxGetN(prhs[2]);
 		int mult = floor(mxGetScalar(prhs[3]));
 		vector<int> basis(m*n);
-		for(size_t i=0; i<n*m; i++)
+		for(size_t i=0; i<n*m; i++) {
 			basis[i] = floor(b[i]-1);
+			// error check input
+			if(basis[i]<0 || basis[i] >= lr->nBasisFunctions())
+				mexErrMsgTxt("Refine_basis: function index out of range");
+		}
 		
 		lr->setRefMultiplicity(mult);
 		lr->refineBasisFunction(basis);
@@ -216,8 +220,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		int n    = mxGetN(prhs[2]);
 		int mult = floor(mxGetScalar(prhs[3]));
 		vector<int> elements(m*n);
-		for(size_t i=0; i<n*m; i++)
+		for(size_t i=0; i<n*m; i++) {
 			elements[i] = floor(el[i]-1);
+			if(elements[i]<0 || elements[i] >= lr->nElements())
+				mexErrMsgTxt("Refine_elements: element index out of range");
+		}
 		
 		lr->setRefMultiplicity(mult);
 		lr->refineElement(elements);
