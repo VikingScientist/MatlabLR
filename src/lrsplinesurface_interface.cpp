@@ -1,5 +1,6 @@
 #include <cmath>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <LRSpline/LRSplineSurface.h>
 #include <mex.h>
@@ -84,6 +85,23 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	 *******      Call the various class methods           ***
 	 ********************************************************/
 
+	// Save
+	if (!strcmp("save", cmd)) {
+		// Check parameters
+		if (nlhs < 0 || nrhs < 3)
+			mexErrMsgTxt("Save: Unexpected arguments.");
+		// rewrap filename from mxArray to char*
+		int len = mxGetM(prhs[2]) * mxGetN(prhs[2]);
+		char filename[len+1];
+		mxGetString(prhs[2], filename, len+1); // adds a terminal 0-character by itself
+		// write the object to file
+		ofstream out;
+		out.open(filename);
+		lr->write(out);
+		// clean up and exit
+		out.close();
+		return;
+	}
 
 	// Print    
 	if (!strcmp("print", cmd)) {

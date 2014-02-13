@@ -107,6 +107,17 @@ classdef LRSplineSurface < handle
 			copyObject.setHandle(newHandle);
 		end
 
+		function save(this, filename)
+		% SAVE  Dumps the backend c++ representation of this LR-spline object to file
+		% LRSplineSurface.save(filename)
+		%
+		%   parameters:
+		%     filename - the name of the file
+			if ~strcmp(class(filename), 'char')
+				throw(MException('LRSplineSurface:save', 'Error: Invalid file name'));
+			end
+			lrsplinesurface_interface('save', this.objectHandle, filename);
+		end
 
 		function print(this)
 		% PRINT  Dumps the backend c++ representation of this LR-spline object to screen
