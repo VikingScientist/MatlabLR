@@ -345,7 +345,11 @@ classdef LRSplineSurface < handle
 		%     v - second parametric coordinate
 		%   returns
 		%     the parametric point mapped to physical space
-			x = lrsplinesurface_interface('point', this.objectHandle, [u,v]);
+			i = this.getElementContaining(u,v);
+			N = this.computeBasis(u,v);
+			x = N * this.cp(:,this.support{i})'; % there is something wierd going on with the calling of the 'point' function, so we'll do it this way instead
+			% N = this.computeBasis(u,v);
+			% x = N * this.cp';
 		end
 
 
@@ -770,13 +774,23 @@ classdef LRSplineSurface < handle
 			this.updatePrimitives();
 		end
 
-		function [oldIndex, oldElms] = removeLshape(this)
+		function [oldIndex, oldElms] = clipArea(this, toBeClipped)
 			newIndex    = 1:size(this.knots,1);
 			oldIndex    = 1:size(this.knots,1);
 			oldElms     = 1:size(this.elements,1);
 			removeEl = [];
 			for i=1:size(this.elements,1)
-				if(this.elements(i,1) >=0 && this.elements(i,4) <= 0)
+				[x,y] = meshgrid(this.elements(i,[1,3]), this.elements(i,[2,4]));
+				keep  = false;
+				for j=1:2
+					for k=1:2,	
+						if ~toBeClipped(x(j,k), y(j,k))
+							keep = true;
+							break;
+						end
+					end
+				end
+				if ~keep
 					removeEl = [removeEl, i];
 				end
 			end
@@ -785,7 +799,16 @@ classdef LRSplineSurface < handle
 
 			removeBasis = [];
 			for i=1:size(this.knots,1)
-				if(this.knots(i,1) >=0 && this.knots(i,end) <= 0)
+				[x,y] = meshgrid(this.knots(i,[1,this.p(1)+2]), this.knots(i,[this.p(1)+3, this.p(1)+this.p(2)+4]));
+				keep  = false;
+				for j=1:2
+					for k=1:2,	
+						if ~toBeClipped(x(j,k), y(j,k))
+							keep = true;
+						end
+					end
+				end
+				if ~keep
 					removeBasis = [removeBasis, i];
 				end
 			end
