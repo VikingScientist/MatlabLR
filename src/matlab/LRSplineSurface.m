@@ -162,7 +162,11 @@ classdef LRSplineSurface < handle
 			end
 
 			% perform refinement
-			lrsplinesurface_interface('refine_basis', this.objectHandle, indices, mult);
+			if(elements)
+				lrsplinesurface_interface('refine_elements', this.objectHandle, indices, mult);
+			else
+				lrsplinesurface_interface('refine_basis', this.objectHandle, indices, mult);
+			end
 
 			% new LR-mesh... update static variables
 			this.bezierHash = [];
@@ -189,8 +193,8 @@ classdef LRSplineSurface < handle
 
 		function cp = L2project(this, u,v,z, w)
 		% L2project  Performs a global L2 projection into LR spline space
-		% LRSplineSurface.raiseOrder(u,v,z)
-		% LRSplineSurface.raiseOrder(u,v,z,w)
+		% LRSplineSurface.L2project(u,v,z)
+		% LRSplineSurface.L2project(u,v,z,w)
 		%
 		%   parameters:
 		%     u - vector of first parametric point
