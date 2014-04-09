@@ -14,11 +14,14 @@ classdef LRSplineSurface < handle
 %     support  - element to basis function support list
 %    
 % LRSplineSurface Methods:
+%     LSSplineSurface      - Constructor
 %     copy                 - Performs a deep copy of the spline object
 %     refine               - Performs local refinements
 %     raiseOrder           - Performs global degree elevation
 %     getEdge              - Extracts functions with support on one of the four parametric edges
 %     getElementContaining - Get element index at parametric point (u,v)
+%     getDerivative        - Gets an LRSplineSurface representation of the two derivatives d/du and d/dv
+%     getAntiDerivative    - Gets the LRSplineSurface space of the two integration spaces int{du} and int{dv}
 %     point                - Evaluates the physical coordinates (x,y) corresponding to a parametric point (u,v)
 %     computeBasis         - Compute all basis functions (and their derivatives)
 %     getBezierExtraction  - Get the bezier extraction matrix for one element
@@ -222,6 +225,26 @@ classdef LRSplineSurface < handle
 				end
 			end
 			cp = A \ b;
+		end
+
+		function [intLRdu intLRdv] = getAntiDerivative(this)
+		% GETANTIDERIVATIVE gets the two integration space int{dx} and int{dy}
+		% [intLRdu intLRdv] = getAntiDerivative()
+		% 
+		%   parameters:
+		%     none
+		%   returns
+		%     dLRdu - integration space wrt u. Control points all zero
+		%     dLRdv - integration space wrt v. Control points all zero
+			u = [min(this.elements(:,1)), max(this.elements(:,3))];
+			v = [min(this.elements(:,2)), max(this.elements(:,4))];
+			p = this.p;
+			intLRdu = LRSplineSurface(p + [1;0], [u(1)*ones(1, p(1)+2), u(2)*ones(1, p(1)+2)], [v(1)*ones(1, p(2)+1), v(2)*ones(1, p(2)+1)]);
+			intLRdv = LRSplineSurface(p + [0;1], [u(1)*ones(1, p(1)+1), u(2)*ones(1, p(1)+1)], [v(1)*ones(1, p(2)+2), v(2)*ones(1, p(2)+2)]);
+			for i=1:size(this.lines,1)
+				intLRdu.insertLine(this.lines(i,1:2), this.lines(i,3:4), this.lines(i,5));
+				intLRdv.insertLine(this.lines(i,1:2), this.lines(i,3:4), this.lines(i,5));
+			end
 		end
 
 		function [dLRdu dLRdv] = getDerivative(this)
