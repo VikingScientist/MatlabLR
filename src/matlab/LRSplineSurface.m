@@ -491,7 +491,8 @@ classdef LRSplineSurface < handle
 
 			i = 1;
 			while i<nargin
-				if strcmp(varargin{i}, 'enumeration')
+				if strcmp(varargin{i}, 'enumeration') || ...
+				   strcmp(varargin{i}, 'enumerate')
 					enumeration = true;
 				elseif strcmp(varargin{i}, 'nviz')
 					i = i+1;
