@@ -702,9 +702,6 @@ classdef LRSplineSurface < handle
 						x  = this.cp(:,ind) * C * N;
 						Jt = this.cp(:,ind) * C * dN; % transpose jacobian matrix [dx/du,dy/du; dx/dv, dy/dv]
 
-						% physical derivatives
-						dNdx = dN * inv(Jt'); 
-
 						% write results depending on type of plot
 						if(parametric)
 							X(i,j) = xi;
@@ -712,6 +709,8 @@ classdef LRSplineSurface < handle
 						else
 							X(i,j) = x(1);
 							Y(i,j) = x(2);
+							% physical derivatives
+							dNdx = dN * inv(Jt'); 
 						end
 						if function_result || secondary
 							if secondary
@@ -721,7 +720,7 @@ classdef LRSplineSurface < handle
 									U(i,j) = sec_function(x, u(ind) * C * N, (u(ind) * C * dNdx)');
 								end
 							else
-								U(i,j) = u(x);
+								U(i,j) = u([X(i,j);Y(i,j)]);
 							end
 						elseif per_element_result
 							U(i,j) = u(iel);
@@ -730,7 +729,7 @@ classdef LRSplineSurface < handle
 						elseif diffX 
 							U(i,j)  = u(ind) * C * dNdx(:,1);
 						elseif diffY && parametric
-							U(i,j)  = u(ind) * C * dN(:,1);
+							U(i,j)  = u(ind) * C * dN(:,2);
 						elseif diffY
 							U(i,j)  = u(ind) * C * dNdx(:,2);
 						elseif mononomial
@@ -948,6 +947,7 @@ classdef LRSplineSurface < handle
 	end % end public methods
 
 	methods (Hidden = true)
+
 		function insertLine(this, start,stop,m)
 			if(numel(start) ~=2 || numel(stop) ~=2)
 				throw(MException('LRSplineSurface:insertLine',  'Error: Invalid arguments'));
