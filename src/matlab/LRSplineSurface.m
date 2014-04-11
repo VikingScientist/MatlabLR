@@ -28,6 +28,8 @@ classdef LRSplineSurface < handle
 %     setContinuity        - Performs global continutiy reduction
 %     L2project            - L2-project results onto the spline basis 
 %     surf                 - Plot scalar results in a surface plot (per element or per controlpoint)
+%     contour              - Use 'contourf' with the argument 'nofill'
+%     contourf             - Plot a contour mesh of a given scalar field
 %     plot                 - Plot the mesh structure 
 %     print                - Prints raw c++ lr data structure
 
@@ -586,7 +588,6 @@ classdef LRSplineSurface < handle
 			end
 		end
 
-
 		function H = surf(this, u, varargin)
 		% SURF  Creates a surface plot of scalar results u given by control point values OR per element values
 		% H = LRSplineSurface.surf(u)
@@ -752,13 +753,8 @@ classdef LRSplineSurface < handle
 						end
 					end
 				end
-				%%% error test for wierd alpha guys %%%
-				% if sum(sum(isnan(U)))>0,
-				% 	iel
-				% 	U
-				% 	pause;
-				% end
 				surf(X,Y,U, 'EdgeColor', 'none');
+
 				Xlines((iel-1)*4+1,:) = X(1,:);
 				Ylines((iel-1)*4+1,:) = Y(1,:);
 				Zlines((iel-1)*4+1,:) = U(1,:);
@@ -774,10 +770,6 @@ classdef LRSplineSurface < handle
 				Xlines((iel-1)*4+4,:) = X(:,end);
 				Ylines((iel-1)*4+4,:) = Y(:,end);
 				Zlines((iel-1)*4+4,:) = U(:,end);
-				% plot3(X(1,:),   Y(1,:),   U(1,:),   'k-');
-				% plot3(X(end,:), Y(end,:), U(end,:), 'k-');
-				% plot3(X(:,1),   Y(:,1),   U(:,1),   'k-');
-				% plot3(X(:,end), Y(:,end), U(:,end), 'k-');
 			end
 			plot3(Xlines', Ylines', Zlines', 'k-');
 			if(per_element_result)
@@ -786,7 +778,174 @@ classdef LRSplineSurface < handle
 				view(3);
 			end
 		end
-	end
+
+		function H = contourf(this, u, v, varargin)
+		% CONTOURF  Creates a contour plot of scalar results u given by control point values OR by a function handle
+		% H = LRSplineSurface.contourf(u, v, ...)
+		% H = LRSplineSurface.contourf(u, v, 'nviz', n, ...)
+		% H = LRSplineSurface.contourf(u, v, 'secondary', f, ...)
+		%
+		% Loop over all elements, and plot the contours as given there. Note that the contour lines are not guaranteed
+		% to be continuous across element boundaries. Increasing 'nviz' diminishes this effect
+		%
+		%   parameters:
+		%     u            - control point results
+		%     v            - contour lines
+		%     'nviz'       - sets the plotting resolution to n points per element
+		%     'diffX'      - plots the derivative with respect to X 
+		%     'diffY'      - plots the derivative with respect to Y
+		%     'secondary'  - plots secondary solutions such as functions of u and dudx
+		%     'nofill'     - uses contour, instead of contourf
+		%     'nolines'    - don't display element lines
+		%     'parametric' - displays results in parametric space (and parametric derivatives)
+		%   returns
+		%     handle to the figure
+			nviz               = 6;
+			diffX              = false;
+			diffY              = false;
+			parametric         = false;
+			function_result    = false;
+			secondary          = false;
+			nofill             = false;
+			nolines            = false;
+			sec_function       = 0;
+
+			i = 1;
+			while i<nargin-2
+				if strcmp(varargin{i}, 'diffX')
+					diffX = true;
+				elseif strcmp(varargin{i}, 'diffY')
+					diffY = true;
+				elseif strcmp(varargin{i}, 'nofill')
+					nofill = true;
+				elseif strcmp(varargin{i}, 'nolines')
+					nolines = true;
+				elseif strcmp(varargin{i}, 'secondary')
+					secondary = true;
+					i = i+1;
+					sec_function = varargin{i};
+				elseif strcmp(varargin{i}, 'nviz')
+					i = i+1;
+					nviz = varargin{i};
+				elseif strcmp(varargin{i}, 'parametric')
+					parametric = true;
+				else
+					throw(MException('LRSplineSurface:surf',  'Error: Unknown input parameter'));
+				end
+				i = i+1;
+			end
+			xg = linspace(-1,1,nviz);
+
+			if strcmp(class(u), 'function_handle')
+				function_result = true;
+			else
+				u = u(:)'; % make u a row vector
+			end
+
+			holdOnReturn = ishold;
+			H = gcf;
+			hold on;
+
+			Xlines = zeros(size(this.elements, 1)*4, nviz);
+			Ylines = zeros(size(this.elements, 1)*4, nviz);
+			plotrange = [+inf, -inf, +inf, -inf];
+
+			bezierKnot1 = [ones(1, this.p(1)+1)*-1, ones(1, this.p(1)+1)];
+			bezierKnot2 = [ones(1, this.p(2)+1)*-1, ones(1, this.p(2)+1)];
+			[bezNu, bezNu_diff] = getBSplineBasisAndDerivative(this.p(1), xg, bezierKnot1); 
+			[bezNv, bezNv_diff] = getBSplineBasisAndDerivative(this.p(2), xg, bezierKnot2); 
+			for iel=1:size(this.elements, 1)
+				umin = this.elements(iel,1);
+				vmin = this.elements(iel,2);
+				umax = this.elements(iel,3);
+				vmax = this.elements(iel,4);
+				hu = umax-umin;
+				hv = vmax-vmin;
+				ind  = this.support{iel}; % indices to nonzero basis functions
+				C  = this.getBezierExtraction(iel);
+				X  = zeros(nviz);
+				Y  = zeros(nviz);
+				U  = zeros(nviz);
+				Ux = zeros(nviz);
+				Uy = zeros(nviz);
+				% for all visualization points
+				for i=1:nviz
+					for j=1:nviz
+						xi  = (.5*xg(i)+.5)*(umax-umin)+umin;
+						eta = (.5*xg(j)+.5)*(vmax-vmin)+vmin;
+
+						% compute all basis functions
+						N     = bezNu(:,i)       * bezNv(:,j)';
+						dNdu  = bezNu_diff(:,i)  * bezNv(:,j)';
+						dNdv  = bezNu(:,i)       * bezNv_diff(:,j)';
+						N     = N(:); % and make results colum vector
+						dN    = [dNdu(:)*2/hu, dNdv(:)*2/hv];
+
+						% evaluates physical mapping and jacobian
+						x  = this.cp(:,ind) * C * N;
+						Jt = this.cp(:,ind) * C * dN; % transpose jacobian matrix [dx/du,dy/du; dx/dv, dy/dv]
+
+						% write results depending on type of plot
+						if(parametric)
+							X(i,j) = xi;
+							Y(i,j) = eta;
+						else
+							X(i,j) = x(1);
+							Y(i,j) = x(2);
+							% physical derivatives
+							dNdx = dN * inv(Jt'); 
+						end
+						if function_result || secondary
+							if secondary
+								if nargin(sec_function)==2 % input parameters x and u
+									U(i,j) = sec_function(x, u(ind) * C * N);
+								elseif nargin(sec_function)==3 % input parameters x, u and dudx
+									U(i,j) = sec_function(x, u(ind) * C * N, (u(ind) * C * dNdx)');
+								end
+							else
+								U(i,j) = u([X(i,j);Y(i,j)]);
+							end
+						elseif diffX && parametric
+							U(i,j)  = u(ind) * C * dN(:,1);
+						elseif diffX 
+							U(i,j)  = u(ind) * C * dNdx(:,1);
+						elseif diffY && parametric
+							U(i,j)  = u(ind) * C * dN(:,2);
+						elseif diffY
+							U(i,j)  = u(ind) * C * dNdx(:,2);
+						else
+							U(i,j) = u(ind) * C * N;
+						end
+					end
+				end
+				plotrange([1,3]) = min(plotrange([1,3]), [min(min(X)), min(min(Y))]);
+				plotrange([2,4]) = max(plotrange([2,4]), [max(max(X)), max(max(Y))]);
+				if nofill
+					contour(X,Y,U, v);
+				else
+					contourf(X,Y,U, v);
+				end
+
+				Xlines((iel-1)*4+1,:) = X(1,:);
+				Ylines((iel-1)*4+1,:) = Y(1,:);
+
+				Xlines((iel-1)*4+2,:) = X(end,:);
+				Ylines((iel-1)*4+2,:) = Y(end,:);
+
+				Xlines((iel-1)*4+3,:) = X(:,1);
+				Ylines((iel-1)*4+3,:) = Y(:,1);
+
+				Xlines((iel-1)*4+4,:) = X(:,end);
+				Ylines((iel-1)*4+4,:) = Y(:,end);
+			end
+			if ~nolines
+				plot(Xlines', Ylines', 'k-');
+			end
+			% dRange = plotrange(2,4) - plotrange(1,3);
+			axis(plotrange);
+		end % end LRSplineSurface.contourf
+
+	end % end public methods
 
 	methods (Hidden = true)
 		function insertLine(this, start,stop,m)
@@ -857,7 +1016,7 @@ classdef LRSplineSurface < handle
 			this.support(removeEl)    = [];
 			this.bezierHash(removeEl) = [];
 		end
-	end
+	end % end hidden methods
 
 	methods (Access = private, Hidden = true)
 		function updatePrimitives(this)
