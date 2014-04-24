@@ -32,6 +32,7 @@ classdef LRSplineSurface < handle
 %     contourf             - Plot a contour mesh of a given scalar field
 %     plot                 - Plot the mesh structure 
 %     print                - Prints raw c++ lr data structure
+%     save                 - Saves the backend c++ lr data to file
 
 	properties(SetAccess = private, Hidden = false)
 		p        % polynomial degree
@@ -251,7 +252,7 @@ classdef LRSplineSurface < handle
 
 		function [dLRdu dLRdv] = getDerivative(this)
 		% GETDERIVATIVE  gets an LRSplineSurface representation of the two derivatives d/du and d/dv
-		% [dLRdu dLRdv] = LRSplineSurface.raiseOrder()
+		% [dLRdu dLRdv] = LRSplineSurface.getDerivative()
 		%
 		%   parameters:
 		%     none
