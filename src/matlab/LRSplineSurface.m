@@ -435,19 +435,24 @@ classdef LRSplineSurface < handle
 		% GETEDGE  Returns a list of all basis functions with nonzero value at one of the four parametric edges
 		% index = LRSplineSurface.getEdge()
 		% index = LRSplineSurface.getEdge(n)
+		% index = LRSplineSurface.getEdge(n, depth)
 		% index = LRSplineSurface.getEdge(n, 'elements')
 		%
 		%   parameters:
-		%     n - the local edge number (all=0, umin=1, umax=2, vmin=3, vmax=4)
+		%     n     - the local edge number (all=0, umin=1, umax=2, vmin=3, vmax=4)
+		%     depth - [optional] number of non-zero derivatives on the edge (default 0)
 		%   returns
 		%     list of all elements or basis function with support on this edge
 			elements = false;
 			index = [];
+			depth = 0;
 			if(nargin < 2)
 				edge = 0;
 			end
-			if(nargin > 2)
-				if(strcmp(varargin{1}, 'elements'))
+			for i=1:(nargin-2)
+				if isa(varargin{i}, 'double')
+					depth = varargin{i};
+				elseif(strcmp(varargin{i}, 'elements'))
 					elements = true;
 				else 
 					throw(MException('LRSplineSurface:getEdge', 'Error: Unkown parameters'));
@@ -462,7 +467,7 @@ classdef LRSplineSurface < handle
 				if(elements)
 					index = [index; find(this.elements(:,1) == umin)];
 				else
-					index = [index; find(this.knots(:, this.p(1)+1) == umin)];
+					index = [index; find(this.knots(:, this.p(1)+1-depth) == umin)];
 				end
 			end
 			if(edge == 2 || edge == 0)
@@ -470,7 +475,7 @@ classdef LRSplineSurface < handle
 				if(elements)
 					index = [index; find(this.elements(:,3) == umax)];
 				else
-					index = [index; find(this.knots(:, 2) == umax)];
+					index = [index; find(this.knots(:, 2+depth) == umax)];
 				end
 			end
 			if(edge == 3 || edge == 0)
@@ -478,7 +483,7 @@ classdef LRSplineSurface < handle
 				if(elements)
 					index = [index; find(this.elements(:,2) == vmin)];
 				else
-					index = [index; find(this.knots(:, end-1) == vmin)];
+					index = [index; find(this.knots(:, end-1-depth) == vmin)];
 				end
 			end
 			if(edge == 4 || edge == 0)
@@ -486,7 +491,7 @@ classdef LRSplineSurface < handle
 				if(elements)
 					index = [index; find(this.elements(:,4) == vmax)];
 				else
-					index = [index; find(this.knots(:, this.p(1)+4) == vmax)];
+					index = [index; find(this.knots(:, this.p(1)+4+depth) == vmax)];
 				end
 			end
 			% clear out any duplicates if one requests all edges
