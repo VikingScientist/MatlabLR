@@ -250,16 +250,18 @@ classdef LRSplineSurface < handle
 			end
 		end
 
-		function [dLRdu dLRdv] = getDerivative(this)
+		function [dLRdu dLRdv] = getDerivative(this, varargin)
 		% GETDERIVATIVE  gets an LRSplineSurface representation of the two derivatives d/du and d/dv
 		% [dLRdu dLRdv] = LRSplineSurface.getDerivative()
+		% [dLRdu dLRdv] = LRSplineSurface.getDerivative('no cp')
 		%
 		%   parameters:
-		%     none
+		%     'no cp' - [optional] does not generate control points based on L2 projection
 		%   returns
 		%     dLRdu - derivative space wrt u. Control points correspond to dx/du and dy/du
 		%     dLRdv - derivative space wrt v. Control points correspond to dx/dv and dy/dv
 			[handle_du handle_dv] = lrsplinesurface_interface('get_derivative_space', this.objectHandle);
+
 
 			dLRdu = LRSplineSurface();
 			dLRdv = LRSplineSurface();
@@ -269,6 +271,10 @@ classdef LRSplineSurface < handle
 			dLRdv.bezierHash = [];
 			dLRdu.updatePrimitives();
 			dLRdv.updatePrimitives();
+
+			if nargin > 1 && strcmp(varargin{1}, 'no cp')
+				return;
+			end
 
 			nElms  = size(this.elements,1);
 			nBasis = size(this.knots,1);
