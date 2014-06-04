@@ -932,7 +932,11 @@ classdef LRSplineSurface < handle
 				plotrange([1,3]) = min(plotrange([1,3]), [min(min(X)), min(min(Y))]);
 				plotrange([2,4]) = max(plotrange([2,4]), [max(max(X)), max(max(Y))]);
 				if nofill
-					contour(X,Y,U, v);
+					if numel(v)==2 && v(1)==v(2) % emhapsize single contour lines a little more
+						contour(X,Y,U, v, 'k-', 'LineWidth', 4);
+					else
+						contour(X,Y,U, v);
+					end
 				else
 					contourf(X,Y,U, v);
 				end
