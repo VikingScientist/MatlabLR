@@ -252,8 +252,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		return;
 	}
 
+	// Get primal space
+	if (!strcmp("get_primal_space", cmd)) {
+		// Check parameters
+		if (nlhs < 1 || nrhs < 2)
+			mexErrMsgTxt("get_primal_space: Unexpected arguments.");
 
-	// Refine basisfunctions
+		LRSplineSurface* lrp = lr->getPrimalSpace();
+		
+		plhs[0] = convertPtr2Mat<LRSplineSurface>(lrp);
+		return;
+	}
+
+	// Get derivative space
 	if (!strcmp("get_derivative_space", cmd)) {
 		// Check parameters
 		if (nlhs < 2 || nrhs < 2)

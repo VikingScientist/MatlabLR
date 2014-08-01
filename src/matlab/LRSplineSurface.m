@@ -20,6 +20,7 @@ classdef LRSplineSurface < handle
 %     raiseOrder           - Performs global degree elevation
 %     getEdge              - Extracts functions with support on one of the four parametric edges
 %     getElementContaining - Get element index at parametric point (u,v)
+%     getPrimal            - Gets an LRSplineSurface representation of one less degree and continuity
 %     getDerivative        - Gets an LRSplineSurface representation of the two derivatives d/du and d/dv
 %     getAntiDerivative    - Gets the LRSplineSurface space of the two integration spaces int{du} and int{dv}
 %     point                - Evaluates the physical coordinates (x,y) corresponding to a parametric point (u,v)
@@ -248,6 +249,23 @@ classdef LRSplineSurface < handle
 				intLRdu.insertLine(this.lines(i,1:2), this.lines(i,3:4), this.lines(i,5));
 				intLRdv.insertLine(this.lines(i,1:2), this.lines(i,3:4), this.lines(i,5));
 			end
+		end
+
+
+		function lrp  = getPrimal(this, varargin)
+		% GETPRIMAL  gets an LRSplineSurface representation of the primal space of one less degree and continuity
+		% lrp = LRSplineSurface.getPrimal()
+		%
+		%   parameters:
+		%     none
+		%   returns
+		%     lrp - primal space. Control points are all zero.
+			new_handle = lrsplinesurface_interface('get_primal_space', this.objectHandle);
+
+			lrp = LRSplineSurface();
+			lrp.setHandle(new_handle);
+			lrp.bezierHash = [];
+			lrp.updatePrimitives();
 		end
 
 		function [dLRdu dLRdv] = getDerivative(this, varargin)
