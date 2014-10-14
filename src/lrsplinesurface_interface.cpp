@@ -337,11 +337,24 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			mexErrMsgTxt("Point: Unexpected arguments.");
 
 		double *u = mxGetPr(prhs[2]);
-		vector<double> vResult;
-		lr->point(vResult, u[0], u[1]);
-		plhs[0] = mxCreateDoubleMatrix(vResult.size(),1, mxREAL);
-		double *dResult  = mxGetPr(plhs[0]);
-		copy(vResult.begin(), vResult.end(), dResult);
+		if( nrhs==4 ) {
+			int nDerivs = floor(mxGetScalar(prhs[3]));
+			std::cout << "Number of derivatives: " << nDerivs << std::endl;
+			vector<vector<double> > vResult;
+			lr->point(vResult, u[0], u[1], nDerivs);
+			plhs[0] = mxCreateDoubleMatrix(vResult[0].size(),vResult.size(), mxREAL);
+			double *dResult  = mxGetPr(plhs[0]);
+			for(int i=0; i<vResult.size(); i++) {
+				copy(vResult[i].begin(), vResult[i].end(), dResult);
+				dResult += vResult[i].size();
+			}
+		} else {
+			vector<double> vResult;
+			lr->point(vResult, u[0], u[1]);
+			plhs[0] = mxCreateDoubleMatrix(vResult.size(),1, mxREAL);
+			double *dResult  = mxGetPr(plhs[0]);
+			copy(vResult.begin(), vResult.end(), dResult);
+		}
 
 		return;
 	}

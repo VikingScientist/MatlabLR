@@ -136,8 +136,9 @@ classdef LRSplineSurface < handle
 		end
 
 
-		function refine(this, indices, varargin)
+		function refine(this, varargin)
 		% REFINE  Performs local refinement of elements or basis functions
+		% LRSplineSurface.refine()
 		% LRSplineSurface.refine(indices)
 		% LRSplineSurface.refine(indices, 'elements')
 		% LRSplineSurface.refine(indices, 'basis')
@@ -150,9 +151,10 @@ classdef LRSplineSurface < handle
 		%     'continuity' - set the refinement continuity to n (less than polynomial degree)
 		%   returns
 		%     none
-			mult     = 1;
-			elements = false;
-			i        = 0;
+			mult     = 1;                  % default parameters, single line
+			elements = false;              % and uniform refinement
+			indices  = 1:size(this.knots,1);
+			i        = 1;
 			% read input parameters
 			while(i<nargin-2)
 				i=i+1;
@@ -364,7 +366,7 @@ classdef LRSplineSurface < handle
 			nPts  = ceil(sqrt(nBasis / nElms));
 			uAll  = zeros(nPts*nPts*nElms,1);
 			vAll  = zeros(nPts*nPts*nElms,1);
-			cpAll = zeros(nPts*nPts*nElms,2);
+			cpAll = zeros(nPts*nPts*nElms,size(this.cp,1));
 
 			k = 1;
 			for iEl=1:nElms,
@@ -390,20 +392,18 @@ classdef LRSplineSurface < handle
 			this.updatePrimitives();
 		end
 
-		function x = point(this, u, v)
+		function x = point(this, u, v, varargin)
 		% POINT  Evaluates the mapping from parametric to physical space
 		% x = LRSplineSurface.point(u,v)
+		% x = LRSplineSurface.point(u,v,d)
 		%
 		%   parameters:
 		%     u - first parametric coordinate
 		%     v - second parametric coordinate
+		%     d - number of derivatives at this point
 		%   returns
-		%     the parametric point mapped to physical space
-			i = this.getElementContaining(u,v);
-			N = this.computeBasis(u,v);
-			x = N * this.cp(:,this.support{i})'; % there is something wierd going on with the calling of the 'point' function, so we'll do it this way instead
-			% N = this.computeBasis(u,v);
-			% x = N * this.cp';
+		%     the parametric point mapped to physical space, and any parametric derivatives
+			x = lrsplinesurface_interface('point', this.objectHandle, [u v], varargin{:});
 		end
 
 
