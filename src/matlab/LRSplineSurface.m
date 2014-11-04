@@ -154,9 +154,9 @@ classdef LRSplineSurface < handle
 			mult     = 1;                  % default parameters, single line
 			elements = false;              % and uniform refinement
 			indices  = 1:size(this.knots,1);
-			i        = 1;
+			i        = 0;
 			% read input parameters
-			while(i<nargin-2)
+			while(i<nargin-1)
 				i=i+1;
 				if     strcmp(varargin{i}, 'elements')
 					elements = true;
@@ -165,8 +165,10 @@ classdef LRSplineSurface < handle
 				elseif strcmp(varargin{i}, 'continuity')
 					mult = max(this.p)-varargin{i+1};
 					i=i+1;
-				else
+				elseif(ischar(varargin{i}))
 					throw(MException('LRSplineSurface:refine',  'Error: Unknown refine parameter'));
+				else
+					indices = varargin{i};
 				end
 			end
 
