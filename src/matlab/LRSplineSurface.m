@@ -18,6 +18,7 @@ classdef LRSplineSurface < handle
 %     copy                 - Performs a deep copy of the spline object
 %     refine               - Performs local refinements
 %     raiseOrder           - Performs global degree elevation
+%     getFunc2Element      - Returns list of elements which a given function have support on
 %     getEdge              - Extracts functions with support on one of the four parametric edges
 %     getElementContaining - Get element index at parametric point (u,v)
 %     getPrimal            - Gets an LRSplineSurface representation of one less degree and continuity
@@ -47,6 +48,7 @@ classdef LRSplineSurface < handle
 	properties(SetAccess = private, Hidden = true)
 		objectHandle;
 		bezierHash;
+		func2elm; % the inverse of the support variable above. Stored as sparse matrix
 	end
 
 	methods
@@ -454,6 +456,14 @@ classdef LRSplineSurface < handle
 		%   returns
 		%     index to the element containint this parametric point
 			iel = lrsplinesurface_interface('get_element_containing', this.objectHandle, [u,v]);
+		end
+
+		function index = getFunc2Element(this, i)
+		% GETFUNC2ELEMENT  Returns list of elements which a given function have support on
+		%
+		%   parameters
+		%     i  - index of basis function
+			index = find(this.func2elm(i,:));
 		end
 
 
@@ -1062,6 +1072,10 @@ classdef LRSplineSurface < handle
 			this.bezierHash = cell(size(this.elements,1),1);
 			for i=1:numel(this.bezierHash)
 				this.bezierHash{i} = lrsplinesurface_interface('get_bezier_extraction', this.objectHandle, i);
+			end
+			this.func2elm = sparse(size(this.knots,1), size(this.elements,1));
+			for i=1:size(this.elements,1)
+				this.func2elm(this.support{i}, i) = 1;
 			end
 		end
 
