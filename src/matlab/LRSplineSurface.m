@@ -1062,6 +1062,11 @@ classdef LRSplineSurface < handle
 			this.support(removeEl)    = [];
 			this.bezierHash(removeEl) = [];
 		end
+
+		function setControlPoints(this, newCP)
+			lrsplinesurface_interface('set_control_points', this.objectHandle, newCP);
+			this.updatePrimitives();
+		end
 	end % end hidden methods
 
 	methods (Access = private, Hidden = true)

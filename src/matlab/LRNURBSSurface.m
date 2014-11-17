@@ -959,61 +959,67 @@ classdef LRNURBSSurface < handle
 			this.updatePrimitives();
 		end
 
-% 		function [oldIndex, oldElms] = clipArea(this, toBeClipped)
-% 			newIndex    = 1:size(this.knots,1);
-% 			oldIndex    = 1:size(this.knots,1);
-% 			oldElms     = 1:size(this.elements,1);
-% 			removeEl = [];
-% 			for i=1:size(this.elements,1)
-% 				[x,y] = meshgrid(this.elements(i,[1,3]), this.elements(i,[2,4]));
-% 				keep  = false;
-% 				for j=1:2
-% 					for k=1:2,	
-% 						if ~toBeClipped(x(j,k), y(j,k))
-% 							keep = true;
-% 							break;
-% 						end
-% 					end
-% 				end
-% 				if ~keep
-% 					removeEl = [removeEl, i];
-% 				end
-% 			end
-% 			this.elements(removeEl,:) = [];
-% 			oldElms(removeEl)         = [];
-% 
-% 			removeBasis = [];
-% 			for i=1:size(this.knots,1)
-% 				[x,y] = meshgrid(this.knots(i,[1,this.p(1)+2]), this.knots(i,[this.p(1)+3, this.p(1)+this.p(2)+4]));
-% 				keep  = false;
-% 				for j=1:2
-% 					for k=1:2,	
-% 						if ~toBeClipped(x(j,k), y(j,k))
-% 							keep = true;
-% 						end
-% 					end
-% 				end
-% 				if ~keep
-% 					removeBasis = [removeBasis, i];
-% 				end
-% 			end
-% 			this.knots(removeBasis,:) = [];
-% 			this.cp(:,removeBasis)    = [];
-% 			this.w(removeBasis)       = [];
-% 			oldIndex(removeBasis)     = [];
-% 
-% 			for i=1:numel(removeBasis)
-% 				newIndex(removeBasis(i):end) = newIndex(removeBasis(i):end) - 1;
-% 			end
-% 
-% 			for i=1:numel(this.support)
-% 				for j=1:numel(this.support{i})
-% 					this.support{i}(j) = newIndex(this.support{i}(j));
-% 				end
-% 			end
-% 			this.support(removeEl)    = [];
-% 			this.bezierHash(removeEl) = [];
-% 		end
+		function [oldIndex, oldElms] = clipArea(this, toBeClipped)
+			newIndex    = 1:size(this.knots,1);
+			oldIndex    = 1:size(this.knots,1);
+			oldElms     = 1:size(this.elements,1);
+			removeEl = [];
+			for i=1:size(this.elements,1)
+				[x,y] = meshgrid(this.elements(i,[1,3]), this.elements(i,[2,4]));
+				keep  = false;
+				for j=1:2
+					for k=1:2,	
+						if ~toBeClipped(x(j,k), y(j,k))
+							keep = true;
+							break;
+						end
+					end
+				end
+				if ~keep
+					removeEl = [removeEl, i];
+				end
+			end
+			this.elements(removeEl,:) = [];
+			oldElms(removeEl)         = [];
+
+			removeBasis = [];
+			for i=1:size(this.knots,1)
+				[x,y] = meshgrid(this.knots(i,[1,this.p(1)+2]), this.knots(i,[this.p(1)+3, this.p(1)+this.p(2)+4]));
+				keep  = false;
+				for j=1:2
+					for k=1:2,	
+						if ~toBeClipped(x(j,k), y(j,k))
+							keep = true;
+						end
+					end
+				end
+				if ~keep
+					removeBasis = [removeBasis, i];
+				end
+			end
+			this.knots(removeBasis,:) = [];
+			this.cp(:,removeBasis)    = [];
+			this.w(removeBasis)       = [];
+			oldIndex(removeBasis)     = [];
+
+			for i=1:numel(removeBasis)
+				newIndex(removeBasis(i):end) = newIndex(removeBasis(i):end) - 1;
+			end
+
+			for i=1:numel(this.support)
+				for j=1:numel(this.support{i})
+					this.support{i}(j) = newIndex(this.support{i}(j));
+				end
+			end
+			this.support(removeEl)    = [];
+			this.bezierHash(removeEl) = [];
+		end
+
+		function setControlPoints(this, newCP)
+			lrsplinesurface_interface('set_control_points', this.objectHandle, newCP);
+			this.updatePrimitives();
+		end
+
 	end % end hidden methods
 
 	methods (Access = private, Hidden = true)
