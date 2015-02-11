@@ -14,7 +14,7 @@ classdef LRSplineSurface < handle
 %     support  - element to basis function support list
 %    
 % LRSplineSurface Methods:
-%     LSSplineSurface      - Constructor
+%     LRSplineSurface      - Constructor
 %     copy                 - Performs a deep copy of the spline object
 %     refine               - Performs local refinements
 %     raiseOrder           - Performs global degree elevation
@@ -30,7 +30,7 @@ classdef LRSplineSurface < handle
 %     setContinuity        - Performs global continutiy reduction
 %     L2project            - L2-project results onto the spline basis 
 %     surf                 - Plot scalar results in a surface plot (per element or per controlpoint)
-%     contour              - Use 'contourf' with the argument 'nofill'
+%     contour              - See the function 'contourf' with the argument 'nofill'
 %     contourf             - Plot a contour mesh of a given scalar field
 %     plot                 - Plot the mesh structure 
 %     print                - Prints raw c++ lr data structure
@@ -59,8 +59,8 @@ classdef LRSplineSurface < handle
 		% LRSplineSurface(p, knotU, knotV, controlpoint)
 		% 
 		%   parameters 
-		%     n            - number of basis functions in each direction (2 components)
 		%     p            - polynomial degree in each direction (2 components)
+		%     n            - number of basis functions in each direction (2 components)
 		%     knotU        - global open knot vector in u-direction (n(1)+p(1)+1 components)
 		%     knotV        - global open knot vector in v-direction (n(2)+p(2)+1 components)
 		%     controlpoint - list of control points (matrix of size dim x n(1)*n(2)), where dim is dimension in physical space
@@ -139,7 +139,7 @@ classdef LRSplineSurface < handle
 
 
 		function refine(this, varargin)
-		% REFINE  Performs local refinement of elements or basis functions
+		% REFINE  Performs local refinement of elements or basis functions. No arguments gives global uniform refinement
 		% LRSplineSurface.refine()
 		% LRSplineSurface.refine(indices)
 		% LRSplineSurface.refine(indices, 'elements')
@@ -151,7 +151,7 @@ classdef LRSplineSurface < handle
 		%     'elements'   - perform full span refinement on the input elements
 		%     'basis'      - perform structure mesh refinement on the input functions
 		%     'continuity' - set the refinement continuity to n (less than polynomial degree)
-		%   returns
+		%   returns:
 		%     none
 			mult     = 1;                  % default parameters, single line
 			elements = false;              % and uniform refinement
@@ -214,7 +214,7 @@ classdef LRSplineSurface < handle
 		%     v - vector of second parametric point
 		%     z - vector of L2-projection points
 		%     w - [optional] list of weights
-		%   returns
+		%   returns:
 		%     cp - list of control points corresponding to this projection
 			nCP = size(this.cp,2);
 			if(nCP > length(u))
@@ -243,7 +243,7 @@ classdef LRSplineSurface < handle
 		% 
 		%   parameters:
 		%     none
-		%   returns
+		%   returns:
 		%     dLRdu - integration space wrt u. Control points all zero
 		%     dLRdv - integration space wrt v. Control points all zero
 			u = [min(this.elements(:,1)), max(this.elements(:,3))];
@@ -264,7 +264,7 @@ classdef LRSplineSurface < handle
 		%
 		%   parameters:
 		%     none
-		%   returns
+		%   returns:
 		%     lrp - primal space. Control points are all zero.
 			new_handle = lrsplinesurface_interface('get_primal_space', this.objectHandle);
 
@@ -281,7 +281,7 @@ classdef LRSplineSurface < handle
 		%
 		%   parameters:
 		%     'no cp' - [optional] does not generate control points based on L2 projection
-		%   returns
+		%   returns:
 		%     dLRdu - derivative space wrt u. Control points correspond to dx/du and dy/du
 		%     dLRdv - derivative space wrt v. Control points correspond to dx/dv and dy/dv
 			[handle_du handle_dv] = lrsplinesurface_interface('get_derivative_space', this.objectHandle);
@@ -352,7 +352,7 @@ classdef LRSplineSurface < handle
 		%   parameters:
 		%     dp - amount to increase in the first parametric direction
 		%     dq - amount to increase in the second parametric direction
-		%   returns
+		%   returns:
 		%     none
 			oldGuy = this.copy();
 			newHandle = lrsplinesurface_interface('raise_order', this.objectHandle, dp, dq);
@@ -405,7 +405,7 @@ classdef LRSplineSurface < handle
 		%     u - first parametric coordinate
 		%     v - second parametric coordinate
 		%     d - number of derivatives at this point
-		%   returns
+		%   returns:
 		%     the parametric point mapped to physical space, and any parametric derivatives
 			x = lrsplinesurface_interface('point', this.objectHandle, [u v], varargin{:});
 		end
@@ -420,7 +420,7 @@ classdef LRSplineSurface < handle
 		%     u      - first parametric coordinate
 		%     v      - second parametric coordinate
 		%     derivs - number of derivatives (greater or equal to 0)
-		%   returns
+		%   returns:
 		%     the value of all nonzero basis functions at a given point
 		%     in case of derivatives, a cell is returned with all derivatives requested
 			N = lrsplinesurface_interface('compute_basis', this.objectHandle, [u, v], varargin{:});
@@ -433,7 +433,7 @@ classdef LRSplineSurface < handle
 		%
 		%   parameters:
 		%     element - global index to the element 
-		%   returns
+		%   returns:
 		%     a matrix with as many rows as there is active basis functions and (p(1)+1)*(p(2)+1) columns
 			if numel(this.bezierHash) == size(this.elements,1)
 				if numel(this.bezierHash{element}) == 0
@@ -453,7 +453,7 @@ classdef LRSplineSurface < handle
 		%   parameters:
 		%     u - first parametric coordinate
 		%     v - second parametric coordinate
-		%   returns
+		%   returns:
 		%     index to the element containint this parametric point
 			iel = lrsplinesurface_interface('get_element_containing', this.objectHandle, [u,v]);
 		end
@@ -477,7 +477,7 @@ classdef LRSplineSurface < handle
 		%   parameters:
 		%     n     - the local edge number (all=0, umin=1, umax=2, vmin=3, vmax=4)
 		%     depth - [optional] number of non-zero derivatives on the edge (default 0)
-		%   returns
+		%   returns:
 		%     list of all elements or basis function with support on this edge
 			elements = false;
 			index = [];
@@ -548,7 +548,7 @@ classdef LRSplineSurface < handle
 		%     'basis'       - plots control points as dots (greville points if 'parametric' is specified)
 		%     'parametric'  - prints the elements in the parametric space instead of the physical 
 		%     'nviz'        - sets the line resolution for plots to use n points for drawing each line
-		%   returns
+		%   returns:
 		%     handle to the figure
 			
 			nPtsPrLine  = 41;
@@ -631,7 +631,7 @@ classdef LRSplineSurface < handle
 		end
 
 		function H = surf(this, u, varargin)
-		% SURF  Creates a surface plot of scalar results u given by control point values OR per element values
+		% SURF  Creates a surface plot of scalar results u given by control point values or per element values or function handle
 		% H = LRSplineSurface.surf(u)
 		% H = LRSplineSurface.surf(u, 'nviz', n)
 		% H = LRSplineSurface.surf(u, 'secondary', f)
@@ -640,13 +640,13 @@ classdef LRSplineSurface < handle
 		% results (i.e. error norms). Else, it is treated as scalar control-point variables (i.e. primary solution field)
 		%
 		%   parameters:
-		%     u            - control point results
-		%     'nviz'       - sets the plotting resolution to n points per element
-		%     'diffX'      - plots the derivative with respect to X 
-		%     'diffY'      - plots the derivative with respect to Y
-		%     'secondary'  - plots secondary solutions such as functions of u and dudx
+		%     u            - control point results  OR  element results  OR  function handle
+		%     'nviz'       - sets the plotting resolution to n points per element [default: 6]
+		%     'diffX'      - plots the derivative with respect to X (only controlpoint u)
+		%     'diffY'      - plots the derivative with respect to Y (only controlpoint u)
+		%     'secondary'  - plots secondary solutions. Must provide input function of the type f=@(x,u,dudx), where x and dudx has two components
 		%     'parametric' - displays results in parametric space (and parametric derivatives)
-		%   returns
+		%   returns:
 		%     handle to the figure
 			nviz               = 6;
 			diffX              = false;
@@ -759,7 +759,11 @@ classdef LRSplineSurface < handle
 								if nargin(sec_function)==2 % input parameters x and u
 									U(i,j) = sec_function(x, u(ind) * C * N);
 								elseif nargin(sec_function)==3 % input parameters x, u and dudx
-									U(i,j) = sec_function(x, u(ind) * C * N, (u(ind) * C * dNdx)');
+									if parametric
+										U(i,j) = sec_function(x, u(ind) * C * N, (u(ind) * C * dN)');
+									else
+										U(i,j) = sec_function(x, u(ind) * C * N, (u(ind) * C * dNdx)');
+									end
 								end
 							else
 								U(i,j) = u([X(i,j);Y(i,j)]);
@@ -821,7 +825,7 @@ classdef LRSplineSurface < handle
 		end
 
 		function H = contourf(this, u, v, varargin)
-		% CONTOURF  Creates a contour plot of scalar results u given by control point values OR by a function handle
+		% CONTOURF  Creates a contour plot of scalar results u given by control point values or by a function handle
 		% H = LRSplineSurface.contourf(u, v, ...)
 		% H = LRSplineSurface.contourf(u, v, 'nviz', n, ...)
 		% H = LRSplineSurface.contourf(u, v, 'secondary', f, ...)
@@ -830,16 +834,16 @@ classdef LRSplineSurface < handle
 		% to be continuous across element boundaries. Increasing 'nviz' diminishes this effect
 		%
 		%   parameters:
-		%     u            - control point results
+		%     u            - control point results  OR  function handle
 		%     v            - contour lines
 		%     'nviz'       - sets the plotting resolution to n points per element
 		%     'diffX'      - plots the derivative with respect to X 
 		%     'diffY'      - plots the derivative with respect to Y
-		%     'secondary'  - plots secondary solutions such as functions of u and dudx
+		%     'secondary'  - plots secondary solutions. Must provide input function of the type f=@(x,u,dudx), where x and dudx has two components
 		%     'nofill'     - uses contour, instead of contourf
 		%     'nolines'    - don't display element lines
 		%     'parametric' - displays results in parametric space (and parametric derivatives)
-		%   returns
+		%   returns:
 		%     handle to the figure
 			nviz               = 6;
 			diffX              = false;
@@ -941,7 +945,11 @@ classdef LRSplineSurface < handle
 								if nargin(sec_function)==2 % input parameters x and u
 									U(i,j) = sec_function(x, u(ind) * C * N);
 								elseif nargin(sec_function)==3 % input parameters x, u and dudx
-									U(i,j) = sec_function(x, u(ind) * C * N, (u(ind) * C * dNdx)');
+									if parametric
+										U(i,j) = sec_function(x, u(ind) * C * N, (u(ind) * C * dN)');
+									else
+										U(i,j) = sec_function(x, u(ind) * C * N, (u(ind) * C * dNdx)');
+									end
 								end
 							else
 								U(i,j) = u([X(i,j);Y(i,j)]);
