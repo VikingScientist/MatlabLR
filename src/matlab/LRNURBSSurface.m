@@ -79,6 +79,8 @@ classdef LRNURBSSurface < handle
 				n = varargin{2};
 				if(length(n) ~=2)
 					throw(MException('LRNURBSSurface:constructor', 'Error: n should have 2 components'));
+				elseif(n(1) <= p(1) ||  n(2) <= p(2))
+					throw(MException('LRNURBSSurface:constructor', 'Error: n should be strictly larger than p'));
 				end
 			elseif(nargin == 4)
 				knot1 = varargin{2};
@@ -947,14 +949,33 @@ classdef LRNURBSSurface < handle
 	methods (Hidden = true)
 
 		function insertLine(this, start,stop,m)
-			if(numel(start) ~=2 || numel(stop) ~=2)
+			%%% error test input
+			if(numel(start) ==2 && numel(stop) ==2)
+				start = [start(1),start(2)];
+				stop  = [stop(1), stop(2) ]; % make both row vectors
+			elseif(size(start,2) == 2 && size(stop,2) == 2)
+				% multiple refinement lines, all OK, don't do anything
+			elseif(size(start,1) == 2 && size(stop,1) == 2)
+				start = start';
+				stop  = stop'; % wrong direction, we just swap them the right way and continue
+			else
 				throw(MException('LRNURBSSurface:insertLine',  'Error: Invalid arguments'));
 			end
+			if size(start,1) ~= size(stop,1)
+				throw(MException('LRNURBSSurface:insertLine',  'Error: Mismatching argument dimensions'));
+			end
+
+			% set default arguments
 			if nargin<4
 				m = 1;
 			end
+			if numel(m) == 1,
+				m = ones(size(start,1),1)*m;
+			end
 				
-			lrsplinesurface_interface('insert_line', this.objectHandle,   start,stop,m);
+			for i=1:size(start,1)
+				lrsplinesurface_interface('insert_line', this.objectHandle, start(i,:),stop(i,:),m(i));
+			end
 			this.bezierHash = [];
 			this.updatePrimitives();
 		end

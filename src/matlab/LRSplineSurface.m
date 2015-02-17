@@ -83,6 +83,8 @@ classdef LRSplineSurface < handle
 				n = varargin{2};
 				if(length(n) ~=2)
 					throw(MException('LRSplineSurface:constructor', 'Error: n should have 2 components'));
+				elseif(n(1) <= p(1) ||  n(2) <= p(2))
+					throw(MException('LRSplineSurface:constructor', 'Error: n should be strictly larger than p'));
 				end
 			elseif(nargin == 4)
 				knot1 = varargin{2};
@@ -1009,8 +1011,13 @@ classdef LRSplineSurface < handle
 			if nargin<4
 				m = 1;
 			end
+			if numel(m) == 1,
+				m = ones(size(start,1),1)*m;
+			end
 				
-			lrsplinesurface_interface('insert_line', this.objectHandle, start,stop,m);
+			for i=1:size(start,1)
+				lrsplinesurface_interface('insert_line', this.objectHandle, start(i,:),stop(i,:),m(i));
+			end
 			this.bezierHash = [];
 			this.updatePrimitives();
 		end

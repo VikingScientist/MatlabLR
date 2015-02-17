@@ -40,13 +40,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 				double *cp = mxGetPr(prhs[4]);
 				int    dim = mxGetM(prhs[4]);
 
-		// Return a handle to a new C++ instance
+				// Return a handle to a new C++ instance
 				plhs[0] = convertPtr2Mat<LRSplineSurface>(new LRSplineSurface(floor(n[0]), floor(n[1]), floor(p[0])+1, floor(p[1])+1, knotU, knotV, cp, dim, false));
 			} else {
 				plhs[0] = convertPtr2Mat<LRSplineSurface>(new LRSplineSurface(floor(n[0]), floor(n[1]), floor(p[0])+1, floor(p[1])+1, knotU, knotV));
 			}
 		} else {
 			double *n = mxGetPr(prhs[2]);
+			if(floor(n[0])<=floor(p[0]) || floor(n[1])<=floor(p[1]))
+				mexErrMsgTxt("New: polynomial degree needs to be less than n");
 			plhs[0] = convertPtr2Mat<LRSplineSurface>(new LRSplineSurface(floor(n[0]), floor(n[1]), floor(p[0])+1, floor(p[1])+1));
 		}
 		return;
@@ -339,7 +341,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		double *u = mxGetPr(prhs[2]);
 		if( nrhs==4 ) {
 			int nDerivs = floor(mxGetScalar(prhs[3]));
-			std::cout << "Number of derivatives: " << nDerivs << std::endl;
 			vector<vector<double> > vResult;
 			lr->point(vResult, u[0], u[1], nDerivs);
 			plhs[0] = mxCreateDoubleMatrix(vResult[0].size(),vResult.size(), mxREAL);
