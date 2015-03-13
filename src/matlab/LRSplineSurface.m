@@ -671,10 +671,10 @@ classdef LRSplineSurface < handle
 			end
 		end
 
-		function [A mesh edges] = getSurfMatrix(this, varargin)
+		function [A mesh edges X Y] = getSurfMatrix(this, varargin)
 		% GETSURFMATRIX  Creates a sparse matrix A for quick evaluation of results on a plotting mesh by A*u, followed by a 'patch' call.
 		% [A mesh edges] = LRSplineSurface.getSurfMatrix()
-		% [A mesh edges] = LRSplineSurface.getSurfMatrix(...)
+		% [A mesh edges X Y] = LRSplineSurface.getSurfMatrix(...)
 		%
 		%   parameters:
 		%     'nviz'       - sets the plotting resolution to n points per element [default: 6]
@@ -685,6 +685,8 @@ classdef LRSplineSurface < handle
 		%     A            - is a sparse matrix of size nxm, where n is the number of visualization points and m the number of basis functions
 		%     mesh         - a matrix of 4 colums describing plotting mesh connectivity by quads
 		%     edges        - a matrix of 4*nElements colums, each column giving the plot index of the element boundaries
+		%     X            - x-coordinates of mesh evaluation (parametric or physical)
+		%     Y            - y-coordinates of mesh evaluation (parametric or physical)
 		%  
 		%   Example:
 		%     lr = LRSplineSurface([3,3], [7,7]);
@@ -734,12 +736,10 @@ classdef LRSplineSurface < handle
 			Ai   = zeros(nPts* approxSupp,1);
 			Aj   = zeros(nPts* approxSupp,1);
 			Av   = zeros(nPts* approxSupp,1);
+			X    = zeros(nPts,1);
+			Y    = zeros(nPts,1);
 			mesh = zeros(nPlotSquare,4);
 			edges= zeros(nviz, nElements*4);
-
-			Xlines = zeros(size(this.elements, 1)*4, nviz);
-			Ylines = zeros(size(this.elements, 1)*4, nviz);
-			Zlines = zeros(size(this.elements, 1)*4, nviz);
 
 			bezierKnot1 = [ones(1, this.p(1)+1)*-1, ones(1, this.p(1)+1)];
 			bezierKnot2 = [ones(1, this.p(2)+1)*-1, ones(1, this.p(2)+1)];
@@ -788,6 +788,8 @@ classdef LRSplineSurface < handle
 						J  = this.cp(:,ind) * C * dN; % jacobian matrix [dx/du,dx/dv; dy/du, dy/dv]
 						
 						if parametric
+							X(ptCount) = xi;
+							Y(ptCount) = eta;
 							if diffX
 								matrixLine = C*dN(:,1);
 							elseif diffY
@@ -797,6 +799,8 @@ classdef LRSplineSurface < handle
 							end
 						else
 							dNdx = dN * inv(J); 
+							X(ptCount) = x(1);
+							Y(ptCount) = x(2);
 							if diffX
 								matrixLine = C*dNdx(:,1);
 							elseif diffY
