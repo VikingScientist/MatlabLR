@@ -28,7 +28,7 @@ time_savetofile_wall  = 0;
 %%% plotting parameters
 plotAll            = false;
 plotSol            = true;
-plotDiv            = true;
+plotDiv            = false;
 plotIndicators     = false;
 plotStream         = false;
 plotDiscretization = false;
@@ -36,16 +36,19 @@ plotDiscretization = false;
 %%% setup problem parameters
 xrange  = [0,1];
 yrange  = [0,1];
-nel     = [16,16];
+nel     = [10,10];
 p       = [2,2]; 
-gauss_n = p+4;
-my           = 1;          % steady stokes constant
+gauss_n = p+2;
+Re           = 400;       % Reynolds number
+my           = 1/Re;       % kinematic viscoscity
 nIterations  = 9;          % number of adaptive refinement iterations
 pressureType = 2;          % pressure boundary conditions (1=none, 2=average, 3=corners)
 penalty      = 5*(p(1)+1); % penalty parameter for weakly enforced boundary conditions
 do_save      = false;      % save figure files to Result folder
 nviz         = 7;          % number of visualization points (pr element)
 f  = @(x,y) [0;0];         % default no external forces (overwrite for anasol cases)
+nwtn_res_tol = 1e-6;
+nwtn_max_it  = 12;
 
 %%% Generate geometry (-1,1)x(-3,3) for the driven-cavity problem
 p = p+1; % define p as the lowest order polynomial
@@ -68,64 +71,130 @@ fprintf('System size: %d\n', size(lru.knots,1) + size(lrv.knots,1) + size(lrp.kn
 disp 'assemble'
 assembleSteadyStokes;
 fprintf('\n'); % add a linebreak since assembly proccedure prints progress
+% break
 
 %%% set boundary conditions
 disp 'setting boundary conditions'
-% setPressureBndryCond;
 weaklyEnforceBndryCond;
 edges = [lru.getEdge(1); lru.getEdge(2); lrv.getEdge(3)+n1; lrv.getEdge(4)+n1];
 topCornersU = intersect(lru.getEdge(4), [lru.getEdge(1);lru.getEdge(2)]);
 topCornersV = intersect(lrv.getEdge(4), [lrv.getEdge(1);lrv.getEdge(2)]) + n1;
 % edges = setdiff(edges, [topCornersU;topCornersV]);
-presCorner = intersect(lrp.getEdge(1), lrp.getEdge(3))+n1+n2;
-edges = [edges; presCorner];
-rebuild = 1:(n1+n2+n3);
-rebuild(edges) = [];
+% presCorner = intersect(lrp.getEdge(1), lrp.getEdge(3))+n1+n2;
+% edges = [edges; presCorner];
+% edges = [];
+% rebuild = 1:(n1+n2+n3);
+% rebuild(edges) = [];
 
 % A = [A, D; D', zeros(n3,n3)];
+% setPressureBndryCond;
+
+
 % A(edges,:) = [];
 % A(:,edges) = [];
 % b(edges)   = [];
-% A(edges,:) = 0;
+A(edges,:) = 0;
 % A(:,edges) = 0;
+NL(edges,:) = 0;
 % A(edges,edges) = eye(numel(edges));
-% b(edges)   = 0;
+b(edges)   = 0;
+Dt = D';
+D(edges,:) = 0;
+M(edges,:) = 0;
+% M(:,edges) = 0;
+M(edges,edges) = eye(numel(edges));
+% avg_p = avg_p / avg_p(1);
+% D     = D - D(:,1)*avg_p;
+Dt(1,:) = 0;
+
+n = n1+n2;
+%%% linear stokes system
+% F  = @(u) [A*u(1:n) + D*u(n+1:end); Dt*u(1:n)]-b;
+% dF = @(u) [A, D; Dt [avg_p'; zeros(n3-1,n3)]];
+%%% nolinear navier-stokes system
+F  = @(u) [A*u(1:n) + D*u(n+1:end) +  NL*kron(u(1:n),u(1:n)); Dt*u(1:n)]-b;
+dF = @(u) [A+NL*kron(u(1:n),speye(n))+NL*kron(speye(n),u(1:n)), D; Dt [avg_p'; zeros(n3-1,n3)]];
+%%% nolinear navier-stokes system (optimized memory)
+% NL2 = reshape(NL, n*n,n);
+% NL2(:,edges) = 0;
+% F  = @(u) [A*u(1:n) + D*u(n+1:end) +  reshape(NL2*u(1:n), n,n)*u(1:n); Dt*u(1:n)]-b;
+% dF = @(u) [A + reshape(NL2*u(1:n), n,n) + reshape(u(1:n)'*NL, n,n), D; Dt [avg_p'; zeros(n3-1,n3)]];
 
 
 % disp 'solving system'
 % U = zeros(n1+n2+n3,1);
-% U(rebuild) = A \ b;
+% % U(rebuild) = A \ b;
+% U = dF(1) \ b;
 % u = U(1:n1);
 % v = U(n1+1:n1+n2);
 % p = U(n1+n2+1:end);
 % makePlots;
+% for h=1:3
+  % figure(h);
+  % shading interp;
+% end
+% 
 % break;
 
 nSteps = 60;
-time = linspace(0,1e-4,nSteps);
+time = linspace(0,40,nSteps);
 k = time(2)-time(1);
 N = n1+n2+n3;
 u    = zeros(N,1);
-u(lru.getEdge(4)) = 1;
+% u(lru.getEdge(4)) = 1;
 uAll = zeros(N,nSteps);
 uAll(:,1) = u;
 
 
-lhs = [M+k*A, k*D; D', zeros(n3,n3)];
+% lhs = [M+k*A, k*D; D', zeros(n3,n3)];
+lhs = [M+k*A, k*D; Dt, [avg_p'; zeros(n3-1,n3)]];
+% lhs = [M, zeros(n1+n2,n3); zeros(n3,N)] + k*dF(1);
 b   = b(1:(n1+n2));
-lhs(edges,:) = [];
-lhs(:,edges) = [];
+% lhs(edges,:) = [];
+% lhs(:,edges) = [];
+
+[plotAu meshu eu xu yu] = lru.getSurfMatrix('diffX', 'parametric', 'nviz', 5, 'diffX');
+[plotAv meshu ev xv yv] = lrv.getSurfMatrix('diffY', 'parametric', 'nviz', 5, 'diffY');
 
 timer = cputime; tic;
 for i=2:nSteps
-  % t = time(i);
-  % fprintf('Time %.3f\n', t);
-  rhs = [M*u(1:(n1+n2)) + k*b; zeros(n3,1)];
-  rhs(edges) = [];
-  u(rebuild) = lhs \ rhs;
+  fprintf('Time: %g (step %d/%d):\n', time(i), i, nSteps);
+
+  % initial guess for newton stepping = previous time step
+  v  = u; %zeros(n1+n2+n3,1);
+  n  = n1+n2;
+  N  = n1+n2+n3;
+  for newtIt=1:nwtn_max_it
+    %%% backward euler stepping
+    lhs = [M, zeros(n,n3);    zeros(n3,N)] + k*dF(v);
+    rhs = [M*(v(1:n)-u(1:n)); zeros(n3,1)] + k* F(v);
+    %%% crank-nicolson rule stepping
+    % lhs = [M, zeros(n,n3);    zeros(n3,N)] + k/2*(dF(v)       );
+    % rhs = [M*(v(1:n)-u(1:n)); zeros(n3,1)] + k/2*( F(v)+ F(u) );
+    % max(max(abs(rightLHS-lhs)))
+    % max(max(abs(rightRHS-rhs)))
+    % rhs(edges) = 0;
+    dv = lhs \ -rhs;
+    v = v + dv;
+    if(norm(dv)<nwtn_res_tol)
+      break;
+    end
+  end
+  fprintf('  Newton iteration converged after %d iterations at residual %g\n', newtIt, norm(dv));
+  u = v;
+  % u = [M+k/2*A, k/2*D; Dt [avg_p'; zeros(n3-1,n3)]] \ [(M-k/2*A)*u(1:n)-k/2*D*u(n+1:end)+k*b; zeros(n3,1)];
+  % u = [M+k*A, k*D; Dt [avg_p'; zeros(n3-1,n3)]] \ [M*u(1:n)+k*b; zeros(n3,1)];
+  % u = rightLHS \ rightRHS;
+  dudx = plotAu*u(1:n1);
+  dvdy = plotAv*u(n1+1:n1+n2);
+  divPt = dudx + dvdy;
+  fprintf('  max(div(u)) = %g\n', max(max(divPt)));
+
   uAll(:,i) = u;
 end
+fprintf('\n');
 time_timeStepping = cputime - timer; time_timeStepping_wall = toc;
+surf(uAll(1:n,:));
 
 t = cputime; tic;
 [plotAu meshu eu xu yu] = lru.getSurfMatrix('parametric', 'nviz', 5);
