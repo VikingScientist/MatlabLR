@@ -36,7 +36,7 @@ plotDiscretization = false;
 %%% setup problem parameters
 xrange  = [0,1];
 yrange  = [0,1];
-nel     = [10,10];
+nel     = [12,12];
 p       = [2,2]; 
 gauss_n = p+2;
 Re           = 1000;       % Reynolds number
@@ -47,20 +47,20 @@ penalty      = 5*(p(1)+1); % penalty parameter for weakly enforced boundary cond
 do_save      = false;      % save figure files to Result folder
 nviz         = 7;          % number of visualization points (pr element)
 f  = @(x,y) [0;0];         % default no external forces (overwrite for anasol cases)
-nwtn_res_tol = 1e-6;
+nwtn_res_tol = 1e-10;
 nwtn_max_it  = 12;
 
 %%% Generate geometry (-1,1)x(-3,3) for the driven-cavity problem
 p = p+1; % define p as the lowest order polynomial
-lr = LRSplineSurface(p, [xrange(1)*ones(1,p(1)), linspace(xrange(1),xrange(2),nel(1)+1), xrange(2)*ones(1,p(1))], [yrange(1)*ones(1,p(2)), linspace(yrange(1),yrange(2),nel(2)+1), yrange(2)*ones(1,p(2))]);
-% lr = makeGeom('twirl', p, 2+p);
-% lr.refine();
-% lr.refine();
-% lr.refine();
+% lr = LRSplineSurface(p, [xrange(1)*ones(1,p(1)), linspace(xrange(1),xrange(2),nel(1)+1), xrange(2)*ones(1,p(1))], [yrange(1)*ones(1,p(2)), linspace(yrange(1),yrange(2),nel(2)+1), yrange(2)*ones(1,p(2))]);
+lr = makeGeom('twirl', p, 2+p);
+lr.refine();
+lr.refine();
+lr.refine();
 
 %%%  refining geometry
 t = cputime; tic;
-refineCorners(lr, 1);
+refineCorners(lr, 3);
 time_refine = cputime - t; time_refine_wall = toc;
 % figure; lr.plot();
 % disp 'press any key to continue'
@@ -101,6 +101,11 @@ topCornersV = intersect(lrv.getEdge(4), [lrv.getEdge(1);lrv.getEdge(2)]) + n1;
 A(edges,:) = 0;
 % A(:,edges) = 0;
 NL(edges,:) = 0;
+n = size(NL,1);
+for i=1:numel(edges)
+  start = (edges(i)-1)*n+1;
+  NL(:,start:start+n-1) = 0;
+end
 % A(edges,edges) = eye(numel(edges));
 b(edges)   = 0;
 Dt = D';
@@ -121,12 +126,14 @@ n = n1+n2;
 % dF = @(u) [A+NL*kron(u(1:n),speye(n))+NL*kron(speye(n),u(1:n)), D; Dt [avg_p'; zeros(n3-1,n3)]];
 %%% nolinear navier-stokes system (optimized memory)
 NL2 = reshape(NL, n*n,n);
-NL2(:,edges) = 0;
+% NL2(:,edges) = 0;
 F  = @(u) [A*u(1:n) + D*u(n+1:end) +  reshape(NL2*u(1:n), n,n)*u(1:n); Dt*u(1:n)]-b;
-dF = @(u) [A + reshape(NL2*u(1:n), n,n) + reshape(u(1:n)'*NL, n,n), D; Dt [avg_p'; zeros(n3-1,n3)]];
+% dF = @(u) [A + reshape(NL2*u(1:n), n,n) + reshape(u(1:n)'*NL, n,n)', D; Dt [avg_p'; zeros(n3-1,n3)]];
+dF = @(u) [A+reshape(NL2*u(1:n), n,n)+NL*kron(speye(n),u(1:n)), D; Dt [avg_p'; zeros(n3-1,n3)]];
+% dF = @(u) [A+NL*kron(u(1:n),speye(n))+NL*kron(speye(n),u(1:n)), D; Dt [avg_p'; zeros(n3-1,n3)]];
 
-nSteps = 30;
-time = linspace(0,40,nSteps);
+nSteps = 60;
+time = linspace(0,30,nSteps);
 k = time(2)-time(1);
 N = n1+n2+n3;
 u    = zeros(N,1);
