@@ -10,23 +10,10 @@ nGauss = gauss_n(1);
 [xg, wg] = GaussLegendre(nGauss);
 xg = [xg; -1; 1];
 
-
 %%% pre-evaluate bezier functions
-bezierKnot1 = [ones(1, lru.p(1)+1)*-1, ones(1, lru.p(1)+1)];
-bezierKnot2 = [ones(1, lru.p(2)+1)*-1, ones(1, lru.p(2)+1)];
-[uBezN1, uBezN1d] = getBSplineBasisAndDerivative(lru.p(1), xg, bezierKnot1); 
-[uBezN2, uBezN2d] = getBSplineBasisAndDerivative(lru.p(2), xg, bezierKnot2); 
-bezierKnot1 = [ones(1, lrv.p(1)+1)*-1, ones(1, lrv.p(1)+1)];
-bezierKnot2 = [ones(1, lrv.p(2)+1)*-1, ones(1, lrv.p(2)+1)];
-[vBezN1, vBezN1d] = getBSplineBasisAndDerivative(lrv.p(1), xg, bezierKnot1); 
-[vBezN2, vBezN2d] = getBSplineBasisAndDerivative(lrv.p(2), xg, bezierKnot2); 
-bezierKnot1 = [ones(1, lr.p(1)+1)*-1, ones(1, lr.p(1)+1)];
-bezierKnot2 = [ones(1, lr.p(2)+1)*-1, ones(1, lr.p(2)+1)];
-[bezN1, bezN1d] = getBSplineBasisAndDerivative(lr.p(1), xg, bezierKnot1); 
-[bezN2, bezN2d] = getBSplineBasisAndDerivative(lr.p(2), xg, bezierKnot2); 
+bezier = getBezierBasis([xg';xg'], lr, lru, lrv, lrp);
 
-
-eps = 1e-12;
+TOL = 1e-12;
 
 for edge=1:4,
   if edge==1
@@ -38,9 +25,9 @@ for edge=1:4,
   elseif edge==4
     elEdge = find(lr.elements(:,4) == vmax);
   elseif edge==5
-    elEdge = find(lr.elements(:,1) <  eps & lr.elements(:,2) < -eps);
+    elEdge = find(lr.elements(:,1) <  TOL & lr.elements(:,2) < -TOL);
   elseif edge==6
-    elEdge = find(lr.elements(:,1) < -eps & lr.elements(:,2) <  eps);
+    elEdge = find(lr.elements(:,1) < -TOL & lr.elements(:,2) <  TOL);
   else
     disp 'Error: Unknown edge index, ignoring boundary condition';
     return
@@ -80,36 +67,32 @@ for edge=1:4,
         v  = (.5*xg(i)+.5)*dv+lr.elements(el,2);
         j  = (edge==1)*(nGauss+1) + (edge==2)*(nGauss+2) + (edge==5)*(nGauss+1);
 
+        Nu = bezierToBsplineBasis(bezier.lru, j, i, Cu, du, dv);
+        Nv = bezierToBsplineBasis(bezier.lrv, j, i, Cv, du, dv);
+        N  = bezierToBsplineBasis(bezier.lr , j, i, C , du, dv);
 
-        N   = uBezN1( :,j) * uBezN2( :,i)';
-        dNx = uBezN1d(:,j) * uBezN2( :,i)';
-        dNy = uBezN1( :,j) * uBezN2d(:,i)';
-        Nu  = (Cu * [N(:),dNx(:)*2/du, dNy(:)*2/dv])';
-        N   = vBezN1( :,j) * vBezN2( :,i)';
-        dNx = vBezN1d(:,j) * vBezN2( :,i)';
-        dNy = vBezN1( :,j) * vBezN2d(:,i)';
-        Nv  = (Cv * [N(:),dNx(:)*2/du, dNy(:)*2/dv])';
-        N   = bezN1( :,j) * bezN2( :,i)';
-        dNx = bezN1d(:,j) * bezN2( :,i)';
-        dNy = bezN1( :,j) * bezN2d(:,i)';
-        N   = (C  * [N(:),dNx(:)*2/du, dNy(:)*2/dv])';
+        map = computeGeometry(lr, el, N);
 
-        x  = N(1,:)   * lr.cp(:,ind)'; % physical coordinate point (x,y)
-        Jt = N(2:3,:) * lr.cp(:,ind)'; % transpose jacobian matrix [dx/du,dy/du; dx/dv, dy/dv]
-        vel  = Jt(2,:);        % velocity vector along edge
+        vel  = map.J(:,2);        % velocity vector along edge
         if(edge == 1 || edge == 5)
           vel = -vel;
         end
         n  = [vel(2), -vel(1)];
         n  = n / norm(n);
 
-        detJw = wg(i)*norm(Jt(2,:))*dv/2;
+        detJw = wg(i)*norm(vel)*dv/2;
         
         %%% uncomment to use both u- and v-components
         % testVel = [Nu(1,:), zeros(1,sup2); zeros(1,sup1), Nv(1,:)];    % vector basis functions
         % gradVel = [Nu(2:3,:), zeros(2,sup2);zeros(2,sup1), Nv(2:3,:)]; % row-wise: u_1,1  u_1,2  u_2,1  u_2,2
         testVel = [zeros(1,sup2); Nv(1,:)];   % vector basis functions
-        gradVel = [zeros(2,sup2); Nv(2:3,:)]; % row-wise: u_1,1  u_1,2  u_2,1  u_2,2
+        gradVel = [zeros(2,sup2); Nv(2:3,:)]; 
+        gradVel = gradVel([1,3,2,4],:);       % row-wise: u_1,1  u_2,1  u_1,2  u_2,2
+
+        % alter through piola mapping
+        [testVel gradVel] = piolaTransform(map, testVel, gradVel);
+
+        % compute quanteties of interest
         symVel  = [gradVel(1,:); .5*sum(gradVel(2:3,:)); .5*sum(gradVel(2:3,:)); gradVel(4,:)]; % symmetric gradient operator
 
         n = [n(1), n(2),  0,    0  ;
@@ -128,36 +111,33 @@ for edge=1:4,
         v  = (edge==3)*vmin + (edge==4)*vmax + (edge==6)*0;
         j  = (edge==3)*(nGauss+1) + (edge==4)*(nGauss+2) + (edge==6)*(nGauss+1);
 
-        N   = uBezN1( :,i) * uBezN2( :,j)';
-        dNx = uBezN1d(:,i) * uBezN2( :,j)';
-        dNy = uBezN1( :,i) * uBezN2d(:,j)';
-        Nu  = (Cu * [N(:),dNx(:)*2/du, dNy(:)*2/dv])';
-        N   = vBezN1( :,i) * vBezN2( :,j)';
-        dNx = vBezN1d(:,i) * vBezN2( :,j)';
-        dNy = vBezN1( :,i) * vBezN2d(:,j)';
-        Nv  = (Cv * [N(:),dNx(:)*2/du, dNy(:)*2/dv])';
-        N   = bezN1( :,i) * bezN2( :,j)';
-        dNx = bezN1d(:,i) * bezN2( :,j)';
-        dNy = bezN1( :,i) * bezN2d(:,j)';
-        N   = (C  * [N(:),dNx(:)*2/du, dNy(:)*2/dv])';
+        % fast basis function evaluation by bezier extraction
+        Nu = bezierToBsplineBasis(bezier.lru, i, j, Cu, du, dv);
+        Nv = bezierToBsplineBasis(bezier.lrv, i, j, Cv, du, dv);
+        N  = bezierToBsplineBasis(bezier.lr , i, j, C , du, dv);
+        
+        map = computeGeometry(lr, el, N);
 
-        x  = N(1,:)   * lr.cp(:,ind)'; % physical coordinate point (x,y)
-        Jt = N(2:3,:) * lr.cp(:,ind)'; % transpose jacobian matrix [dx/du,dy/du; dx/dv, dy/dv]
-
-        vel  = Jt(1,:);        % velocity vector along edge
+        vel  = map.J(:,1);        % velocity vector along edge
         if(edge == 4)
           vel = -vel;
         end
         n  = [vel(2), -vel(1)];
         n  = n / norm(n);
 
-        detJw = wg(i)*norm(Jt(1,:))*du/2;
+        detJw = wg(i)*norm(vel)*du/2;
 
         %%% uncomment to use both u- and v-components
         % testVel = [Nu(1,:), zeros(1,sup2); zeros(1,sup1), Nv(1,:)];    % vector basis functions
         % gradVel = [Nu(2:3,:), zeros(2,sup2);zeros(2,sup1), Nv(2:3,:)]; % row-wise: u_1,1  u_1,2  u_2,1  u_2,2
         testVel = [Nu(1,:)  ; zeros(1,sup1); ]; % vector basis functions
-        gradVel = [Nu(2:3,:); zeros(2,sup1); ]; % row-wise: u_1,1  u_1,2  u_2,1  u_2,2
+        gradVel = [Nu(2:3,:); zeros(2,sup1); ]; 
+        gradVel = gradVel([1,3,2,4],:);         % row-wise: u_1,1  u_2,1  u_1,2  u_2,2
+  
+        % alter through piola mapping
+        [testVel gradVel] = piolaTransform(map, testVel, gradVel);
+
+        % compute quanteties of interest
         symVel  = [gradVel(1,:); .5*sum(gradVel(2:3,:)); .5*sum(gradVel(2:3,:)); gradVel(4,:)]; % symmetric gradient operator
 
         n = [n(1), n(2),  0,    0  ;
