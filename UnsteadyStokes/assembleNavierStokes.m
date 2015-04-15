@@ -105,22 +105,23 @@ for el=1:nel,
 
       %%%%%    Test function syntax:
       %
-      % N - velocity basis functions
-      % M - pressure basis functions
+      % N - velocity vector basis functions
+      % M - pressure scalar basis functions
+      % _i     - component i 
       % _{i,j} - component i differentiated wrt j
       % ^k     - basis function #k
       %
       % N_{i,j}^k  = velocity basis number k, component i differentiated wrt j
-      % N_{i,i}    = divergence of a basis function
+      % N_{i,i}    = divergence of a (vector) basis function
       %
 
       Ak = Ak  + 2*my * symVel'*symVel   * detJw;  % N_{i,j}^k  N_{i,j}^l  diffusion term,  for all (k,l)
       Mk = Mk  +       testVel'*testVel  * detJw;  % N_i^k      N_i^l      mass matrix,     for all (k,l)
       Dk = Dk  -        divVel'*testP    * detJw;  % N_{i,i}^k  M^l        pressure term    for all (k,l)
-      tmp1 = testVel(1,:)'*sum(gradVel([1,2],:));  % N_i^k      N_{j,i}^l                   for j=1, all (k,l)
-      tmp2 = testVel(2,:)'*sum(gradVel([3,4],:));  % N_i^k      N_{j,i}^l                   for j=2, all (k,l)
+      tmp1 = gradVel([1,3],:)'*testVel;            % N_i^k      N_{j,i}^l                   for j=1, all (l,k)
+      tmp2 = gradVel([2,4],:)'*testVel;            % N_i^k      N_{j,i}^l                   for j=2, all (l,k)
       NLk  = NLk + (tmp1(:)*testVel(1,:)+...
-                    tmp2(:)*testVel(2,:)) *detJw;  % N_i^k N_{j,i}^l N_j^m visc. term       for all (kl,m)
+                    tmp2(:)*testVel(2,:)) *detJw;  % N_i^k N_{j,i}^l N_j^m visc. term       for all (lk,m)
 
       % right-hand side 
       fVal = [0,0];
