@@ -75,7 +75,7 @@ time_makeSpace = cputime - t; time_makeSpace_wall = toc;
 
 fprintf('System size: %d\n', size(lru.knots,1) + size(lrv.knots,1) + size(lrp.knots,1));
 disp 'assemble'
-assembleSteadyStokes;
+assembleNavierStokes;
 fprintf('\n'); % add a linebreak since assembly proccedure prints progress
 % break
 
@@ -94,7 +94,6 @@ topCornersV = intersect(lrv.getEdge(4), [lrv.getEdge(1);lrv.getEdge(2)]) + n1;
 
 % A = [A, D; D', zeros(n3,n3)];
 % setPressureBndryCond;
-
 
 % A(edges,:) = [];
 % A(:,edges) = [];
@@ -125,22 +124,6 @@ NL2 = reshape(NL, n*n,n);
 NL2(:,edges) = 0;
 F  = @(u) [A*u(1:n) + D*u(n+1:end) +  reshape(NL2*u(1:n), n,n)*u(1:n); Dt*u(1:n)]-b;
 dF = @(u) [A + reshape(NL2*u(1:n), n,n) + reshape(u(1:n)'*NL, n,n), D; Dt [avg_p'; zeros(n3-1,n3)]];
-
-
-% disp 'solving system'
-% U = zeros(n1+n2+n3,1);
-% % U(rebuild) = A \ b;
-% U = dF(1) \ b;
-% u = U(1:n1);
-% v = U(n1+1:n1+n2);
-% p = U(n1+n2+1:end);
-% makePlots;
-% for h=1:3
-  % figure(h);
-  % shading interp;
-% end
-% 
-% break;
 
 nSteps = 30;
 time = linspace(0,40,nSteps);
@@ -203,30 +186,8 @@ time_timeStepping = cputime - timer; time_timeStepping_wall = toc;
 surf(uAll(1:n,:));
 
 t = cputime; tic;
-% pre-compute all matrices needed to plot FIELD results
+% pre-compute all matrices needed to plot the solutions
 [plotA mesh edges x y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, 5);
-% [plotAu meshu eu xu yu] = lru.getSurfMatrix('parametric', 'nviz', 5);
-% [plotAv meshu ev xv yv] = lrv.getSurfMatrix('parametric', 'nviz', 5);
-% [plotAx mesh  edg x y]  = lr.getSurfMatrix( 'parametric', 'diffX', 'nviz', 5);
-% [plotAy mesh  edg x y]  = lr.getSurfMatrix( 'parametric', 'diffY', 'nviz', 5);
-% [plotA  mesh  edg x y]  = lr.getSurfMatrix( 'parametric', 'nviz', 5);
-% % since elements are unsorted, we sort the evaluation points such that xu(I) == x(J)
-% [sorted I] = sortrows([xu, yu]);
-% revI = 1:numel(I); revI(I) = 1:numel(I);
-% [sorted J] = sortrows([x,  y]);
-% revJ = 1:numel(J); revJ(J) = 1:numel(J);
-% [plotA  mesh  edg x y]  = lr.getSurfMatrix( 'nviz', 5);
-% plotA  = plotA( J,:);
-% plotAu = plotAu(I,:);
-% plotAv = plotAv(I,:);
-% x      = x(J);
-% y      = y(J);
-% xu     = xu(I);
-% yu     = yu(I);
-% edg    = revI(edg);
-% meshu  = revI(meshu);
-
-% pre-compute all matrices needed to plot QUIVER results
 [Aquiv xquiv, yquiv, Jquiv] = getQuiverPlotMatrices(lru, lrv, 30,30, lr);
 
 % initialize movie capture
@@ -235,28 +196,9 @@ myMovie(nSteps) = struct('cdata', [], 'colormap', []);
 figure;
 set(gcf, 'Position', [0,0, 1280, 800]);
 
-% % compute geometry contributions (as needed by the piola mapping)
-% Jxx  = plotAx * lr.cp(1,:)';
-% Jxy  = plotAy * lr.cp(1,:)';
-% Jyx  = plotAx * lr.cp(2,:)';
-% Jyy  = plotAy * lr.cp(2,:)';
-% detJ = Jxx.*Jyy - Jxy.*Jyx;
-% detJquiv = Jquiv(:,1).*Jquiv(:,4) - Jquiv(:,2).*Jquiv(:,3);
 for i=1:nSteps
   u = uAll(1:n1,i);
   v = uAll((n1+1):(n1+n2),i);
-  tmpX = plotAu * u;
-  tmpY = plotAv * v; % the velocity components in parametric space
-  % velX = (Jxx.*tmpX + Jxy.*tmpY)./detJ;
-  % velY = (Jyx.*tmpX + Jyy.*tmpY)./detJ; % the piola transformed velocity
-  % z    = sqrt(velX.^2 + velY.^2);
-  % z    = sqrt(tmpX.^2 + tmpY.^2);
-  % tmpX = Aquivu * u;
-  % tmpY = Aquivv * v; % velocity components in parametric space
-  % quivVelX = (Jquiv(:,1).*tmpX + Jquiv(:,3).*tmpY)./detJquiv;
-  % quivVelY = (Jquiv(:,2).*tmpX + Jquiv(:,4).*tmpY)./detJquiv; % the piola transformed velocity
-  % quivVelX = Aquivu * u;
-  % quivVelY = Aquivv * v; % velocity components in parametric space
   vel      = Aquiv*[u;v];
   quivVelX = vel(1:end/2);
   quivVelY = vel(end/2+1:end);
