@@ -747,7 +747,7 @@ classdef LRSplineSurface < handle
 
 						% evaluates physical mapping and jacobian
 						x  = this.cp(:,ind) * C * N;
-						Jt = this.cp(:,ind) * C * dN; % transpose jacobian matrix [dx/du,dy/du; dx/dv, dy/dv]
+						J  = this.cp(:,ind) * C * dN; % jacobian matrix [dx/du,dx/dv; dy/du, dy/dv]
 						
 						if parametric
 							if diffX
@@ -758,7 +758,7 @@ classdef LRSplineSurface < handle
 								matrixLine = C*N;
 							end
 						else
-							dNdx = dN * inv(Jt'); 
+							dNdx = dN * inv(J); 
 							if diffX
 								matrixLine = C*dNdx(:,1);
 							elseif diffY
@@ -894,7 +894,7 @@ classdef LRSplineSurface < handle
 
 						% evaluates physical mapping and jacobian
 						x  = this.cp(:,ind) * C * N;
-						Jt = this.cp(:,ind) * C * dN; % transpose jacobian matrix [dx/du,dy/du; dx/dv, dy/dv]
+						J  = this.cp(:,ind) * C * dN; % jacobian matrix [dx/du,dx/dv; dy/du, dy/dv]
 
 						% write results depending on type of plot
 						if(parametric)
@@ -904,7 +904,7 @@ classdef LRSplineSurface < handle
 							X(i,j) = x(1);
 							Y(i,j) = x(2);
 							% physical derivatives
-							dNdx = dN * inv(Jt'); 
+							dNdx = dN * inv(J); 
 						end
 						if function_result || secondary
 							if secondary
@@ -1080,7 +1080,7 @@ classdef LRSplineSurface < handle
 
 						% evaluates physical mapping and jacobian
 						x  = this.cp(:,ind) * C * N;
-						Jt = this.cp(:,ind) * C * dN; % transpose jacobian matrix [dx/du,dy/du; dx/dv, dy/dv]
+						J  = this.cp(:,ind) * C * dN; % jacobian matrix [dx/du,dx/dv; dy/du, dy/dv]
 
 						% write results depending on type of plot
 						if(parametric)
@@ -1090,7 +1090,7 @@ classdef LRSplineSurface < handle
 							X(i,j) = x(1);
 							Y(i,j) = x(2);
 							% physical derivatives
-							dNdx = dN * inv(Jt'); 
+							dNdx = dN * inv(J); 
 						end
 						if function_result || secondary
 							if secondary
