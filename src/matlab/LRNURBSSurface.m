@@ -7,7 +7,7 @@ classdef LRNURBSSurface < handle
 % LRNURBSSurface Properties: 
 %     p        - polynomial degree
 %     knots    - knot vectors
-%     cp       - control points
+%     cp       - control points (rational weights in last coordinate)
 %     w        - weights
 %     lines    - mesh lines, (u0,v0, u1,v1, m), where m is the multiplicity
 %     elements - fintite elements (u0, v0, u1, v1)
@@ -33,6 +33,7 @@ classdef LRNURBSSurface < handle
 %     plot                 - Plot the mesh structure 
 %     print                - Prints raw c++ lr data structure
 %     save                 - Saves the backend c++ lr data to file
+%     load                 - Loads the backend c++ lr data from file
 
 	properties(SetAccess = private, Hidden = false)
 		p        % polynomial degree
@@ -51,7 +52,7 @@ classdef LRNURBSSurface < handle
 
 	methods
 		function this = LRNURBSSurface(varargin)
-		% LRNURBSSurface  Constructor, initialize a tensor product LRSplinSurface object
+		% LRNURBSSurface  Constructor, initialize a tensor product rational LRSplinSurface object
 		% LRNURBSSurface(p, knotU, knotV, controlpoint)
 		% 
 		%   parameters 
@@ -59,7 +60,7 @@ classdef LRNURBSSurface < handle
 		%     p            - polynomial degree in each direction (2 components)
 		%     knotU        - global open knot vector in u-direction (n(1)+p(1)+1 components)
 		%     knotV        - global open knot vector in v-direction (n(2)+p(2)+1 components)
-		%     controlpoint - list of control points (matrix of size dim x n(1)*n(2)), where dim is dimension in physical space
+		%     controlpoint - list of control points and rational weights (matrix of size (dim+1) x n(1)*n(2)), where dim is dimension in physical space
 
 
 			% error check input
@@ -125,6 +126,19 @@ classdef LRNURBSSurface < handle
 				throw(MException('LRNURBSSurface:save', 'Error: Invalid file name'));
 			end
 			lrsplinesurface_interface('save', this.objectHandle, filename);
+		end
+
+		function load(this, filename)
+		% LOAD  Reads the backend c++ representation of this LR-spline object from file
+		% LRNURBSSurface.load(filename)
+		%
+		%   parameters:
+		%     filename - the name of the file
+			if ~strcmp(class(filename), 'char')
+				throw(MException('LRNURBSSurface:load', 'Error: Invalid file name'));
+			end
+			lrsplinesurface_interface('load', this.objectHandle, filename);
+			this.updatePrimitives();
 		end
 
 		function print(this)
@@ -362,14 +376,14 @@ classdef LRNURBSSurface < handle
 			z = lrsplinesurface_interface('point',         this.objectHandle, [u v], varargin{:});
 			iel = this.getElementContaining(u, v);
 			sup = this.support{iel};
-			w   = this.cp(3,sup); % weight controlpoints
-			W   = z(3,1);         % weight function
+			w   = this.cp(end,sup); % weight controlpoints
+			W   = z(end,1);         % weight function
 			if(derivs > -1)
 				N(1,:) = N(1,:).*w / W;
 			end
 			if(derivs > 0)
-				N(2,:) = (N(2,:)*W-N(1,:)*z(3,2)).* w / W^2;
-				N(3,:) = (N(3,:)*W-N(1,:)*z(3,3)).* w / W^2;
+				N(2,:) = (N(2,:)*W-N(1,:)*z(end,2)).* w / W^2;
+				N(3,:) = (N(3,:)*W-N(1,:)*z(end,3)).* w / W^2;
 			end
 		end
 

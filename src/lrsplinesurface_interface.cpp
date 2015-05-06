@@ -27,10 +27,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		// Check parameters
 		if (nlhs != 1)
 			mexErrMsgTxt("New: One output expected.");
-		
+
 		// fetch input arguments
-		double *p = mxGetPr(prhs[1]);
 		if(nrhs > 3) {
+			double *p = mxGetPr(prhs[1]);
 			double *knotU = mxGetPr(prhs[2]);
 			double *knotV = mxGetPr(prhs[3]);
 			double n[2];
@@ -45,11 +45,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			} else {
 				plhs[0] = convertPtr2Mat<LRSplineSurface>(new LRSplineSurface(floor(n[0]), floor(n[1]), floor(p[0])+1, floor(p[1])+1, knotU, knotV));
 			}
-		} else {
+		} else if (nrhs>2){
+			double *p = mxGetPr(prhs[1]);
 			double *n = mxGetPr(prhs[2]);
 			if(floor(n[0])<=floor(p[0]) || floor(n[1])<=floor(p[1]))
 				mexErrMsgTxt("New: polynomial degree needs to be less than n");
 			plhs[0] = convertPtr2Mat<LRSplineSurface>(new LRSplineSurface(floor(n[0]), floor(n[1]), floor(p[0])+1, floor(p[1])+1));
+		} else {
+			plhs[0] = convertPtr2Mat<LRSplineSurface>(new LRSplineSurface());
 		}
 		return;
 	}
@@ -86,7 +89,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	/*********************************************************
 	 *******      Call the various class methods           ***
 	 ********************************************************/
-
 	// Save
 	if (!strcmp("save", cmd)) {
 		// Check parameters
@@ -102,6 +104,24 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		lr->write(out);
 		// clean up and exit
 		out.close();
+		return;
+	}
+
+	// Load
+	if (!strcmp("load", cmd)) {
+		// Check parameters
+		if (nlhs < 0 || nrhs < 3)
+			mexErrMsgTxt("Load: Unexpected arguments.");
+		// rewrap filename from mxArray to char*
+		int len = mxGetM(prhs[2]) * mxGetN(prhs[2]);
+		char filename[len+1];
+		mxGetString(prhs[2], filename, len+1); // adds a terminal 0-character by itself
+		// write the object to file
+		ifstream in;
+		in.open(filename);
+		lr->read(in);
+		// clean up and exit
+		in.close();
 		return;
 	}
 

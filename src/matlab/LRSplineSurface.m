@@ -36,6 +36,7 @@ classdef LRSplineSurface < handle
 %     plot                 - Plot the mesh structure 
 %     print                - Prints raw c++ lr data structure
 %     save                 - Saves the backend c++ lr data to file
+%     load                 - Load the backend c++ lr data from file
 
 	properties(SetAccess = private, Hidden = false)
 		p        % polynomial degree
@@ -67,11 +68,13 @@ classdef LRSplineSurface < handle
 		%     controlpoint - list of control points (matrix of size dim x n(1)*n(2)), where dim is dimension in physical space
 
 
-			% error check input
+			% no arguments: create an empty object ready to read from file
 			if(nargin == 0)
-				objectHandle = 0;
+				this.objectHandle = lrsplinesurface_interface('new');
 				return;
 			end
+
+			% error check input
 			if(nargin ~= 2 && nargin ~=3 && nargin ~= 4)
 				throw(MException('LRSplineSurface:constructor',  'Error: Invalid number of arguments to LRSplineSurface constructor'));
 			end
@@ -99,7 +102,6 @@ classdef LRSplineSurface < handle
 			this.objectHandle = lrsplinesurface_interface('new', varargin{:});
 			this.bezierHash = [];
 			this.updatePrimitives();
-
 		end
 
 		function delete(this)
@@ -129,6 +131,19 @@ classdef LRSplineSurface < handle
 				throw(MException('LRSplineSurface:save', 'Error: Invalid file name'));
 			end
 			lrsplinesurface_interface('save', this.objectHandle, filename);
+		end
+
+		function load(this, filename)
+		% LOAD  Reads the backend c++ representation of this LR-spline object from file
+		% LRSplineSurface.load(filename)
+		%
+		%   parameters:
+		%     filename - the name of the file
+			if ~strcmp(class(filename), 'char')
+				throw(MException('LRSplineSurface:load', 'Error: Invalid file name'));
+			end
+			lrsplinesurface_interface('load', this.objectHandle, filename);
+			this.updatePrimitives();
 		end
 
 		function print(this)
