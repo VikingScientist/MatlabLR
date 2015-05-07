@@ -44,3 +44,24 @@ nwtn_res_tol = 1e-10;
 nwtn_max_it  = 12;
 
 
+%%% create the folder tree-structure of Title/Subtitle/id-XXX, where id is a unique identifier
+%   the identifier is the first unused lowercase alphabetical letter
+%   XXX is the problem parameters
+%   this is where we store the result files
+
+filename = sprintf('%s/%s/%s-p%d%d-re%d-T%d', Problem.Title, Problem.Subtitle, Problem.Identifier, Problem.Polynomial_Degree, floor(Problem.Reynolds), floor(Problem.Time_Range(2)));
+if ~exist(Problem.Title, 'dir')
+	mkdir(Problem.Title);
+end
+if ~exist([Problem.Title, '/', Problem.Subtitle], 'dir')
+	mkdir([Problem.Title, '/', Problem.Subtitle])
+end
+if exist([filename, '.mat' ], 'file')
+	Problem.Identifier = 'a';
+	filename = sprintf('%s/%s/%s-p%d%d-re%d-T%d', Problem.Title, Problem.Subtitle, Problem.Identifier, Problem.Polynomial_Degree, floor(Problem.Reynolds), floor(Problem.Time_Range(2)));
+	while exist([filename, '.mat'], 'file')
+		Problem.Identifier = Problem.Identifier + 1;
+		filename = sprintf('%s/%s/%s-p%d%d-re%d-T%d', Problem.Title, Problem.Subtitle, Problem.Identifier, Problem.Polynomial_Degree, floor(Problem.Reynolds), floor(Problem.Time_Range(2)));
+	end
+end
+

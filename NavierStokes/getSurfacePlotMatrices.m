@@ -1,4 +1,4 @@
-function [A mesh edges X Y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, nviz)
+function [A B mesh edges X Y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, nviz)
   xg = linspace(-1,1,nviz);
 
   nElements   = size(lr.elements,1);
@@ -17,6 +17,9 @@ function [A mesh edges X Y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, nviz)
   Ai   = zeros(2*nPts* approxSupp,1);
   Aj   = zeros(2*nPts* approxSupp,1);
   Av   = zeros(2*nPts* approxSupp,1);
+  Bi   = zeros(  nPts* approxSupp,1);
+  Bj   = zeros(  nPts* approxSupp,1);
+  Bv   = zeros(  nPts* approxSupp,1);
   X    = zeros(nPts,1);
   Y    = zeros(nPts,1);
   mesh = zeros(nPlotSquare,4);
@@ -26,6 +29,7 @@ function [A mesh edges X Y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, nviz)
   ptCount   = 1;
   meshCount = 1;
   sparseCount = 1;
+  sparseCount_p = 1;
   for iel=1:size(lr.elements, 1)
     umin = lr.elements(iel,1);
     vmin = lr.elements(iel,2);
@@ -79,13 +83,19 @@ function [A mesh edges X Y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, nviz)
                      Nu(3,:),       zeros(1,sup2);
                      zeros(1,sup1), Nv(3,:)      ];               % row-wise: u_1,1  u_2,1  u_1,2  u_2,2
         [vecBasis, gradBasis] = piolaTransform(map, vecBasis, gradBasis);
+        pressureBasis         = piolaTransform(map, Np(1,:));
         X(ptCount) = map.x(1);
         Y(ptCount) = map.x(2);
 
         matrixLine1 = vecBasis(1,:);
         matrixLine2 = vecBasis(2,:);
-        ind = [lru.support{elu}, lrv.support{elv}+n1];
+        ind  = [lru.support{elu}, lrv.support{elv}+n1];
+		indp = lrp.support{elp};
 
+        Bi(sparseCount_p:(sparseCount_p+numel(indp)-1)) = ptCount;
+        Bj(sparseCount_p:(sparseCount_p+numel(indp)-1)) = indp;
+        Bv(sparseCount_p:(sparseCount_p+numel(indp)-1)) = pressureBasis;
+        sparseCount_p = sparseCount_p + numel(indp);
           
         Ai(sparseCount:(sparseCount+numel(ind)-1)) = ptCount;
         Aj(sparseCount:(sparseCount+numel(ind)-1)) = ind;
@@ -103,7 +113,9 @@ function [A mesh edges X Y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, nviz)
     end
 
   end
-  sparseCount = sparseCount - 1;
-  A = sparse(Ai(1:sparseCount), Aj(1:sparseCount), Av(1:sparseCount));
+  sparseCount   = sparseCount   - 1;
+  sparseCount_p = sparseCount_p - 1;
+  A = sparse(Ai(1:sparseCount),   Aj(1:sparseCount),   Av(1:sparseCount))  ;
+  B = sparse(Bi(1:sparseCount_p), Bj(1:sparseCount_p), Bv(1:sparseCount_p));
 end
 

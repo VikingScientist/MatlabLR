@@ -1,4 +1,5 @@
 function [N dN] = piolaTransform(map, N_in, dN_in)
+% function  N     = piolaTransform(map, N_in)
 % function [N dN] = piolaTransform(map, N_in, dN_in)
 
 if nargout == 2 && nargin<3
