@@ -3,14 +3,16 @@
 p = Problem.Polynomial_Degree+1; % define p as the lowest order polynomial
 nel = [1,1] / Problem.H_Max;
 lr = LRSplineSurface(p, [xrange(1)*ones(1,p(1)), linspace(xrange(1),xrange(2),nel(1)+1), xrange(2)*ones(1,p(1))], [yrange(1)*ones(1,p(2)), linspace(yrange(1),yrange(2),nel(2)+1), yrange(2)*ones(1,p(2))]);
+
 % lr = makeGeom('twirl', p, 2+p);
-% lr.refine();
-% lr.refine();
-% lr.refine();
+% while max(lr.elements(:,4)-lr.elements(:,2)) > Problem.H_Max
+% 	lr.refine();
+% end
 
 %%%  refining geometry
 t = cputime; tic;
-nRef = ceil(log2(Problem.H_Max / Problem.H_Min));
+actual_h_max = max(max(lr.elements(:,3:4)-lr.elements(:,1:2)));
+nRef = ceil(log2(actual_h_max / Problem.H_Min));
 refineCorners(lr, nRef);
 time_refine = cputime - t; time_refine_wall = toc;
 % figure; lr.plot();

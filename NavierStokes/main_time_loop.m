@@ -1,8 +1,8 @@
 
 
 h = lr.elements(:,3:4) - lr.elements(:,1:2);
-hmax = max(max(h));
-k = min(hmax^((lrp.p(1)+1)/2), hmax^2 /4/my);
+hmin = min(min(h));
+k = min(hmin^((lrp.p(1)+1)/2), hmin^2 /4/my);
 
 time = Problem.Time_Range(1):k:Problem.Time_Range(2);
 nSteps = length(time);
@@ -22,8 +22,13 @@ b   = b(1:(n1+n2));
 % lhs(edges,:) = [];
 % lhs(:,edges) = [];
 
-[plotAu meshu eu xu yu] = lru.getSurfMatrix('diffX', 'parametric', 'nviz', 5, 'diffX');
-[plotAv meshu ev xv yv] = lrv.getSurfMatrix('diffY', 'parametric', 'nviz', 5, 'diffY');
+% [plotAu meshu eu xu yu] = lru.getSurfMatrix('diffX', 'parametric', 'nviz', 5, 'diffX');
+% [plotAv meshu ev xv yv] = lrv.getSurfMatrix('diffY', 'parametric', 'nviz', 5, 'diffY');
+[plotA plotB mesh edges x y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, 4);
+title    = sprintf('%s, %s (%s)', Problem.Title, Problem.Subtitle, Problem.Identifier);
+writeVTK2(sprintf('%s-%d.vtk', filename, 1), title, x,y,mesh, zeros(numel(x),1),zeros(numel(x),1), zeros(numel(x),1));
+
+topRightCorner = intersect(lrp.getEdge(2), lrp.getEdge(4))+n1+n2;
 
 timer = cputime; tic;
 for i=2:nSteps
@@ -51,18 +56,26 @@ for i=2:nSteps
     end
   end
   fprintf('  Newton iteration converged after %d iterations at residual %g\n', newtIt, norm(dv));
+  fprintf('  Pressure at top right corner %g\n', v(topRightCorner));
   u = v;
+  vel = plotA*u(1:n);
+  pressure = plotB*u(n+1:end);
+  velX     = vel(1:end/2  );
+  velY     = vel(  end/2+1:end);
+  writeVTK2(sprintf('%s-%d.vtk', filename, i), title, x,y,mesh, velX,velY,pressure);
+
+
   % u = [M+k/2*A, k/2*D; Dt [avg_p'; zeros(n3-1,n3)]] \ [(M-k/2*A)*u(1:n)-k/2*D*u(n+1:end)+k*b; zeros(n3,1)];
   % u = [M+k*A, k*D; Dt [avg_p'; zeros(n3-1,n3)]] \ [M*u(1:n)+k*b; zeros(n3,1)];
   % u = rightLHS \ rightRHS;
-  dudx = plotAu*u(1:n1);
-  dvdy = plotAv*u(n1+1:n1+n2);
-  divPt = dudx + dvdy;
-  fprintf('  max(div(u)) = %g\n', max(max(divPt)));
+  % dudx = plotAu*u(1:n1);
+  % dvdy = plotAv*u(n1+1:n1+n2);
+  % divPt = dudx + dvdy;
+  % fprintf('  max(div(u)) = %g\n', max(max(divPt)));
   timeUsed = toc - lastTime;
   timeLeft = (nSteps-i)*timeUsed;
   c = clock;
-  c(5) = c(5) + floor(timeLeft);
+  c(6) = c(6) + floor(timeLeft);
   fprintf('  Estimated time left: ');
   if timeLeft>60*60*24
     fprintf('%d days, ', floor(timeLeft/60/60/24));
