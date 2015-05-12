@@ -1,13 +1,8 @@
 
-
-h = lr.elements(:,3:4) - lr.elements(:,1:2);
-hmin = min(min(h));
-k = min(hmin^((lrp.p(1)+1)/2), hmin^2 /4/my);
-
-time = Problem.Time_Range(1):k:Problem.Time_Range(2);
 nSteps = length(time);
 % time = linspace(0,30,nSteps);
 % k = time(2)-time(1);
+k = delta_time;
 N = n1+n2+n3;
 u    = zeros(N,1);
 % u(lru.getEdge(4)) = 1;

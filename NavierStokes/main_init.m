@@ -65,3 +65,56 @@ if exist([filename, '.mat' ], 'file')
 	end
 end
 
+main_getGeom;
+
+%%% display element sizes as nice fractions if avaiable, if not as floating point numbers
+h = lr.elements(:,3:4) - lr.elements(:,1:2);
+hmax = max(max(h));
+hmin = min(min(h));
+[a b] = rat(hmax);
+if a<5 && b<1e4
+	hmax = sprintf('%d/%d', a,b);
+else 
+	hmax = sprintf('%f', hmax);
+end
+[a b] = rat(hmin);
+if a<5 && b<1e4
+	hmin = sprintf('%d/%d', a,b);
+else 
+	hmin = sprintf('%f', hmin);
+end
+
+%%% debug print problem info
+fprintf('Problem setup complete:\n');
+fprintf('  File:    "%s"\n', filename);
+fprintf('  Geometry "%s"\n', Problem.Geometry);
+fprintf('    Parametric element size h_max: %s\n', hmax);
+fprintf('    Parametric element size h_min: %s\n', hmin);
+fprintf('  Approximation spaces\n');
+fprintf('    Geometry space: %d\n', size(lr.knots,1));
+fprintf('    Velocity space: %d x %d\n', size(lru.knots,1), size(lrv.knots,1) );
+fprintf('    Pressure space: %d\n', size(lrp.knots,1));
+fprintf('    System size   : %d\n', size(lru.knots,1) + size(lrv.knots,1) + size(lrp.knots,1));
+
+
+h = lr.elements(:,3:4) - lr.elements(:,1:2);
+hmax = max(max(h));
+hmin = min(min(h));
+
+if isa(Problem.Time_Step, 'function_handle')
+	delta_time = Problem.Time_Step(hmax);
+else
+	delta_time = Problem.Time_Range(1):Problem.Time_Step:Problem.Time_Range(2);
+end
+
+time = Problem.Time_Range(1):delta_time:Problem.Time_Range(2);
+nSteps = length(time);
+
+%%% debug print time integration
+fprintf('  Time integration\n');
+fprintf('    T(start) : %f\n', time(1));
+fprintf('    T(end)   : %f\n', time(end));
+fprintf('    k        : %f\n', delta_time);
+fprintf('    # steps  : %d\n', nSteps);
+
+
