@@ -142,10 +142,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	if (!strcmp("get_element_containing", cmd)) {
 		// Check parameters
 		if (nlhs < 1 || nrhs < 3)
-			mexErrMsgTxt("compute_basis: Unexpected arguments.");
+			mexErrMsgTxt("get_element_containing: Unexpected arguments.");
 		double *u = mxGetPr(prhs[2]);
 
-		int id = lr->getElementContaining(u[0], u[1]); // always search for element and return sparse result
+		int id = lr->getElementContaining(u[0], u[1]);
 		plhs[0] = mxCreateDoubleScalar(id+1);
 		return;
 	}
@@ -169,6 +169,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		double *dResult = mxGetPr(plhs[0]);
 		for(size_t i=0; i<vResult.size(); i++)
 			copy(vResult[i].begin(), vResult[i].end(), dResult+i*vResult[0].size());
+		if(nlhs > 1)
+			plhs[1] = mxCreateDoubleScalar(id+1);
 		
 		return;
 	}

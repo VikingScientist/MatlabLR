@@ -429,19 +429,24 @@ classdef LRSplineSurface < handle
 		end
 
 
-		function N = computeBasis(this, u, v, varargin)
+		function [N i] = computeBasis(this, u, v, varargin)
 		% COMPUTEBASIS  Evaluates all basis functions at a given parametric point, as well as their derivatives
-		% N = LRSplineSurface.computeBasis(u, v)
-		% N = LRSplineSurface.computeBasis(u, v, derivs)
+		% N     = LRSplineSurface.computeBasis(u, v)
+		% N     = LRSplineSurface.computeBasis(u, v, derivs)
+		% [N i] = LRSplineSurface.computeBasis(u, v, derivs)
 		%
 		%   parameters:
 		%     u      - first parametric coordinate
 		%     v      - second parametric coordinate
 		%     derivs - number of derivatives (greater or equal to 0)
 		%   returns:
-		%     the value of all nonzero basis functions at a given point
-		%     in case of derivatives, a cell is returned with all derivatives requested
-			N = lrsplinesurface_interface('compute_basis', this.objectHandle, [u, v], varargin{:});
+		%     N      - the value of all nonzero basis functions at a given point
+		%              in case of derivatives, a cell is returned with all derivatives requested
+		%     i      - the global index to these nonzero basis functions
+			[N el_id] = lrsplinesurface_interface('compute_basis', this.objectHandle, [u, v], varargin{:});
+			if nargout>1
+				i = this.support{el_id};
+			end
 		end
 
 
