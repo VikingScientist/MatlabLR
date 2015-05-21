@@ -1,4 +1,4 @@
-function [A B mesh edges X Y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, nviz)
+function [A B mesh edges X Y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, nviz, newElU, newElV, newElP)
   xg = linspace(-1,1,nviz);
 
   nElements   = size(lr.elements,1);
@@ -42,6 +42,11 @@ function [A B mesh edges X Y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, nviz)
     elu = lru.getElementContaining(umin+hu/2, vmin+hv/2);
     elv = lrv.getElementContaining(umin+hu/2, vmin+hv/2);
     elp = lrp.getElementContaining(umin+hu/2, vmin+hv/2);
+    if exist('newElU')==1
+      elu = newElU(elu);
+      elv = newElV(elv);
+      elp = newElP(elp);
+    end
 
     C   = lr.getBezierExtraction(iel);
     Cu  = lru.getBezierExtraction(elu);
@@ -90,7 +95,7 @@ function [A B mesh edges X Y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, nviz)
         matrixLine1 = vecBasis(1,:);
         matrixLine2 = vecBasis(2,:);
         ind  = [lru.support{elu}, lrv.support{elv}+n1];
-		indp = lrp.support{elp};
+        indp = lrp.support{elp};
 
         Bi(sparseCount_p:(sparseCount_p+numel(indp)-1)) = ptCount;
         Bj(sparseCount_p:(sparseCount_p+numel(indp)-1)) = indp;

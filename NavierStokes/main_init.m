@@ -104,7 +104,7 @@ hmin = min(min(h));
 if isa(Problem.Time_Step, 'function_handle')
 	delta_time = Problem.Time_Step(hmax);
 else
-	delta_time = Problem.Time_Range(1):Problem.Time_Step:Problem.Time_Range(2);
+	delta_time = Problem.Time_Step;
 end
 
 time = Problem.Time_Range(1):delta_time:Problem.Time_Range(2);

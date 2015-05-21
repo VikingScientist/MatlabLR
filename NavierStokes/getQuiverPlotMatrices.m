@@ -1,4 +1,4 @@
-function [A X Y J] = getQuiverPlotMatrices(lru, lrv, n, m, lr)
+function [A X Y] = getQuiverPlotMatrices(lru, lrv, n, m, lr)
 
 piolamap = false;
 if(nargin == 5)
@@ -16,7 +16,6 @@ Av   = zeros(n*m, size(lrv.knots,1));
 n1   = size(lru.knots,1);
 n2   = size(lrv.knots,1);
 A    = zeros(2*n*m, n1+n2);
-J    = zeros(n*m,4);
 X    = zeros(n*m,1);
 Y    = zeros(n*m,1);
 

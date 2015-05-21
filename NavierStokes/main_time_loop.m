@@ -4,7 +4,8 @@ nSteps = length(time);
 % k = time(2)-time(1);
 k = delta_time;
 N = n1+n2+n3;
-u    = zeros(N,1);
+u        = zeros(N,1);
+u(edges) = edgVal;
 % u(lru.getEdge(4)) = 1;
 uAll = zeros(N,nSteps);
 uAll(:,1) = u;
@@ -19,9 +20,13 @@ b   = b(1:(n1+n2));
 
 % [plotAu meshu eu xu yu] = lru.getSurfMatrix('diffX', 'parametric', 'nviz', 5, 'diffX');
 % [plotAv meshu ev xv yv] = lrv.getSurfMatrix('diffY', 'parametric', 'nviz', 5, 'diffY');
-[plotA plotB mesh edges x y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, 4);
+if exist('newElU')==1
+  [plotA plotB mesh edges x y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, 4, newElU, newElV, newElP);
+else
+  [plotA plotB mesh edges x y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, 4);
+end
 title    = sprintf('%s, %s (%s)', Problem.Title, Problem.Subtitle, Problem.Identifier);
-writeVTK2(sprintf('%s-%d.vtk', filename, 1), title, x,y,mesh, zeros(numel(x),1),zeros(numel(x),1), zeros(numel(x),1));
+writeVTK2(sprintf('%s-%d.vtk', filename, 0), title, x,y,mesh, zeros(numel(x),1),zeros(numel(x),1), zeros(numel(x),1));
 
 topRightCorner = intersect(lrp.getEdge(2), lrp.getEdge(4))+n1+n2;
 
@@ -36,11 +41,11 @@ for i=2:nSteps
   N  = n1+n2+n3;
   for newtIt=1:nwtn_max_it
     %%% backward euler stepping
-    % lhs = [M, zeros(n,n3);    zeros(n3,N)] + k*dF(v);
-    % rhs = [M*(v(1:n)-u(1:n)); zeros(n3,1)] + k* F(v);
+    lhs = [M, zeros(n,n3);    zeros(n3,N)] + k*dF(v);
+    rhs = [M*(v(1:n)-u(1:n)); zeros(n3,1)] + k* F(v);
     %%% crank-nicolson rule stepping
-    lhs = [M, zeros(n,n3);    zeros(n3,N)] + k/2*(dF(v)       );
-    rhs = [M*(v(1:n)-u(1:n)); zeros(n3,1)] + k/2*( F(v)+ F(u) );
+    % lhs = [M, zeros(n,n3);    zeros(n3,N)] + k/2*(dF(v)       );
+    % rhs = [M*(v(1:n)-u(1:n)); zeros(n3,1)] + k/2*( F(v)+ F(u) );
     % max(max(abs(rightLHS-lhs)))
     % max(max(abs(rightRHS-rhs)))
     % rhs(edges) = 0;
@@ -51,13 +56,16 @@ for i=2:nSteps
     end
   end
   fprintf('  Newton iteration converged after %d iterations at residual %g\n', newtIt, norm(dv));
-  fprintf('  Pressure at top right corner %g\n', v(topRightCorner));
+  fprintf('  Pressure at top right corner : %g\n', v(topRightCorner));
+  fprintf('  Max u-velocity controlpoint  : %g\n', max(v(1:n1)));
+  fprintf('  Max v-velocity controlpoint  : %g\n', max(v(n1+1:n1+n2)));
+  fprintf('  Max pressure controlpoint    : %g\n', max(v(n+1:end)));
   u = v;
   vel = plotA*u(1:n);
   pressure = plotB*u(n+1:end);
   velX     = vel(1:end/2  );
   velY     = vel(  end/2+1:end);
-  writeVTK2(sprintf('%s-%d.vtk', filename, i), title, x,y,mesh, velX,velY,pressure);
+  writeVTK2(sprintf('%s-%d.vtk', filename, i-1), title, x,y,mesh, velX,velY,pressure);
 
 
   % u = [M+k/2*A, k/2*D; Dt [avg_p'; zeros(n3-1,n3)]] \ [(M-k/2*A)*u(1:n)-k/2*D*u(n+1:end)+k*b; zeros(n3,1)];

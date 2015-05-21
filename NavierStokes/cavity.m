@@ -195,7 +195,7 @@ surf(uAll(1:n,:));
 t = cputime; tic;
 % pre-compute all matrices needed to plot the solutions
 [plotA mesh edges x y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, 5);
-[Aquiv xquiv, yquiv, Jquiv] = getQuiverPlotMatrices(lru, lrv, 30,30, lr);
+[Aquiv xquiv, yquiv] = getQuiverPlotMatrices(lru, lrv, 30,30, lr);
 
 % initialize movie capture
 clear myMovie
