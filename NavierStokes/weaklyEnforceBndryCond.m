@@ -145,12 +145,8 @@ for edge=1:4,
         % A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/du*testVel'*testVel)*detJw;
         A(globIu, globIu) = A(globIu, globIu) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/du*testVel'*testVel)*detJw;
 
-        ubc = (edge==4)*[1;0];
-        % b(globIu)       = b(globIu)   + 2*my*( -Nu(2,:)'*n(1) - .5*Nu(3,:)'*n(2) + penalty/du*Nu(1,:)')*fval*detJw;
-        b(globIu)       = b(globIu) - 2*my*(symVel'*n'*ubc - penalty/du*testVel'*ubc)*detJw;
-        % b(globIv)       = b(globIv)   + 2*my*(                - .5*Nv(2,:)'*n(2)                      )*fval*detJw;
-        % b(globIu)       = b(globIu)   + 2*my*( -.5*Nu(2:3,:)'*n' - (.5*n*Nu(2:3,:))' + penalty/du*Nu(1,:)')*fval*detJw;
-        % b(globIu)       = b(globIu)   + 2*my*( -Nu(2:3,:)'*n' + penalty/du*Nu(1,:)')*fval*detJw;
+        % ubc = (edge==4)*[1;0];
+        % b(globIu)       = b(globIu) - 2*my*(symVel'*n'*ubc - penalty/du*testVel'*ubc)*detJw;
 
       end
     end
