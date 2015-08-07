@@ -89,7 +89,6 @@ p_dof(presEdges) = [];
 
 %%% linear stokes system
 if Problem.Linear
-  disp 'Linear system'
   F  = @(u) [A*u(1:n) + D*u(n+1:end); D'*u(1:n);0] - [b;0];
   dF = @(u) [A         , D                  ;
              D'        , zeros(numel(p_dof));
@@ -98,7 +97,6 @@ if Problem.Linear
 % dF = @(u) [A, D; Dt [avg_p'; zeros(n3-1,n3)]];
 else
 %%% Nolinear navier-stokes system
-  disp 'Navier stokes system'
   F  = @(u) [A*u(1:n) + D*u(n+1:end) +  NL*kron(u(1:n),u(1:n)); D'*u(1:n);0]-[b;0];
   dF = @(u) [A+NL*kron(u(1:n),speye(n))+NL*kron(speye(n),u(1:n)), D; D', zeros(numel(p_dof)); zeros(1,n), avg_p(p_dof)']; % augment linear system by additional row
 end
