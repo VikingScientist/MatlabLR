@@ -10,13 +10,13 @@ val = [velVal  ; presVal];
 u(edg) = val;
 nonEdge = 1:N;
 nonEdge(edg) = [];
-for newtIt=1:nwtn_max_it
+for newtIt=1:Problem.Newton_Max_It
   rhs =  F(u(nonEdge));
   lhs = dF(u(nonEdge));
 
   du = lhs \ -rhs;
   u(nonEdge) = u(nonEdge) + du;
-  if(norm(du)<nwtn_res_tol)
+  if(norm(du)<Problem.Newton_TOL)
     break;
   end
 end

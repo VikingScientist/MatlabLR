@@ -1,10 +1,9 @@
 function [cp i] = L2edge(lr, start, stop, f, newEl)
 
 p = lr.p;
-TOL = 1e-12;
 if start(1) == stop(1) % vertical line (const. xi)
 	edge = [find(lr.elements(:,1) == start(1)); ... % elements starting at this edge
-	        find(lr.elements(:,3) == start(1))];    % elements ending at this edge (on of these should contain zero elements)
+	        find(lr.elements(:,3) == start(1))];    % elements ending at this edge (one of these should contain zero elements)
 	edge = edge(find(lr.elements(edge,4) <= stop(2) & ...
 	                 lr.elements(edge,2) >= start(2))); % crop away elements not within the requested range
 
@@ -13,7 +12,7 @@ if start(1) == stop(1) % vertical line (const. xi)
 	           lr.knots(i,end   ) > start(2)));  % crop away functions not within the requested range
 elseif start(2) == stop(2) % horizontal line (const. eta)
 	edge = [find(lr.elements(:,2) == start(2)); ... % elements starting at this edge
-	        find(lr.elements(:,4) == start(2))];    % elements ending at this edge (on of these should contain zero elements)
+	        find(lr.elements(:,4) == start(2))];    % elements ending at this edge (one of these should contain zero elements)
 	edge = edge(find(lr.elements(edge,3) <= stop(1) & ...
 	                 lr.elements(edge,1) >= start(1))); % crop away elements not within the requested range
 

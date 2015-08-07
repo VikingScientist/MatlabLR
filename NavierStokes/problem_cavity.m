@@ -19,7 +19,7 @@ clear; close all;
 %                                                       
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-p  = 3; % polynomial degree. May be needed in Problem.Time_Step
+p  = 2; % polynomial degree. May be needed in Problem.Time_Step
 Re = 1; % Reynolds number.   May be needed in Problem.Time_Step
 
 Problem = struct(...
@@ -46,18 +46,20 @@ Problem = struct(...
 % 'Time_Step'         ,  @(h) min(h^((p+1)/2), h^2 /4*Re), ...
 
 BC     = cell(1);
-BC{1}  = struct('start', [0,0], 'stop', [1,0], 'comp', 2, 'value', 0);
-BC{2}  = struct('start', [0,1], 'stop', [1,1], 'comp', 2, 'value', 0);
-BC{3}  = struct('start', [0,0], 'stop', [0,1], 'comp', 1, 'value', 0);
-BC{4}  = struct('start', [1,0], 'stop', [1,1], 'comp', 1, 'value', 0);
-BC{5}  = struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', 0);
-BC{6}  = struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', 1);
-BC{7}  = struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', 0);
-BC{8}  = struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', 0);
-BC{9}  = struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', 0);
-BC{10} = struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', 0);
-BC{11} = struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', 0);
-BC{12} = struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', 0);
+BC{1}  = struct('start', [0,0], 'stop', [1,0], 'comp', 2, 'value', 0, 'weak', false);
+BC{2}  = struct('start', [0,1], 'stop', [1,1], 'comp', 2, 'value', 0, 'weak', false);
+BC{3}  = struct('start', [0,0], 'stop', [0,1], 'comp', 1, 'value', 0, 'weak', false);
+BC{4}  = struct('start', [1,0], 'stop', [1,1], 'comp', 1, 'value', 0, 'weak', false);
+
+BC{5}  = struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', 0, 'weak', true);
+BC{6}  = struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', 1, 'weak', true);
+BC{7}  = struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', 0, 'weak', true);
+BC{8}  = struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', 0, 'weak', true);
+
+% BC{9}  = struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', 0, 'weak', false);
+% BC{10} = struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', 0, 'weak', false);
+% BC{11} = struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', 0, 'weak', false);
+% BC{12} = struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', 0, 'weak', false);
 
 main_init;
 main_assemble;

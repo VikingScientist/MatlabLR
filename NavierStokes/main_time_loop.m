@@ -63,7 +63,7 @@ for i=2:nSteps
   lhs = [[M,zeros(n,n3)] + k*dF(zeros(size(u))); lhs_lower];
   rhs = [M*u(1:n)        + k* F(zeros(size(u))); rhs_lower];
   v = lhs \ rhs;
-  for newtIt=1:nwtn_max_it
+  for newtIt=1:Problem.Newton_Max_It
     %%% QUACK!!!
     rhs = M*(v(1:n)-u(1:n)) + k*(A*v(1:n)+D*v(n+1:end));
     % rhs = rhs - A(:,velEdges)*velVal - D(:,presEdges)*presVal;
@@ -97,7 +97,7 @@ for i=2:nSteps
     dv = lhs \ -rhs;
     v(1:n) = v(1:n) + dv(1:n);
     v(n+1:end) = v(n+1:end);
-    if(norm(dv(1:n))<nwtn_res_tol)
+    if(norm(dv(1:n))<Problem.Newton_TOL)
       break;
     end
   end

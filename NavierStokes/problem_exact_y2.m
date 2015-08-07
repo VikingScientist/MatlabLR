@@ -58,7 +58,6 @@ BC{10} = struct('start', [Problem.Geometry_param,0], 'stop', [Problem.Geometry_p
 BC{11} = struct('start', [0,1],                      'stop', [0,1],                      'comp', 3, 'value',  Problem.Geometry_param);
 BC{12} = struct('start', [Problem.Geometry_param,1], 'stop', [Problem.Geometry_param,1], 'comp', 3, 'value', -Problem.Geometry_param);
 
-
 main_init;
 main_assemble;
 
