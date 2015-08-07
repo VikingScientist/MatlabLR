@@ -13,26 +13,52 @@ xg = [xg; -1; 1];
 %%% pre-evaluate bezier functions
 bezier = getBezierBasis([xg';xg'], lr, lru, lrv, lrp);
 
-TOL = 1e-12;
 
-for edge=1:4,
-  if edge==1
-    elEdge = find(lr.elements(:,1) == umin);
-  elseif edge==2
-    elEdge = find(lr.elements(:,3) == umax);
-  elseif edge==3
-    elEdge = find(lr.elements(:,2) == vmin);
-  elseif edge==4
-    elEdge = find(lr.elements(:,4) == vmax);
-  elseif edge==5
-    elEdge = find(lr.elements(:,1) <  TOL & lr.elements(:,2) < -TOL);
-  elseif edge==6
-    elEdge = find(lr.elements(:,1) < -TOL & lr.elements(:,2) <  TOL);
-  else
-    disp 'Error: Unknown edge index, ignoring boundary condition';
-    return
+for edge=1:numel(BC)
+  bc = BC{edge};
+  if ~isfield(bc, 'weak') || bc.weak==false % skip strong boundary conditions
+    continue;
   end
-  % elEdge = lr.getEdge(edge, 'elements');
+  if bc.start(1) == bc.stop(1)     % vertical line   (const. xi)
+	  elmStart = find(lr.elements(:,1) == bc.start(1)); % elements starting at this edge
+	  elmEnd   = find(lr.elements(:,3) == bc.start(1)); % elements ending at this edge (one of these should contain zero elements)
+    if numel(elmStart) > 0
+      elEdge        = elmStart;
+      left_edge     = true;
+      running_param = 'v';
+    elseif numel(elmEnd) > 0
+      elEdge        = elmEnd;
+      left_edge     = false;
+      running_param = 'v';
+    else
+      disp 'Error: weaklyEnforceBC, edge not found with any corresponding elements'
+      bc
+      break;
+    end
+	  elEdge = elEdge(find(lr.elements(elEdge,4) <= bc.stop(2) & ...
+	                       lr.elements(elEdge,2) >= bc.start(2))); % crop away elements not within the requested range
+  elseif bc.start(2) == bc.stop(2) % horizontal line (const. eta)
+	  elmStart = find(lr.elements(:,2) == bc.start(2)); % elements starting at this edge
+	  elmEnd   = find(lr.elements(:,4) == bc.start(2)); % elements ending at this edge (one of these should contain zero elements)
+    if numel(elmStart) > 0
+      elEdge        = elmStart;
+      left_edge     = true;
+      running_param = 'u';
+    elseif numel(elmEnd) > 0
+      elEdge        = elmEnd;
+      left_edge     = false;
+      running_param = 'u';
+    else
+      disp 'Error: weaklyEnforceBC, edge not found with any corresponding elements'
+      bc
+      break;
+    end
+	  elEdge = elEdge(find(lr.elements(elEdge,3) <= bc.stop(1) & ...
+	                       lr.elements(elEdge,1) >= bc.start(1))); % crop away elements not within the requested range
+  else % illegal line parameters
+	  disp 'Error: weaklyEnforceBndryCond requests only horizontal or vertical input lines';
+    break;
+  end
   
   for el=elEdge',
 
@@ -52,7 +78,7 @@ for edge=1:4,
     Cv = lrv.getBezierExtraction(el_v);
 
     % find all functions with support on this element
-    ind  = lr.support{el};
+    ind    = lr.support{el};
     globIu = lru.support{el_u};
     globIv = lrv.support{el_v} + n1;
 
@@ -61,12 +87,15 @@ for edge=1:4,
     sup3 = numel(globIp);
     globIvel = [globIu, globIv];
 
-    if(edge == 1 || edge == 2 || edge==5)
+    if running_param == 'v'
       for i=1:nGauss,
-        u  = (edge==1)*umin + (edge==2)*umax + (edge==5)*0;
-        v  = (.5*xg(i)+.5)*dv+lr.elements(el,2);
-        j  = (edge==1)*(nGauss+1) + (edge==2)*(nGauss+2) + (edge==5)*(nGauss+1);
+        if left_edge
+          j = nGauss+1;
+        else
+          j = nGauss+2;
+        end
 
+        % fast basis function evaluation by bezier extraction
         Nu = bezierToBsplineBasis(bezier.lru, j, i, Cu, du, dv);
         Nv = bezierToBsplineBasis(bezier.lrv, j, i, Cv, du, dv);
         N  = bezierToBsplineBasis(bezier.lr , j, i, C , du, dv);
@@ -74,7 +103,7 @@ for edge=1:4,
         map = computeGeometry(lr, el, N);
 
         vel  = map.J(:,2);        % velocity vector along edge
-        if(edge == 1 || edge == 5)
+        if left_edge
           vel = -vel;
         end
         n  = [vel(2), -vel(1)];
@@ -82,11 +111,14 @@ for edge=1:4,
 
         detJw = wg(i)*norm(vel)*dv/2;
         
-        %%% uncomment to use both u- and v-components
-        % testVel = [Nu(1,:), zeros(1,sup2); zeros(1,sup1), Nv(1,:)];    % vector basis functions
-        % gradVel = [Nu(2:3,:), zeros(2,sup2);zeros(2,sup1), Nv(2:3,:)]; % row-wise: u_1,1  u_1,2  u_2,1  u_2,2
-        testVel = [zeros(1,sup2); Nv(1,:)];   % vector basis functions
-        gradVel = [zeros(2,sup2); Nv(2:3,:)]; 
+        %%% compute test functions
+        if bc.comp == 1
+          testVel = [Nu(1,:)  ; zeros(1,sup1); ]; % vector basis functions
+          gradVel = [Nu(2:3,:); zeros(2,sup1); ]; 
+        else
+          testVel = [zeros(1,sup2); Nv(1,:)];   % vector basis functions
+          gradVel = [zeros(2,sup2); Nv(2:3,:)]; 
+        end
         gradVel = gradVel([1,3,2,4],:);       % row-wise: u_1,1  u_2,1  u_1,2  u_2,2
 
         % alter through piola mapping
@@ -97,19 +129,30 @@ for edge=1:4,
 
         n = [n(1), n(2),  0,    0  ;
               0,    0,   n(1), n(2)]; 
-        % A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/dv*testVel'*testVel)*detJw;
-        A(globIv, globIv) = A(globIv, globIv) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/dv*testVel'*testVel)*detJw;
 
-        % if(edge==1)
-          % b(globIu)       = b(globIu)   + ( -Nu(2:3,:)'*n'*fval   +penalty/dv*Nu(1,:)'*fval)*detJw;
-        % end
+        ubc = zeros(2,1);
+        if isa(bc.value, 'function_handle')
+          ubc(bc.comp) = bc.value(map.x(1), map.x(2));
+        else
+          ubc(bc.comp) = bc.value;
+        end
+
+        if bc.comp == 1
+          A(globIu, globIu) = A(globIu, globIu) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/dv*testVel'*testVel)*detJw;
+          b(globIu)         = b(globIu)         - 2*my*(symVel'*n'*ubc                         - penalty/dv*testVel'*ubc)    *detJw;
+        else
+          A(globIv, globIv) = A(globIv, globIv) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/dv*testVel'*testVel)*detJw;
+          b(globIv)         = b(globIv)         - 2*my*(symVel'*n'*ubc                         - penalty/dv*testVel'*ubc)    *detJw;
+        end
 
       end
-    elseif(edge == 3 || edge == 4 || edge==6)
+    elseif running_param == 'u'
       for i=1:nGauss,
-        u  = (.5*xg(i)+.5)*du + lr.elements(el,1);
-        v  = (edge==3)*vmin + (edge==4)*vmax + (edge==6)*0;
-        j  = (edge==3)*(nGauss+1) + (edge==4)*(nGauss+2) + (edge==6)*(nGauss+1);
+        if left_edge
+          j = nGauss+1;
+        else
+          j = nGauss+2;
+        end
 
         % fast basis function evaluation by bezier extraction
         Nu = bezierToBsplineBasis(bezier.lru, i, j, Cu, du, dv);
@@ -119,7 +162,7 @@ for edge=1:4,
         map = computeGeometry(lr, el, N);
 
         vel  = map.J(:,1);        % velocity vector along edge
-        if(edge == 4)
+        if left_edge
           vel = -vel;
         end
         n  = [vel(2), -vel(1)];
@@ -127,11 +170,14 @@ for edge=1:4,
 
         detJw = wg(i)*norm(vel)*du/2;
 
-        %%% uncomment to use both u- and v-components
-        % testVel = [Nu(1,:), zeros(1,sup2); zeros(1,sup1), Nv(1,:)];    % vector basis functions
-        % gradVel = [Nu(2:3,:), zeros(2,sup2);zeros(2,sup1), Nv(2:3,:)]; % row-wise: u_1,1  u_1,2  u_2,1  u_2,2
-        testVel = [Nu(1,:)  ; zeros(1,sup1); ]; % vector basis functions
-        gradVel = [Nu(2:3,:); zeros(2,sup1); ]; 
+        %%% compute test functions
+        if bc.comp == 1
+          testVel = [Nu(1,:)  ; zeros(1,sup1); ]; % vector basis functions
+          gradVel = [Nu(2:3,:); zeros(2,sup1); ]; 
+        else
+          testVel = [zeros(1,sup2); Nv(1,:)];   % vector basis functions
+          gradVel = [zeros(2,sup2); Nv(2:3,:)]; 
+        end
         gradVel = gradVel([1,3,2,4],:);         % row-wise: u_1,1  u_2,1  u_1,2  u_2,2
   
         % alter through piola mapping
@@ -142,16 +188,24 @@ for edge=1:4,
 
         n = [n(1), n(2),  0,    0  ;
               0,    0,   n(1), n(2)]; 
-        % A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/du*testVel'*testVel)*detJw;
-        A(globIu, globIu) = A(globIu, globIu) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/du*testVel'*testVel)*detJw;
 
-        % ubc = (edge==4)*[1;0];
-        % b(globIu)       = b(globIu) - 2*my*(symVel'*n'*ubc - penalty/du*testVel'*ubc)*detJw;
+        ubc = zeros(2,1);
+        if isa(bc.value, 'function_handle')
+          ubc(bc.comp) = bc.value(map.x(1), map.x(2));
+        else
+          ubc(bc.comp) = bc.value;
+        end
+
+        if bc.comp == 1
+          A(globIu, globIu) = A(globIu, globIu) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/du*testVel'*testVel)*detJw;
+          b(globIu)         = b(globIu)         - 2*my*(symVel'*n'*ubc                         - penalty/du*testVel'*ubc)    *detJw;
+        else
+          A(globIv, globIv) = A(globIv, globIv) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/du*testVel'*testVel)*detJw;
+          b(globIv)         = b(globIv)         - 2*my*(symVel'*n'*ubc                         - penalty/du*testVel'*ubc)    *detJw;
+        end
 
       end
     end
   end
 end
 
-
-% end % end function

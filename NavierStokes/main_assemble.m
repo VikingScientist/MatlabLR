@@ -5,7 +5,7 @@ fprintf('\n');
 
 %%% set boundary conditions
 disp 'setting boundary conditions'
-% weaklyEnforceBndryCond;
+weaklyEnforceBndryCond;
 % edges = [lru.getEdge(1); lru.getEdge(2); lrv.getEdge(3)+n1; lrv.getEdge(4)+n1];
 % topCornersU = intersect(lru.getEdge(4), [lru.getEdge(1);lru.getEdge(2)]);
 % topCornersV = intersect(lrv.getEdge(4), [lrv.getEdge(1);lrv.getEdge(2)]) + n1;
@@ -15,6 +15,9 @@ edgVal    = [];
 presEdges = [];
 presVal   = [];
 for i=1:numel(BC)
+  if isfield(BC{i}, 'weak') && BC{i}.weak==true % skip weak boundary conditions (these are handled in another function
+    continue;
+  end
   if BC{i}.comp == 1 % condition on u-component 
     if exist('newElU')
       [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value, newElU);
