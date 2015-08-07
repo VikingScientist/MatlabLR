@@ -5,16 +5,17 @@ nSteps = length(time);
 k = delta_time;
 N = n1+n2+n3;
 u        = zeros(N,1);
-u(edges) = edgVal;
+u(velEdges)    = velVal;
+u(presEdges+n) = presVal;
 % u(lru.getEdge(4)) = 1;
 uAll = zeros(N,nSteps);
 uAll(:,1) = u;
 
 
 % lhs = [M+k*A, k*D; D', zeros(n3,n3)];
-lhs = [M+k*A, k*D; Dt, [avg_p'; zeros(n3-1,n3)]];
+% lhs = [M+k*A, k*D; Dt, [avg_p'; zeros(n3-1,n3)]];
 % lhs = [M, zeros(n1+n2,n3); zeros(n3,N)] + k*dF(1);
-b   = b(1:(n1+n2));
+% b   = b(1:(n1+n2));
 % lhs(edges,:) = [];
 % lhs(:,edges) = [];
 
@@ -30,19 +31,63 @@ writeVTK2(sprintf('%s-%d.vtk', filename, 0), title, x,y,mesh, zeros(numel(x),1),
 
 topRightCorner = intersect(lrp.getEdge(2), lrp.getEdge(4))+n1+n2;
 
+% b = -A(:,velEdges)*velVal - D(:,presEdges)*presVal;
 timer = cputime; tic;
 for i=2:nSteps
   lastTime = toc;
   fprintf('Time: %g (step %d/%d):\n', time(i), i, nSteps);
 
   % initial guess for newton stepping = previous time step
-  v  = u; %zeros(n1+n2+n3,1);
+  v   = u; %zeros(n1+n2+n3,1);
   n  = n1+n2;
   N  = n1+n2+n3;
+  % rhs = M*(v(1:n)-u(1:n)) + k*(A*v(1:n)+D*v(n+1:end));
+  % rhs = M*u(1:n) - k*b - M(:,velEdges)*velVal;
+  % lhs = [M + k*A, k*D];
+  % lhs(velEdges,:) = 0;
+  % lhs(:,velEdges) = 0;
+  % lhs(velEdges,velEdges) = speye(numel(velEdges));
+
+  % rhs(velEdges) = velVal;
+  lhs_lower = [D', zeros(n3)];
+  lhs_lower([presEdges;avgP_ind],:) = 0;
+  lhs_lower(avgP_ind,n+1:end)      = avg_p';
+  lhs_lower(presEdges,n+presEdges) = speye(numel(presEdges));;
+  % rhs_lower = bLow;
+  rhs_lower = zeros(n3,1);
+  rhs_lower(presEdges) = presVal;
+  rhs_lower(avgP_ind)  = 0;
+  % rhs = [rhs; -D(velEdges,:)'*velVal];
+  % rhs(presEdges+n) = presVal;
+  % rhs(avgP_ind +n) = 0;
+  lhs = [[M,zeros(n,n3)] + k*dF(zeros(size(u))); lhs_lower];
+  rhs = [M*u(1:n)        + k* F(zeros(size(u))); rhs_lower];
+  v = lhs \ rhs;
   for newtIt=1:nwtn_max_it
+    %%% QUACK!!!
+    rhs = M*(v(1:n)-u(1:n)) + k*(A*v(1:n)+D*v(n+1:end));
+    % rhs = rhs - A(:,velEdges)*velVal - D(:,presEdges)*presVal;
+    lhs = [M + k*A, k*D];
+    lhs(velEdges,:) = 0;
+    lhs(:,velEdges) = 0;
+    % for j=1:numel(velEdges)
+      % k = velEdges(j);
+      % lhs(k,k) = 1;
+    % end
+    lhs(velEdges,velEdges) = speye(numel(velEdges));
+
+    rhs(velEdges) = 0;
+    lhs_lower = [D', zeros(n3)];
+    lhs_lower([presEdges;avgP_ind],:) = 0;
+    lhs_lower(avgP_ind,n+1:end)      = avg_p';
+    lhs_lower(presEdges,n+presEdges) = speye(numel(presEdges));;
+    rhs = [rhs; -D(velEdges,:)'*velVal];
+    rhs(presEdges+n) = -presVal;
+    rhs(avgP_ind +n) = 0;
+    lhs = [lhs; lhs_lower];
     %%% backward euler stepping
-    lhs = [M, zeros(n,n3);    zeros(n3,N)] + k*dF(v);
-    rhs = [M*(v(1:n)-u(1:n)); zeros(n3,1)] + k* F(v);
+    % lhs = [M, zeros(n,n3);    zeros(n3,N)] + k*dF(v);
+    % rhs = [M*(v(1:n)-u(1:n)); zeros(n3,1)] + k* F(v);
     %%% crank-nicolson rule stepping
     % lhs = [M, zeros(n,n3);    zeros(n3,N)] + k/2*(dF(v)       );
     % rhs = [M*(v(1:n)-u(1:n)); zeros(n3,1)] + k/2*( F(v)+ F(u) );
@@ -50,8 +95,9 @@ for i=2:nSteps
     % max(max(abs(rightRHS-rhs)))
     % rhs(edges) = 0;
     dv = lhs \ -rhs;
-    v = v + dv;
-    if(norm(dv)<nwtn_res_tol)
+    v(1:n) = v(1:n) + dv(1:n);
+    v(n+1:end) = v(n+1:end);
+    if(norm(dv(1:n))<nwtn_res_tol)
       break;
     end
   end

@@ -60,7 +60,7 @@ if exist([filename, '.mat' ], 'file')
 	Problem.Identifier = 'a';
 	filename = sprintf('%s/%s/%s-p%d%d-re%d-T%d', Problem.Title, Problem.Subtitle, Problem.Identifier, Problem.Polynomial_Degree, floor(Problem.Reynolds), floor(Problem.Time_Range(2)));
 	while exist([filename, '.mat'], 'file')
-		Problem.Identifier = Problem.Identifier + 1;
+		Problem.Identifier = char(Problem.Identifier + 1);
 		filename = sprintf('%s/%s/%s-p%d%d-re%d-T%d', Problem.Title, Problem.Subtitle, Problem.Identifier, Problem.Polynomial_Degree, floor(Problem.Reynolds), floor(Problem.Time_Range(2)));
 	end
 end

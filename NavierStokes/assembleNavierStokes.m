@@ -93,6 +93,7 @@ for el=1:nel,
       testP   = Np(1,:);
       testVel = [Nu(1,:), zeros(1,sup2); zeros(1,sup1), Nv(1,:)];    % vector basis functions
       gradVel = [Nu(2:3,:), zeros(2,sup2);zeros(2,sup1), Nv(2:3,:)]; % 
+      % myA     = gradVel'*gradVel;
       gradVel = gradVel([1,3,2,4],:);                                % row-wise: u_1,1  u_2,1  u_1,2  u_2,2
 
       % alter through piola mapping
@@ -116,6 +117,7 @@ for el=1:nel,
       %
 
       Ak = Ak  + 2*my * symVel'*symVel   * detJw;  % N_{i,j}^k  N_{i,j}^l  diffusion term,  for all (k,l)
+      % Ak = Ak  + 2*my          *myA      * detJw;  % N_{i,j}^k  N_{i,j}^l  diffusion term,  for all (k,l)
       Mk = Mk  +       testVel'*testVel  * detJw;  % N_i^k      N_i^l      mass matrix,     for all (k,l)
       Dk = Dk  -        divVel'*testP    * detJw;  % N_{i,i}^k  M^l        pressure term    for all (k,l)
       tmp1 = gradVel([1,3],:)'*testVel;            % N_i^k      N_{j,i}^l                   for j=1, all (l,k)
