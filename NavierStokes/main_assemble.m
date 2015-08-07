@@ -10,8 +10,10 @@ disp 'setting boundary conditions'
 % topCornersU = intersect(lru.getEdge(4), [lru.getEdge(1);lru.getEdge(2)]);
 % topCornersV = intersect(lrv.getEdge(4), [lrv.getEdge(1);lrv.getEdge(2)]) + n1;
 
-edges = [];
-edgVal = [];
+edges     = [];
+edgVal    = [];
+presEdges = [];
+presVal   = [];
 for i=1:numel(BC)
   if BC{i}.comp == 1 % condition on u-component 
     if exist('newElU')
@@ -27,51 +29,20 @@ for i=1:numel(BC)
     end
     thisI = thisI + n1;
   elseif BC{i}.comp == 3 % condition on pressure-component 
+    p = lrp.p(1);
+    presI = find(abs(lrp.knots(:,2)   - BC{i}.start(1)) < Problem.Geom_TOL &  abs(lrp.knots(:,p+1) - BC{i}.start(1)) < Problem.Geom_TOL & ...
+                 abs(lrp.knots(:,p+4) - BC{i}.start(2)) < Problem.Geom_TOL &  abs(lrp.knots(:,end-1) - BC{i}.start(2)) < Problem.Geom_TOL );
+    presEdges = [presEdges; presI];
+    presVal   = [presVal  ; BC{i}.value];
   end
   edges  = [edges;  thisI];
   edgVal = [edgVal; thisCP];
 end
 
+% strip down DOFs appearing on multple edges (i.e. corners)
 [velEdges i] = unique(edges);
 velVal       = edgVal(i);
 
-% edges = setdiff(edges, [topCornersU;topCornersV]);
-presCorner1 = intersect(lrp.getEdge(1), [lrp.getEdge(3); lrp.getEdge(4)]);
-presCorner2 = intersect(lrp.getEdge(2), [lrp.getEdge(3); lrp.getEdge(4)]);
-presEdges = [presCorner1; presCorner2];
-presVal   = [Problem.Geometry_param; Problem.Geometry_param; -Problem.Geometry_param; -Problem.Geometry_param];
-% presEdges = [];
-% presVal   = [];
-% edges = [edges; presCorner];
-% edges = [];
-% rebuild = 1:(n1+n2+n3);
-% rebuild(edges) = [];
-
-% A = [A, D; D', zeros(n3,n3)];
-% setPressureBndryCond;
-
-% n = size(NL,1);
-% b(1:n) = b(1:n) - A(:,edges)*edgVal;
-% A(edges,:) = [];
-% A(:,edges) = [];
-% b(edges)   = [];
-% A(edges,:) = 0;
-% A(:,edges) = 0;
-% NL(edges,:) = 0;
-% for i=1:numel(edges)
-%   start = (edges(i)-1)*n+1;
-%   NL(:,start:start+n-1) = 0;
-% end
-% A(edges,edges) = speye(numel(edges));
-% b(edges)   = edgVal;
-% Dt = D';
-% D(edges,:) = 0;
-% M(edges,:) = 0;
-% M(:,edges) = 0;
-% M(edges,edges) = speye(numel(edges));
-% avg_p = avg_p / avg_p(1);
-% D     = D - D(:,1)*avg_p;
-% Dt(1,:) = 0;
 avgP_ind = sort(setdiff(1:10, presEdges));
 avgP_ind = avgP_ind(1);
 
