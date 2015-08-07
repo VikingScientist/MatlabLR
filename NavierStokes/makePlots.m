@@ -5,6 +5,7 @@ if exist('nviz')~=1
 	nviz = 10;
 end
 
+U = u;
 u = U(1:n1);
 v = U(n1+1:n1+n2);
 p = U(n1+n2+1:end);
