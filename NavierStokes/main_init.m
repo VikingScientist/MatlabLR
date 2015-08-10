@@ -103,11 +103,26 @@ else
 	delta_time = Problem.Time_Step;
 end
 
+integrator_name = lower(Problem.Time_Integrator);
+if strncmp(integrator_name, 'crank', 5) ||  ...
+   strcmp( integrator_name, 'cn')
+  time_integrator = 'Crank-Nicolsen';
+elseif strncmp(integrator_name, 'backward', 7) ||  ...
+       strcmp( integrator_name, 'relue', 7)
+  time_integrator = 'Backward Euler';
+else
+  fprintf('Error: Unkown time integrator: \"%s\"\n', Problem.Time_Integrator)
+  break;
+end
+
+        
+
 time = Problem.Time_Range(1):delta_time:Problem.Time_Range(2);
 nSteps = length(time);
 
 %%% debug print time integration
 fprintf('  Time integration\n');
+fprintf('    Type     : %s\n', time_integrator);
 fprintf('    T(start) : %f\n', time(1));
 fprintf('    T(end)   : %f\n', time(end));
 fprintf('    k        : %f\n', delta_time);

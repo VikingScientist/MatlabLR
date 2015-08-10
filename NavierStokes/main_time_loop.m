@@ -4,20 +4,19 @@ nSteps = length(time);
 % k = time(2)-time(1);
 k = delta_time;
 N = n1+n2+n3;
+n = n1+n2;
 u        = zeros(N,1);
-u(velEdges)    = velVal;
-u(presEdges+n) = presVal;
-% u(lru.getEdge(4)) = 1;
+edg = [velEdges; presEdges+n];
+val = [velVal  ; presVal];
+u(edg) = val;
+nonEdge = 1:N;
+nonEdge(edg) = [];
+
 uAll = zeros(N,nSteps);
 uAll(:,1) = u;
 
+ndof_vel = n1+n2-numel(velEdges);
 
-% lhs = [M+k*A, k*D; D', zeros(n3,n3)];
-% lhs = [M+k*A, k*D; Dt, [avg_p'; zeros(n3-1,n3)]];
-% lhs = [M, zeros(n1+n2,n3); zeros(n3,N)] + k*dF(1);
-% b   = b(1:(n1+n2));
-% lhs(edges,:) = [];
-% lhs(:,edges) = [];
 
 % [plotAu meshu eu xu yu] = lru.getSurfMatrix('diffX', 'parametric', 'nviz', 5, 'diffX');
 % [plotAv meshu ev xv yv] = lrv.getSurfMatrix('diffY', 'parametric', 'nviz', 5, 'diffY');
@@ -38,66 +37,25 @@ for i=2:nSteps
   fprintf('Time: %g (step %d/%d):\n', time(i), i, nSteps);
 
   % initial guess for newton stepping = previous time step
-  v   = u; %zeros(n1+n2+n3,1);
-  n  = n1+n2;
-  N  = n1+n2+n3;
-  % rhs = M*(v(1:n)-u(1:n)) + k*(A*v(1:n)+D*v(n+1:end));
-  % rhs = M*u(1:n) - k*b - M(:,velEdges)*velVal;
-  % lhs = [M + k*A, k*D];
-  % lhs(velEdges,:) = 0;
-  % lhs(:,velEdges) = 0;
-  % lhs(velEdges,velEdges) = speye(numel(velEdges));
-
-  % rhs(velEdges) = velVal;
-  lhs_lower = [D', zeros(n3)];
-  lhs_lower([presEdges;avgP_ind],:) = 0;
-  lhs_lower(avgP_ind,n+1:end)      = avg_p';
-  lhs_lower(presEdges,n+presEdges) = speye(numel(presEdges));;
-  % rhs_lower = bLow;
-  rhs_lower = zeros(n3,1);
-  rhs_lower(presEdges) = presVal;
-  rhs_lower(avgP_ind)  = 0;
-  % rhs = [rhs; -D(velEdges,:)'*velVal];
-  % rhs(presEdges+n) = presVal;
-  % rhs(avgP_ind +n) = 0;
-  lhs = [[M,zeros(n,n3)] + k*dF(zeros(size(u))); lhs_lower];
-  rhs = [M*u(1:n)        + k* F(zeros(size(u))); rhs_lower];
-  v = lhs \ rhs;
+  v   = u;
   for newtIt=1:Problem.Newton_Max_It
-    %%% QUACK!!!
-    rhs = M*(v(1:n)-u(1:n)) + k*(A*v(1:n)+D*v(n+1:end));
-    % rhs = rhs - A(:,velEdges)*velVal - D(:,presEdges)*presVal;
-    lhs = [M + k*A, k*D];
-    lhs(velEdges,:) = 0;
-    lhs(:,velEdges) = 0;
-    % for j=1:numel(velEdges)
-      % k = velEdges(j);
-      % lhs(k,k) = 1;
-    % end
-    lhs(velEdges,velEdges) = speye(numel(velEdges));
+    un = u(nonEdge); 
+    vn = v(nonEdge);
 
-    rhs(velEdges) = 0;
-    lhs_lower = [D', zeros(n3)];
-    lhs_lower([presEdges;avgP_ind],:) = 0;
-    lhs_lower(avgP_ind,n+1:end)      = avg_p';
-    lhs_lower(presEdges,n+presEdges) = speye(numel(presEdges));;
-    rhs = [rhs; -D(velEdges,:)'*velVal];
-    rhs(presEdges+n) = -presVal;
-    rhs(avgP_ind +n) = 0;
-    lhs = [lhs; lhs_lower];
-    %%% backward euler stepping
-    % lhs = [M, zeros(n,n3);    zeros(n3,N)] + k*dF(v);
-    % rhs = [M*(v(1:n)-u(1:n)); zeros(n3,1)] + k* F(v);
-    %%% crank-nicolson rule stepping
-    % lhs = [M, zeros(n,n3);    zeros(n3,N)] + k/2*(dF(v)       );
-    % rhs = [M*(v(1:n)-u(1:n)); zeros(n3,1)] + k/2*( F(v)+ F(u) );
-    % max(max(abs(rightLHS-lhs)))
-    % max(max(abs(rightRHS-rhs)))
-    % rhs(edges) = 0;
+    if strcmp(time_integrator, 'Backward Euler')
+      lhs = k*dF(vn);
+      rhs = k* F(vn);
+    elseif strcmp(time_integrator, 'Crank-Nicolsen')
+      lhs = k/2*(dF(vn)         );
+      rhs = k/2*( F(vn) + F(un) );
+    end
+
+    lhs(1:ndof_vel,1:ndof_vel) = lhs(1:ndof_vel,1:ndof_vel) + M;
+    rhs(1:ndof_vel)            = rhs(1:ndof_vel)            + M*(vn(1:ndof_vel)-un(1:ndof_vel));
     dv = lhs \ -rhs;
-    v(1:n) = v(1:n) + dv(1:n);
-    v(n+1:end) = v(n+1:end);
-    if(norm(dv(1:n))<Problem.Newton_TOL)
+
+    v(nonEdge) = v(nonEdge) + dv;
+    if(norm(dv)<Problem.Newton_TOL)
       break;
     end
   end
@@ -113,14 +71,7 @@ for i=2:nSteps
   velY     = vel(  end/2+1:end);
   writeVTK2(sprintf('%s-%d.vtk', filename, i-1), title, x,y,mesh, velX,velY,pressure);
 
-
-  % u = [M+k/2*A, k/2*D; Dt [avg_p'; zeros(n3-1,n3)]] \ [(M-k/2*A)*u(1:n)-k/2*D*u(n+1:end)+k*b; zeros(n3,1)];
-  % u = [M+k*A, k*D; Dt [avg_p'; zeros(n3-1,n3)]] \ [M*u(1:n)+k*b; zeros(n3,1)];
-  % u = rightLHS \ rightRHS;
-  % dudx = plotAu*u(1:n1);
-  % dvdy = plotAv*u(n1+1:n1+n2);
-  % divPt = dudx + dvdy;
-  % fprintf('  max(div(u)) = %g\n', max(max(divPt)));
+  % compute and print timing estimates
   timeUsed = toc - lastTime;
   timeLeft = (nSteps-i)*timeUsed;
   c = clock;
