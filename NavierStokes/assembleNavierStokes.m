@@ -135,12 +135,12 @@ for el=1:nel,
   end
   % end gauss points
 
-  kl_index = zeros(numel(globIvel)^2,1);
+  lk_index = zeros(numel(globIvel)^2,1);
   inc = (n1+n2);
   m=1;
   for l=1:numel(globIvel)
     for k=1:numel(globIvel)
-      kl_index(m) = globIvel(k) + (globIvel(l)-1)*inc;
+      lk_index(m) = globIvel(l) + (globIvel(k)-1)*inc;
       m = m+1;
     end
   end
@@ -149,7 +149,7 @@ for el=1:nel,
   A(globIvel, globIvel)  = A(globIvel, globIvel)  + Ak;
   M(globIvel, globIvel)  = M(globIvel, globIvel)  + Mk;
   D(globIvel, locIp)     = D(globIvel, locIp)     + Dk;
-  NL(globIvel, kl_index) = NL(globIvel, kl_index) + NLk';
+  NL(globIvel, lk_index) = NL(globIvel, lk_index) + NLk';
 end
 % end element loop
 
