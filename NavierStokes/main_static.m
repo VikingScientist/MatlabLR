@@ -42,10 +42,10 @@ fprintf('  Max pressure controlpoint    : %g\n', max(u(n+1:end)));
 % % 
 % % u = lhs \ rhs;
 
-n = n1+n2-numel(velEdges);
-lhs = [A D; D', zeros(numel(p_dof)); zeros(1,n), avg_p(p_dof)'];
-rhs = [b;0];
-u(nonEdge) = lhs \ rhs;
+% n = n1+n2-numel(velEdges);
+% lhs = [A D; D', zeros(numel(p_dof)); zeros(1,n), avg_p(p_dof)'];
+% rhs = [b;0];
+% u(nonEdge) = lhs \ rhs;
 
 uAll = u;
 
