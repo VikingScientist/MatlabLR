@@ -28,6 +28,10 @@ if Problem.Save_Results
   lru.save([filename, '-lru.lr']);
   lrv.save([filename, '-lrv.lr']);
   lrp.save([filename, '-lrp.lr']);
-  save(filename, 'Problem', 'uAll', 'time');
+  if Problem.Static
+    save(filename, 'Problem', 'uAll');
+  else
+    save(filename, 'Problem', 'uAll', 'time');
+  end
 end
 
