@@ -15,7 +15,10 @@ edgVal    = [];
 presEdges = [];
 presVal   = [];
 for i=1:numel(BC)
-  if isfield(BC{i}, 'weak') && BC{i}.weak==true % skip weak boundary conditions (these are handled in another function
+  if isfield(BC{i}, 'weak') && BC{i}.weak==true % skip weak boundary conditions (these are handled in another function)
+    continue;
+  end
+  if isfield(BC{i}, 'pressure_integral') && BC{i}.pressure_integral==true % skip average pressure  boundary conditions (handled at different place)
     continue;
   end
   if BC{i}.comp == 1 % condition on u-component 
@@ -64,20 +67,6 @@ if numel(presEdges)>0
   b = b - [ D(:,presEdges)*presVal; zeros(n3,1) ];
 end
 
-% NL2 = reshape(NL,n*n,n);
-% B = reshape(NL2*rand(n,1), n,n);
-% disp 'Symmetry before removing rows'
-% max(max(abs(B-B')))
-% NL(1,:) = [];
-% clearI = [1:n, 1:n:n*n];
-% n = n-1;
-% NL(:, clearI) = [];
-% NL2 = reshape(NL,n*n,n);
-% B = reshape(NL2*rand(n,1), n,n);
-% disp 'Symmetry after removing row'
-% max(max(abs(B-B')))
-% break;
-
 %%% remove boundary DOFs from the system
 A(:,velEdges)             = [];
 A(velEdges,:)             = [];
@@ -103,22 +92,32 @@ p_dof(presEdges) = [];
 
 %%% linear stokes system
 if Problem.Linear
-  F  = @(u) [A*u(1:n) + D*u(n+1:end); D'*u(1:n);0] - [b;0];
-  dF = @(u) [A         , D                  ;
-             D'        , zeros(numel(p_dof));
-             zeros(1,n), avg_p(p_dof)'     ]; % augment linear system by additional row
+  if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
+    F  = @(u) [A*u(1:n) + D*u(n+1:end); D'*u(1:n);0] - [b;0];
+    dF = @(u) [A         , D                  ;
+               D'        , zeros(numel(p_dof));
+               zeros(1,n), avg_p(p_dof)'     ]; % augment linear system by additional row
+  else 
+    F  = @(u) [A*u(1:n) + D*u(n+1:end); D'*u(1:n)] - [b];
+    dF = @(u) [A         , D                  ;
+               D'        , zeros(numel(p_dof))];
+  end
 % F  = @(u) [A*u(1:n) + D*u(n+1:end); Dt*u(1:n)]-b;
 % dF = @(u) [A, D; Dt [avg_p'; zeros(n3-1,n3)]];
 else
-%%% Nolinear navier-stokes system
 %%% nolinear navier-stokes system (optimized memory)
   NL;                        % (m,lk)
   NL2 = reshape(NL, n*n,n);  % (ml,k)
   NL3 = reshape(NL', n,n*n); % (l,km)
-  F  = @(u) [A*u(1:n) + D*u(n+1:end) +  NL*kron(u(1:n),u(1:n)); D'*u(1:n);0] - [b;0];
+  if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
+    F  = @(u) [A*u(1:n) + D*u(n+1:end) +  NL*kron(u(1:n),u(1:n)); D'*u(1:n);0] - [b;0];
 % F  = @(u) [A*u(1:n) + D*u(n+1:end) +  reshape(NL2*u(1:n), n,n)*u(1:n); D'*u(1:n); 0] - [b;0];
-  dF = @(u) [A + reshape(NL2*u(1:n), n,n) + reshape(u(1:n)'*NL3, n,n)',  D; D', zeros(numel(p_dof)); zeros(1,n), avg_p(p_dof)'];
+    dF = @(u) [A + reshape(NL2*u(1:n), n,n) + reshape(u(1:n)'*NL3, n,n)',  D; D', zeros(numel(p_dof)); zeros(1,n), avg_p(p_dof)'];
 % dF = @(u) [A + reshape(NL2*u(1:n), n,n) + NL*kron(speye(n),u(1:n)),    D; D', zeros(numel(p_dof)); zeros(1,n), avg_p(p_dof)'];
 % dF = @(u) [A + NL*kron(u(1:n),speye(n)) + NL*kron(speye(n),u(1:n)),    D; D', zeros(numel(p_dof)); zeros(1,n), avg_p(p_dof)'];
+  else
+    F  = @(u) [A*u(1:n) + D*u(n+1:end) +  NL*kron(u(1:n),u(1:n)); D'*u(1:n)] - b;
+    dF = @(u) [A + reshape(NL2*u(1:n), n,n) + reshape(u(1:n)'*NL3, n,n)',  D; D', zeros(numel(p_dof))];
+  end
 end
 

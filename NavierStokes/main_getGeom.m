@@ -1,7 +1,7 @@
 
 %%% Generate geometry 
 name = lower(Problem.Geometry);
-p = Problem.Polynomial_Degree+1; % define p as the lowest order polynomial
+p = Problem.Polynomial_Degree+1; % define p as the highest order polynomial
 t = cputime; tic;
 doCrop = false;
 

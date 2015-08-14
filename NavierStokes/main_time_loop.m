@@ -1,7 +1,5 @@
 
 nSteps = length(time);
-% time = linspace(0,30,nSteps);
-% k = time(2)-time(1);
 k = delta_time;
 N = n1+n2+n3;
 n = n1+n2;
@@ -18,15 +16,17 @@ uAll(:,1) = u;
 ndof_vel = n1+n2-numel(velEdges);
 
 
-% [plotAu meshu eu xu yu] = lru.getSurfMatrix('diffX', 'parametric', 'nviz', 5, 'diffX');
-% [plotAv meshu ev xv yv] = lrv.getSurfMatrix('diffY', 'parametric', 'nviz', 5, 'diffY');
-if exist('newElU')==1
-  [plotA plotB mesh edges x y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, 4, newElU, newElV, newElP);
-else
-  [plotA plotB mesh edges x y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, 4);
+if Problem.Paraview
+  % [plotAu meshu eu xu yu] = lru.getSurfMatrix('diffX', 'parametric', 'nviz', 5, 'diffX');
+  % [plotAv meshu ev xv yv] = lrv.getSurfMatrix('diffY', 'parametric', 'nviz', 5, 'diffY');
+  if exist('newElU')==1
+    [plotA plotB mesh edges x y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, 4, newElU, newElV, newElP);
+  else
+    [plotA plotB mesh edges x y] = getSurfacePlotMatrices(lr, lru, lrv, lrp, 4);
+  end
+  title    = sprintf('%s, %s (%s)', Problem.Title, Problem.Subtitle, Problem.Identifier);
+  writeVTK2(sprintf('%s-%d.vtk', filename, 0), title, x,y,mesh, zeros(numel(x),1),zeros(numel(x),1), zeros(numel(x),1));
 end
-title    = sprintf('%s, %s (%s)', Problem.Title, Problem.Subtitle, Problem.Identifier);
-writeVTK2(sprintf('%s-%d.vtk', filename, 0), title, x,y,mesh, zeros(numel(x),1),zeros(numel(x),1), zeros(numel(x),1));
 
 topRightCorner = intersect(lrp.getEdge(2), lrp.getEdge(4))+n1+n2;
 
@@ -65,11 +65,13 @@ for i=2:nSteps
   fprintf('  Max v-velocity controlpoint  : %g\n', max(v(n1+1:n1+n2)));
   fprintf('  Max pressure controlpoint    : %g\n', max(v(n+1:end)));
   u = v;
-  vel = plotA*u(1:n);
-  pressure = plotB*u(n+1:end);
-  velX     = vel(1:end/2  );
-  velY     = vel(  end/2+1:end);
-  writeVTK2(sprintf('%s-%d.vtk', filename, i-1), title, x,y,mesh, velX,velY,pressure);
+  if Problem.Paraview
+    vel = plotA*u(1:n);
+    pressure = plotB*u(n+1:end);
+    velX     = vel(1:end/2  );
+    velY     = vel(  end/2+1:end);
+    writeVTK2(sprintf('%s-%d.vtk', filename, i-1), title, x,y,mesh, velX,velY,pressure);
+  end
 
   % compute and print timing estimates
   timeUsed = toc - lastTime;

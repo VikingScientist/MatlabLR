@@ -139,9 +139,9 @@ if plotAll || (exist('plotDiv')==1 && plotDiv==true)
 		makeDivPlot();
 		set(gcf, 'Position', [0,0,800,600]);
 		axis equal;
-		xl = xlim();
-		zl = zlim(); zlim(zl*1.5);
-		xlim(xl);
+		% xl = xlim();
+		% zl = zlim(); zlim(zl*1.5);
+		% xlim(xl);
 		if exist('do_save')==1 && do_save == true
 			saveas(gcf, 'Results/div-solution.png', 'png');
 			saveas(gcf, 'Results/div-solution.eps', 'psc2');

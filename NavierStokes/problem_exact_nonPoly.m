@@ -44,19 +44,20 @@ Problem = struct(...
 % 'Time_Step'         ,  @(h) min(h^((p+1)/2), h^2 /4*Re), ...
 
 pex = @(x,y) (-424+156*exp(1)+(y.^2-y).*(-456+exp(x).*(456+x.^2.*(228-5*(y.^2-y))+2*x.*(-228+(y.^2-y))+2*x.^3.*(-36+(y.^2-y))+x.^4.*(12+(y.^2-y)))));
-BC     = cell(1);
-BC{1}  = struct('start', [0,0], 'stop', [1,0], 'comp', 2, 'value', 0, 'weak', false);
-BC{2}  = struct('start', [0,1], 'stop', [1,1], 'comp', 2, 'value', 0, 'weak', false);
-BC{3}  = struct('start', [0,0], 'stop', [0,1], 'comp', 1, 'value', 0, 'weak', false);
-BC{4}  = struct('start', [1,0], 'stop', [1,1], 'comp', 1, 'value', 0, 'weak', false);
-BC{5}  = struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', 0, 'weak', false);
-BC{6}  = struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', 0, 'weak', false);
-BC{7}  = struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', 0, 'weak', false);
-BC{8}  = struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', 0, 'weak', false);
-BC{9}  = struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', pex(0,0), 'weak', false);
-BC{10} = struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', pex(1,0), 'weak', false);
-BC{11} = struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', pex(0,1), 'weak', false);
-BC{12} = struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', pex(1,1), 'weak', false);
+BC     = cell(0);
+BC = [BC, struct('pressure_integral', true)];
+BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 2, 'value', 0, 'weak', false)];
+BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 2, 'value', 0, 'weak', false)];
+BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 1, 'value', 0, 'weak', false)];
+BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 1, 'value', 0, 'weak', false)];
+BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', 0, 'weak', false)];
+BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', 0, 'weak', false)];
+BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', 0, 'weak', false)];
+BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', 0, 'weak', false)];
+BC = [BC, struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', pex(0,0), 'weak', false)];
+BC = [BC, struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', pex(1,0), 'weak', false)];
+BC = [BC, struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', pex(0,1), 'weak', false)];
+BC = [BC, struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', pex(1,1), 'weak', false)];
 
 
 

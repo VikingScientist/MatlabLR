@@ -90,7 +90,6 @@ end
 plot3(Xlines', Ylines', Zlines', 'k-');
 colorbar;
 set(gcf, 'Position', [0,0,800,600]);
-axis equal;
 title('Divergence([u,v])');
 view(2);
 
