@@ -43,9 +43,14 @@ Problem = struct(...
 'Time_Range'        ,  [0,10]);
 % 'Time_Step'         ,  @(h) min(h^((p+1)/2), h^2 /4*Re), ...
 
-uex = @(x,y)  sin(pi*x).*cos(pi*y);
-vex = @(x,y) -cos(pi*x).*sin(pi*y);
-pex = @(x,y) sin(2*pi*x).*sin(2*pi*y);
+Exact_solution = struct(                  ...
+'u', @(x,y)  sin(pi*x).*cos(pi*y),        ...
+'v', @(x,y) -cos(pi*x).*sin(pi*y),        ...
+'p', @(x,y) sin(2*pi*x).*sin(2*pi*y),     ...
+'grad_u', @(x,y) [pi*cos(pi*x)*cos(pi*y); -pi*sin(pi*x)*sin(pi*y)],...
+'grad_v', @(x,y) [pi*sin(pi*x)*sin(pi*y); -pi*cos(pi*x)*cos(pi*y)]...
+);
+
 BC     = cell(0);
 BC = [BC, struct('pressure_integral', true)];
 BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 2, 'value', 0)];
@@ -53,10 +58,10 @@ BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 2, 'value', 0)];
 BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 1, 'value', 0)];
 BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 1, 'value', 0)];
 
-BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', uex, 'weak', true)];
-BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', uex, 'weak', true)];
-BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', vex, 'weak', true)];
-BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', vex, 'weak', true)];
+BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', Exact_solution.u, 'weak', true)];
+BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', Exact_solution.u, 'weak', true)];
+BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', Exact_solution.v, 'weak', true)];
+BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', Exact_solution.v, 'weak', true)];
 % BC = [BC, struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', pex(0,0), 'weak', false)];
 % BC = [BC, struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', pex(1,0), 'weak', false)];
 % BC = [BC, struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', pex(0,1), 'weak', false)];
@@ -67,8 +72,10 @@ main_assemble;
 
 if Problem.Static
   main_static;
+  integrateNorms;
 else 
   main_time_loop;
 end
+
 
 main_dump_results;

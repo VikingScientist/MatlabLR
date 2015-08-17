@@ -1,8 +1,21 @@
 Problem
+u = uAll;
 
 if Problem.Static
   if Problem.MatlabPlot
     makePlots;
+    if(exist('Exact_solution'))
+      fprintf('| uh - u |_H1  = %10.4g (%6.3f%%)\n', sqrt(sum(velocity_error_H1_squared)), sqrt(sum(velocity_error_H1_squared)/sum(u_H1_norm_squared)));
+      fprintf('| ph - p |_L2  = %10.4g (%6.3f%%)\n', sqrt(sum(pressure_error_L2_squared)), sqrt(sum(pressure_error_L2_squared)/sum(p_L2_norm_squared)));
+      fprintf('| uh - u |_inf = %10.4g\n', max(velocity_error_inf));
+      fprintf('| ph - p |_inf = %10.4g\n', max(pressure_error_inf));
+      fprintf('| u |_H1       = %10.4g\n', sqrt(sum(u_H1_norm_squared)));
+      fprintf('| p |_L2       = %10.4g\n', sqrt(sum(p_L2_norm_squared)));
+    end
+    fprintf('| uh |_H1      = %10.4g\n', sqrt(sum(uh_H1_norm_squared)));
+    fprintf('| ph |_L2      = %10.4g\n', sqrt(sum(ph_L2_norm_squared)));
+    fprintf('|div(uh)|_L2   = %10.4g\n', sqrt(sum(div_u_L2_norm_squared)));
+    fprintf('|div(uh)|_inf  = %10.4g\n', max(div_u_inf_norm));
   end
   
   if Problem.Paraview
