@@ -43,7 +43,14 @@ Problem = struct(...
 'Time_Range'        ,  [0,10]);
 % 'Time_Step'         ,  @(h) min(h^((p+1)/2), h^2 /4*Re), ...
 
-pex = @(x,y) (-424+156*exp(1)+(y.^2-y).*(-456+exp(x).*(456+x.^2.*(228-5*(y.^2-y))+2*x.*(-228+(y.^2-y))+2*x.^3.*(-36+(y.^2-y))+x.^4.*(12+(y.^2-y)))));
+Exact_solution = struct(                  ...
+'u',      @(x,y) 2*exp(x)*(x-1)^2*x^2*(y^2-y)*(2*y-1), ...
+'v',      @(x,y) -exp(x)*(x-1)*x*(-2+x*(x+3))*(y-1)^2*y^2, ...
+'p',      @(x,y) (-424+156*exp(1)+(y^2-y)*(-456+exp(x)*(456+x^2*(228-5*(y^2-y))+2*x*(-228+(y^2-y))+2*x^3*(-36+(y^2-y))+x^4*(12+(y^2-y))))), ...
+'grad_u', @(x,y) [- 4*x*exp(x)*(- y^2 + y)*(2*y - 1)*(x - 1)^2 - 2*x^2*exp(x)*(- y^2 + y)*(2*x - 2)*(2*y - 1) - 2*x^2*exp(x)*(- y^2 + y)*(2*y - 1)*(x - 1)^2; 2*x^2*exp(x)*(2*y - 1)^2*(x - 1)^2 - 4*x^2*exp(x)*(- y^2 + y)*(x - 1)^2], ...
+'grad_v', @(x,y) [- y^2*exp(x)*(x*(x + 3) - 2)*(x - 1)*(y - 1)^2 - x*y^2*exp(x)*(x*(x + 3) - 2)*(y - 1)^2 - x*y^2*exp(x)*(x*(x + 3) - 2)*(x - 1)*(y - 1)^2 - x*y^2*exp(x)*(2*x + 3)*(x - 1)*(y - 1)^2; - 2*x*y*exp(x)*(x*(x + 3) - 2)*(x - 1)*(y - 1)^2 - x*y^2*exp(x)*(x*(x + 3) - 2)*(2*y - 2)*(x - 1)] ...
+);
+
 BC     = cell(0);
 BC = [BC, struct('pressure_integral', true)];
 BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 2, 'value', 0, 'weak', false)];
@@ -54,10 +61,10 @@ BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', 0, 'weak', f
 BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', 0, 'weak', false)];
 BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', 0, 'weak', false)];
 BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', 0, 'weak', false)];
-BC = [BC, struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', pex(0,0), 'weak', false)];
-BC = [BC, struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', pex(1,0), 'weak', false)];
-BC = [BC, struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', pex(0,1), 'weak', false)];
-BC = [BC, struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', pex(1,1), 'weak', false)];
+BC = [BC, struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', Exact_solution.p(0,0), 'weak', false)];
+BC = [BC, struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', Exact_solution.p(1,0), 'weak', false)];
+BC = [BC, struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', Exact_solution.p(0,1), 'weak', false)];
+BC = [BC, struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', Exact_solution.p(1,1), 'weak', false)];
 
 
 
@@ -66,6 +73,7 @@ main_assemble;
 
 if Problem.Static
   main_static;
+  integrateNorms;
 else 
   main_time_loop;
 end
