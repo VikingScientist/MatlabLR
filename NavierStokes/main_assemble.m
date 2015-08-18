@@ -1,5 +1,5 @@
 
-fprintf('assmbling system\n'); % add a linebreak since assembly proccedure prints progress
+fprintf('assembling system\n'); % add a linebreak since assembly proccedure prints progress
 assembleNavierStokes;
 fprintf('\n'); 
 
