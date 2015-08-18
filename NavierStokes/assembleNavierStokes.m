@@ -125,8 +125,7 @@ for el=1:nel,
 
       % right-hand side 
       fVal = Problem.Force(map.x(1), map.x(2));
-      b(globIu) = b(globIu) + Nu(1,:)'*fVal(1) * detJw;
-      b(globIv) = b(globIv) + Nv(1,:)'*fVal(2) * detJw;
+      b(globIvel) = b(globIvel) + testVel'*fVal * detJw;
 
       avg_p(locIp)   = avg_p(locIp)   + testP'*detJw;
       B(locIp,locIp) = B(locIp,locIp) + testP'*testP*detJw;

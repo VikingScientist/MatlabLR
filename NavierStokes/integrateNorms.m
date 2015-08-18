@@ -1,7 +1,7 @@
 
 t = cputime;
 tic;
-%%%%%   ASSEMBLE THE 'STIFFNESS' MATRIX A  %%%%%
+%%%%%   INTEGRATE ALL (ERROR) NORMS  %%%%%
 
 n1 = size(lru.knots,1);
 n2 = size(lrv.knots,1);
