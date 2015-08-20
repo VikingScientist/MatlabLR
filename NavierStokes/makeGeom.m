@@ -18,31 +18,80 @@ if strcmp(name,'random')
 
 %%%    spinning mesh
 elseif strcmp(name,'twirl')
+  if p(1) < 2 || p(2) < 2
+    disp 'Error: makeGeom \"twirl\" geometry not supported for p<1'
+    lr = [];
+    return 
+  end
 	knot1 = [0 0 0 1 2 2 2];
 	knot2 = [0 0 0 1 2 2 2];
-	knot1 = [zeros(1,p(1)), 0:n(1)-p(1), (n(1)-p(1))*ones(1,p(1))];
-	knot2 = [zeros(1,p(2)), 0:n(2)-p(2), (n(2)-p(2))*ones(1,p(2))];
-	[y x] = meshgrid(linspace(-1,1,4), linspace(-1,1,4));
-	[y x] = meshgrid(linspace(-1,1,n(2)), linspace(-1,1,n(1)));
-	xend = x;
-	yend = y;
-	for i=1:ceil(n(1)/2)
-		i;
-		t = 2*pi/3 * i/ceil(n(1)/2);
-		xend(i+1:end-i,i+1:end-i) = x(i+1:end-i,i+1:end-i)*cos(t) - y(i+1:end-i,i+1:end-i)*sin(t);
-		yend(i+1:end-i,i+1:end-i) = x(i+1:end-i,i+1:end-i)*sin(t) + y(i+1:end-i,i+1:end-i)*cos(t);
-	end
+	[x y] = meshgrid(linspace(-1,1,4), linspace(-1,1,4)); % create uniform control points
+  theta = 2*pi/8;
+  xend = x;
+  yend = y;
+  xend(2:3,2:3) = 1.2*x(2:3,2:3)*cos(theta) - 1.2*y(2:3,2:3)*sin(theta); % twist all internal control points (and expand a little bit)
+  yend(2:3,2:3) = 1.2*x(2:3,2:3)*sin(theta) + 1.2*y(2:3,2:3)*cos(theta);
+
+  %%% order elevate geometry
+  knot1_high_p = knot1;
+  knot2_high_p = knot2;
+  for i=3:p(1)
+    knot1_high_p = sort([knot1_high_p, unique(knot1)]);
+  end
+  for i=3:p(2)
+    knot2_high_p = sort([knot2_high_p, unique(knot2)]);
+  end
+  N = [numel(knot1_high_p)-p(1)-1, numel(knot2_high_p)-p(2)-1];
+  grevX = zeros(N(1),1);
+  grevY = zeros(N(1),1);
+  for i=1:N(1)
+    grevX(i) = sum(knot1_high_p(i+1:i+p(1))/p(1));
+  end
+  for i=1:N(2)
+    grevY(i) = sum(knot2_high_p(i+1:i+p(2))/p(2));
+  end
+  Nx  = getBSplineBasisAndDerivative(   2, grevX, knot1);
+  Ny  = getBSplineBasisAndDerivative(   2, grevY, knot2);
+  Npx = getBSplineBasisAndDerivative(p(1), grevX, knot1_high_p);
+  Npy = getBSplineBasisAndDerivative(p(2), grevY, knot2_high_p);
+  xend = inv(Npx')*Nx'*xend'*Ny*inv(Npy);
+  yend = inv(Npx')*Nx'*yend'*Ny*inv(Npy);
+  %%% end order elevation %%%
+
+  %%% knot insert to get all the requested basis functions
+  B = zeros(N(1), N(2), 3);
+  B(:,:,1) = xend;
+  B(:,:,2) = yend;
+  B(:,:,3) = ones(N);
+  N = n-N; % figure out how many new knots we need
+  newN = [floor(N(1)/2), floor(N(1)/2) + mod(N(1), 2)]; % split these equally on each side of C^1 line
+  for i=1:newN(1)
+    [B, knot1_high_p] = knot_insertion_matrix(B, knot1_high_p, p,     i/(newN(1)+1), 1);
+  end
+  for i=1:newN(2)
+    [B, knot1_high_p] = knot_insertion_matrix(B, knot1_high_p, p, 1.0+i/(newN(2)+1), 1);
+  end
+  newN = [floor(N(2)/2), floor(N(2)/2) + mod(N(2), 2)]; % split these equally on each side of C^1 line
+  for i=1:newN(1)
+    [B, knot2_high_p] = knot_insertion_matrix(B, knot2_high_p, p,     i/(newN(1)+1), 2);
+  end
+  for i=1:newN(2)
+    [B, knot2_high_p] = knot_insertion_matrix(B, knot2_high_p, p, 1.0+i/(newN(2)+1), 2);
+  end
+  xend = B(:,:,1);
+  yend = B(:,:,2);
+  %%% end knot insertion %%%
+
+  %%% normalize geometry to be contained in [0,1]
   xend = (xend+1)/2;
   yend = (yend+1)/2;
-  knot1 = knot1 / knot1(end);
-  knot2 = knot2 / knot2(end);
-	% plot(xend, yend,   'b-' ); hold on;
-	% plot(xend',yend', 'b-' );
-	% plot(xend, yend,   'ro '); 
-	% lr = LRSplineSurface([2,2], knot1, knot2, [x(:)'; y(:)']);
-	lr = LRSplineSurface(p, knot1, knot2, [xend(:)'; yend(:)']);
-	% lr.raiseOrder(p(1)-2, p(2)-2);
-	% while size(lr.knots,1)<n(1)*n(2)
-		% lr.refine();
-	% end
+  knot1_high_p = knot1_high_p / knot1_high_p(end);
+  knot2_high_p = knot2_high_p / knot2_high_p(end);
+
+%   figure;
+%     hold on;
+%     plot(xend,  yend,  'ko-'); 
+%     plot(xend', yend', 'ko-'); 
+
+	lr = LRSplineSurface(p, knot1_high_p, knot2_high_p, [xend(:)'; yend(:)']);
 end
