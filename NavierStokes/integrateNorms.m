@@ -153,6 +153,7 @@ for el=1:nel,
   div_u_inf_norm(el)             = max_div;
 
 end
+fprintf('\n');
 % end element loop
 
 time_posptprocess     = cputime - t;

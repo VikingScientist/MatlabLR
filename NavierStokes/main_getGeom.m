@@ -16,7 +16,7 @@ if(strncmp(name, 'id',2) || strcmp(name, 'square')),
 
 %%% vortex (twirl) geometry tests mapped geometry on the unit square
 elseif(strcmp(name, 'twirl') || strcmp(name, 'vortex') || strcmp(name, 'twist'))
-	lr = makeGeom('twirl', p, 2+p);
+	lr = makeGeom('twirl', p, p);
 	while max(lr.elements(:,4)-lr.elements(:,2)) > Problem.H_Max
 		lr.refine();
 	end
