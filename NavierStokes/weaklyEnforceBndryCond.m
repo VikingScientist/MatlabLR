@@ -127,8 +127,8 @@ for edge=1:numel(BC)
         % compute quanteties of interest
         symVel  = [gradVel(1,:); .5*sum(gradVel(2:3,:)); .5*sum(gradVel(2:3,:)); gradVel(4,:)]; % symmetric gradient operator
 
-        n = [n(1), n(2),  0,    0  ;
-              0,    0,   n(1), n(2)]; 
+        n = [n(1),  0,   n(2),  0  ;
+              0,   n(1),  0,   n(2)]; 
 
         ubc = zeros(2,1);
         if isa(bc.value, 'function_handle')
@@ -186,8 +186,8 @@ for edge=1:numel(BC)
         % compute quanteties of interest
         symVel  = [gradVel(1,:); .5*sum(gradVel(2:3,:)); .5*sum(gradVel(2:3,:)); gradVel(4,:)]; % symmetric gradient operator
 
-        n = [n(1), n(2),  0,    0  ;
-              0,    0,   n(1), n(2)]; 
+        n = [n(1),  0,   n(2),  0  ;
+              0,   n(1),  0,   n(2)]; 
 
         ubc = zeros(2,1);
         if isa(bc.value, 'function_handle')
