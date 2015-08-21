@@ -24,6 +24,7 @@ classdef LRSplineSurface < handle
 %     getPrimal            - Gets an LRSplineSurface representation of one less degree and continuity
 %     getDerivative        - Gets an LRSplineSurface representation of the two derivatives d/du and d/dv
 %     getAntiDerivative    - Gets the LRSplineSurface space of the two integration spaces int{du} and int{dv}
+%     getGrevillePoint     - Gets one or all of the greville abscissae (knot averages)
 %     point                - Evaluates the physical coordinates (x,y) corresponding to a parametric point (u,v)
 %     computeBasis         - Compute all basis functions (and their derivatives)
 %     getBezierExtraction  - Get the bezier extraction matrix for one element
@@ -412,6 +413,23 @@ classdef LRSplineSurface < handle
 			clear oldGuy;
 			this.bezierHash = [];
 			this.updatePrimitives();
+		end
+
+		function x = getGrevillePoint(this, varargin)
+		% GETGREVILLEPOINT  Computes the parametric greville point of the basis functions
+		% x = LRSplineSurface.getGrevillePoint()
+		% x = LRSplineSurface.getGrevillePoint(i)
+		%
+		%   parameters:
+		%     i - index of basis function to return. If no i specified, all are returned
+		%   returns:
+		%     One or all parametric greville abscissae
+			if nargin > 1
+				i = varargin{1};
+				x = [sum(this.knots(i,2:(this.p(1)+1)))/this.p(1), sum(this.knots(i,(this.p(1)+4):(end-1)))/this.p(2)];
+			else
+				x = [sum(this.knots(:,2:(this.p(1)+1)),2)/this.p(1), sum(this.knots(:,(this.p(1)+4):(end-1)),2)/this.p(2)];
+			end
 		end
 
 		function x = point(this, u, v, varargin)
