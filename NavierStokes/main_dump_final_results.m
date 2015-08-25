@@ -20,7 +20,7 @@ if exist('Convergence_rates')
   figure;
     loglog(result_h, result_uh_H1, 'o-');
     c = get(gca, 'ColorOrder');
-    set(    gca, 'ColorOrder', c(1:Convergence_rates.iterations,:));
+    set(    gca, 'ColorOrder', c(1:numel(expected_rates),:));
     hold on;
     loglog(helpLinesX, helpLinesY, '--');
     title('Velocity error');
@@ -28,7 +28,7 @@ if exist('Convergence_rates')
     set(gca, 'FontSize', 16);
     xlabel('Mesh size $$h$$', 'interpreter', 'latex')
     ylabel('$$\|u-u_h\|_{H^1} / \|u\|_{H^1}$$', 'interpreter', 'Latex');
-    % saveas(gcf, 'conv-umr-u-sinus.pdf', 'pdf');
+    % saveas(gcf, 'conv-umr-u-cavity-re200000-cheat.pdf', 'pdf');
 
   yStart = result_ph_L2(end, :);
   yStart = yStart * 1.5;
@@ -46,7 +46,7 @@ if exist('Convergence_rates')
   figure;
     loglog(result_h, result_ph_L2, 'o-');
     c = get(gca, 'ColorOrder');
-    set(    gca, 'ColorOrder', c(1:Convergence_rates.iterations,:));
+    set(    gca, 'ColorOrder', c(1:numel(expected_rates),:));
     hold on;
     loglog(helpLinesX, helpLinesY, '--');
     title('Pressure error');
@@ -54,7 +54,7 @@ if exist('Convergence_rates')
     set(gca, 'FontSize', 16);
     xlabel('Mesh size $$h$$', 'interpreter', 'latex')
     ylabel('$$\|p-p_h\|_{L^2} / \|p\|_{L^2}$$', 'interpreter', 'Latex');
-    % saveas(gcf, 'conv-umr-p-sinus.pdf', 'pdf');
+    % saveas(gcf, 'conv-umr-p-cavity-re200000-cheat.pdf', 'pdf');
 end
 
 if Problem.Static
