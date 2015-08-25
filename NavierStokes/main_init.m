@@ -27,9 +27,8 @@ plotStream         = false;
 plotDiscretization = false;
 
 %%% setup problem parameters
-xrange  = [0,1];
-yrange  = [0,1];
-nel     = [12,12];
+xrange  = [0, 1];
+yrange  = [0, 1];
 p       = Problem.Polynomial_Degree;
 gauss_n = p+2;
 Re           = Problem.Reynolds;% Reynolds number
@@ -38,6 +37,20 @@ nIterations  = 9;          % number of adaptive refinement iterations
 pressureType = 2;          % pressure boundary conditions (1=none, 2=average, 3=corners)
 penalty      = 5*(p(1)+1); % penalty parameter for weakly enforced boundary conditions
 nviz         = 7;          % number of visualization points (pr element)
+
+%%% create default values in case they are not specified
+if ~isfield(Problem, 'Force')
+  if Problem.Linear && exist('force_linear')
+    Problem = setfield(Problem, 'Force',  force_linear);
+  elseif ~Problem.Linear && exist('force_nonlinear')
+    Problem = setfield(Problem, 'Force',  force_nonlinear);
+  else
+    Problem = setfield(Problem, 'Force',  @(x,y) [0;0]);
+  end
+end
+if ~isfield(Problem, 'Time_Step')
+  Problem = setfield(Problem, 'Time_Step', @(h) min(h^((max(Problem.Polynomial_Degree)+1)/2), h^2 /4*Problem.Reynolds));
+end
 
 
 %%% create the folder tree-structure of Title/Subtitle/id-XXX, where id is a unique identifier
