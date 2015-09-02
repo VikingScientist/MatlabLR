@@ -9,10 +9,10 @@ vmax = max(lr.elements(:,4));
 nGauss = gauss_n(1);
 [xg, wg] = GaussLegendre(nGauss);
 xg = [xg; -1; 1];
+n1 = size(lru.knots,1);
 
 %%% pre-evaluate bezier functions
 bezier = getBezierBasis([xg';xg'], lr, lru, lrv, lrp);
-
 
 for edge=1:numel(BC)
   bc = BC{edge};
@@ -112,13 +112,8 @@ for edge=1:numel(BC)
         detJw = wg(i)*norm(vel)*dv/2;
         
         %%% compute test functions
-        if bc.comp == 1
-          testVel = [Nu(1,:)  ; zeros(1,sup1); ]; % vector basis functions
-          gradVel = [Nu(2:3,:); zeros(2,sup1); ]; 
-        else
-          testVel = [zeros(1,sup2); Nv(1,:)];   % vector basis functions
-          gradVel = [zeros(2,sup2); Nv(2:3,:)]; 
-        end
+        testVel = [Nu(1,:),   zeros(1,sup2); zeros(1,sup1), Nv(1,:)  ]; % vector basis functions
+        gradVel = [Nu(2:3,:), zeros(2,sup2); zeros(2,sup1), Nv(2:3,:)]; 
         gradVel = gradVel([1,3,2,4],:);       % row-wise: u_1,1  u_2,1  u_1,2  u_2,2
 
         % alter through piola mapping
@@ -127,25 +122,19 @@ for edge=1:numel(BC)
         % compute quanteties of interest
         symVel  = [gradVel(1,:); .5*sum(gradVel(2:3,:)); .5*sum(gradVel(2:3,:)); gradVel(4,:)]; % symmetric gradient operator
 
+        if isa(bc.value, 'function_handle')
+          ubc = bc.value(map.x(1), map.x(2));
+        else
+          ubc = bc.value;
+        end
+
         n = [n(1),  0,   n(2),  0  ;
               0,   n(1),  0,   n(2)]; 
 
-        ubc = zeros(2,1);
-        if isa(bc.value, 'function_handle')
-          ubc(bc.comp) = bc.value(map.x(1), map.x(2));
-        else
-          ubc(bc.comp) = bc.value;
-        end
+        A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/dv*testVel'*testVel)*detJw;
+        b(globIvel)           = b(globIvel)           - 2*my*(symVel'*n'*ubc                         - penalty/dv*testVel'*ubc)    *detJw;
 
-        if bc.comp == 1
-          A(globIu, globIu) = A(globIu, globIu) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/dv*testVel'*testVel)*detJw;
-          b(globIu)         = b(globIu)         - 2*my*(symVel'*n'*ubc                         - penalty/dv*testVel'*ubc)    *detJw;
-        else
-          A(globIv, globIv) = A(globIv, globIv) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/dv*testVel'*testVel)*detJw;
-          b(globIv)         = b(globIv)         - 2*my*(symVel'*n'*ubc                         - penalty/dv*testVel'*ubc)    *detJw;
-        end
-
-      end
+      end % end gauss point iteration
     elseif running_param == 'u'
       for i=1:nGauss,
         if left_edge
@@ -161,8 +150,8 @@ for edge=1:numel(BC)
         
         map = computeGeometry(lr, el, N);
 
-        vel  = map.J(:,1);        % velocity vector along edge
-        if left_edge
+        vel  = map.J(:,1); % velocity vector along edge
+        if ~left_edge      % "left" here means lower, or in this case bottom u-value
           vel = -vel;
         end
         n  = [vel(2), -vel(1)];
@@ -171,13 +160,8 @@ for edge=1:numel(BC)
         detJw = wg(i)*norm(vel)*du/2;
 
         %%% compute test functions
-        if bc.comp == 1
-          testVel = [Nu(1,:)  ; zeros(1,sup1); ]; % vector basis functions
-          gradVel = [Nu(2:3,:); zeros(2,sup1); ]; 
-        else
-          testVel = [zeros(1,sup2); Nv(1,:)];   % vector basis functions
-          gradVel = [zeros(2,sup2); Nv(2:3,:)]; 
-        end
+        testVel = [Nu(1,:),   zeros(1,sup2); zeros(1,sup1), Nv(1,:)  ]; % vector basis functions
+        gradVel = [Nu(2:3,:), zeros(2,sup2); zeros(2,sup1), Nv(2:3,:)]; 
         gradVel = gradVel([1,3,2,4],:);         % row-wise: u_1,1  u_2,1  u_1,2  u_2,2
   
         % alter through piola mapping
@@ -189,23 +173,16 @@ for edge=1:numel(BC)
         n = [n(1),  0,   n(2),  0  ;
               0,   n(1),  0,   n(2)]; 
 
-        ubc = zeros(2,1);
         if isa(bc.value, 'function_handle')
-          ubc(bc.comp) = bc.value(map.x(1), map.x(2));
+          ubc = bc.value(map.x(1), map.x(2));
         else
-          ubc(bc.comp) = bc.value;
+          ubc = bc.value;
         end
 
-        if bc.comp == 1
-          A(globIu, globIu) = A(globIu, globIu) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/du*testVel'*testVel)*detJw;
-          b(globIu)         = b(globIu)         - 2*my*(symVel'*n'*ubc                         - penalty/du*testVel'*ubc)    *detJw;
-        else
-          A(globIv, globIv) = A(globIv, globIv) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/du*testVel'*testVel)*detJw;
-          b(globIv)         = b(globIv)         - 2*my*(symVel'*n'*ubc                         - penalty/du*testVel'*ubc)    *detJw;
-        end
-
-      end
-    end
-  end
-end
+        A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/du*testVel'*testVel)*detJw;
+        b(globIvel)           = b(globIvel)           - 2*my*(symVel'*n'*ubc                         - penalty/du*testVel'*ubc)    *detJw;
+      end % end gauss point iteration
+    end   % end u/v running-parameter if statement
+  end     % end element on edge loop
+end       % end edge loop
 

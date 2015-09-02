@@ -72,6 +72,8 @@ if Problem.Static
     pressure = plotB*u(n+1:end);
     velX     = vel(1:end/2  );
     velY     = vel(  end/2+1:end);
+    xrange   = [min(x), max(x)];
+    yrange   = [min(y), max(y)];
 
     z = velX;
     figure; hold on;
@@ -79,24 +81,30 @@ if Problem.Static
       plot3(x(edges), y(edges), z(edges), 'k-');
       set(gca, 'FontSize', 24);
       title('U solution');
-      xlim(0:1);
-      ylim(0:1);
+      xlim(xrange);
+      ylim(yrange);
+      colorbar;
+      axis equal;
     z = velY;
     figure; hold on;
       patch('Faces', mesh, 'Vertices', [x,y,z], 'CData', z, 'FaceColor', 'interp', 'EdgeColor', 'none');
       plot3(x(edges), y(edges), z(edges), 'k-');
       set(gca, 'FontSize', 24);
       title('V solution');
-      xlim(0:1);
-      ylim(0:1);
+      xlim(xrange);
+      ylim(yrange);
+      colorbar;
+      axis equal;
     z = pressure;
     figure; hold on;
       patch('Faces', mesh, 'Vertices', [x,y,z], 'CData', z, 'FaceColor', 'interp', 'EdgeColor', 'none');
       plot3(x(edges), y(edges), z(edges), 'k-');
       set(gca, 'FontSize', 24);
       title('P solution');
-      xlim(0:1);
-      ylim(0:1);
+      xlim(xrange);
+      ylim(yrange);
+      colorbar;
+      axis equal;
   end
 end
 
