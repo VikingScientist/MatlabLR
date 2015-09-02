@@ -34,7 +34,6 @@ gauss_n = p+2;
 Re           = Problem.Reynolds;% Reynolds number
 my           = 1/Re;       % kinematic viscoscity
 nIterations  = 9;          % number of adaptive refinement iterations
-pressureType = 2;          % pressure boundary conditions (1=none, 2=average, 3=corners)
 penalty      = 5*(p(1)+1); % penalty parameter for weakly enforced boundary conditions
 nviz         = 7;          % number of visualization points (pr element)
 

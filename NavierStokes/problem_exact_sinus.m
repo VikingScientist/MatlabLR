@@ -22,8 +22,8 @@ Problem = struct(...
 'Geometry'          ,  'id',       ...
 'Geometry_param'    ,  1,          ...
 'Polynomial_Degree' ,  [2,2],      ...
-'H_Max'             ,  1/2,        ...
-'H_Min'             ,  1/2,        ...
+'H_Max'             ,  1/4,        ...
+'H_Min'             ,  1/4,        ...
 'Reynolds'          ,  1,         ...
 'Geom_TOL'          ,  1e-10,      ...
 'Newton_TOL'        ,  1e-10,      ...
@@ -39,28 +39,30 @@ Problem = struct(...
 Convergence_rates = struct( ...
 'uniform',      true,       ...
 'p_values',      1:3,       ...
-'iterations',    3);
+'iterations',    4);
 
 syms x y 
 phi(x,y) = -1/pi*sin(pi*x)*sin(pi*y);
 p(x,y)   = sin(2*pi*x)*sin(2*pi*y);
+% p(x,y)   = log(x+y+1)*(x^2+y^2);
 main_make_exact_solution;
 
 BC = cell(0);
-BC = [BC, struct('pressure_integral', true)];
+BC = [BC, struct('pressure_integral', true, 'value', pressure_exact_avg)];
 BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 2, 'value', 0)];
 BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 2, 'value', 0)];
 BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 1, 'value', 0)];
 BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 1, 'value', 0)];
 
-BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', Exact_solution.u, 'weak', false)];
-BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', Exact_solution.u, 'weak', false)];
-BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', Exact_solution.v, 'weak', false)];
-BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', Exact_solution.v, 'weak', false)];
-BC = [BC, struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', Exact_solution.p(0,0), 'weak', false)];
-BC = [BC, struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', Exact_solution.p(1,0), 'weak', false)];
-BC = [BC, struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', Exact_solution.p(0,1), 'weak', false)];
-BC = [BC, struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', Exact_solution.p(1,1), 'weak', false)];
+BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', Exact_solution.velocity, 'weak', true)];
+BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', Exact_solution.velocity, 'weak', true)];
+BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', Exact_solution.velocity, 'weak', true)];
+BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', Exact_solution.velocity, 'weak', true)];
+
+% BC = [BC, struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', Exact_solution.p(0,0))];
+% BC = [BC, struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', Exact_solution.p(1,0))];
+% BC = [BC, struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', Exact_solution.p(0,1))];
+% BC = [BC, struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', Exact_solution.p(1,1))];
 
 if exist('Convergence_rates')
   if ~Problem.Static
