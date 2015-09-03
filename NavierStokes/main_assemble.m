@@ -22,18 +22,34 @@ for i=1:numel(BC)
     continue;
   end
   if BC{i}.comp == 1 % condition on u-component 
-    if exist('newElU')
-      [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value, newElU);
+    if isfield(BC{i}, 'tangent') 
+      if exist('newElU')
+        [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value, 'df', BC{i}.tangent, 'newEl', newElU);
+      else
+        [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value, 'df', BC{i}.tangent);
+      end
     else
-      [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value);
+      if exist('newElU')
+        [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value, 'newEl', newElU);
+      else
+        [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value);
+      end
     end
     edges  = [edges;  thisI];
     edgVal = [edgVal; thisCP];
   elseif BC{i}.comp == 2 % condition on v-component 
-    if exist('newElU')
-      [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value, newElV);
+    if isfield(BC{i}, 'tangent') 
+      if exist('newElU')
+        [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value, 'df', BC{i}.tangent, 'newEl', newElV);
+      else
+        [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value, 'df', BC{i}.tangent);
+      end
     else
-      [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value);
+      if exist('newElU')
+        [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value, 'newEl', newElV);
+      else
+        [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value);
+      end
     end
     thisI = thisI + n1;
     edges  = [edges;  thisI];
@@ -44,9 +60,6 @@ for i=1:numel(BC)
                  abs(lrp.knots(:,p+4) - BC{i}.start(2)) < Problem.Geom_TOL &  abs(lrp.knots(:,end-1) - BC{i}.start(2)) < Problem.Geom_TOL );
     presEdges = [presEdges; presI];
     presVal   = [presVal  ; BC{i}.value];
-%     [thisCP thisI] = L2edge(lrp, BC{i}.start, BC{i}.stop, BC{i}.value);
-%     presEdges = [presEdges; thisI];
-%     presVal   = [presVal  ; thisCP];
   end
 end
 
@@ -63,6 +76,10 @@ inner_p = 1:n3;
 inner_p(presEdges) = [];
 inner_u = 1:n;
 inner_u(velEdges)  = [];
+
+fullD   = D;
+fullA   = A;
+fullB   = b;
 
 %%% put all boundary conditions into b-vector
 if numel(velEdges)>0
@@ -91,6 +108,7 @@ if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true && isfie
 end
 
 %%% remove boundary DOFs from the system
+n = n1+n2;
 A(:,velEdges)             = [];
 A(velEdges,:)             = [];
 M(:,velEdges)             = [];
