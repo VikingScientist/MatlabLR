@@ -19,54 +19,75 @@ clear; close all;
 %                                                       
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-p  = 2; % polynomial degree. May be needed in Problem.Time_Step
-Re = 1; % Reynolds number.   May be needed in Problem.Time_Step
-
 Problem = struct(...
 'Title'             ,  'Backstep',  ...
 'Subtitle'          ,  'testing',   ...
 'Identifier'        ,  'a',        ...
 'Geometry'          ,  'Backstep',   ...
 'Geometry_param'    ,  1,          ...
-'Polynomial_Degree' ,  [p,p],      ...
-'H_Max'             ,  1/4,        ...
-'H_Min'             ,  1/16,        ...
-'Reynolds'          ,  Re,         ...
+'Polynomial_Degree' ,  [2,2],      ...
+'H_Max'             ,  1/2,        ...
+'H_Min'             ,  1/8,        ...
+'Reynolds'          ,  100,         ...
 'Geom_TOL'          ,  1e-10,      ...
 'Newton_TOL'        ,  1e-10,      ...
 'Newton_Max_It'     ,  12,         ...
-'Force'             ,  @(x,y)[0,0],...
+'Force'             ,  @(x,y)[0;0],...
 'Static'            ,  true,       ...
 'Linear'            ,  false,       ...
 'Paraview'          ,  true,      ...
 'MatlabPlot'        ,  true,       ...
 'Save_Results'      ,  true,       ...
-'Time_Integrator'   ,  'backward euler',        ...
-'Time_Step'         ,  @(h) min(h^((p+1)/2), h^2 /4*Re), ...
+'Time_Integrator'   ,  'CN',        ...
 'Time_Range'        ,  [0,1]);
 % 'Time_Step'         ,  .010,        ...
 
-BC     = cell(1);
-BC{1}  = struct('start', [-4,2], 'stop', [10,2],  'comp', 2, 'value', 0); % horizontal top edge
-BC{2}  = struct('start', [0,-1], 'stop', [10,-1], 'comp', 2, 'value', 0); % horizontal bottom edge
-BC{3}  = struct('start', [-4,0], 'stop', [0,0],   'comp', 2, 'value', 0); % horizontal corner edge
-BC{4}  = struct('start', [-4,0], 'stop', [-4,2],  'comp', 1, 'value', @(x,y) y*(2-y)); % vertical left edge
-BC{5}  = struct('start', [0,-1], 'stop', [0,0],   'comp', 1, 'value', 0);              % vertical corner edge
-% BC{6}  = struct('start', [10,-1],'stop', [10,2],  'comp', 1, 'value', @(x,y) (y+1)*(2-y)*(2/3)^3); % vertical right edge
+BC     = cell(0);
+BC = [BC, struct('start', [-4,2], 'stop', [10,2],  'comp', 2, 'value', 0)]; % horizontal top edge
+BC = [BC, struct('start', [0,-1], 'stop', [10,-1], 'comp', 2, 'value', 0)]; % horizontal bottom edge
+BC = [BC, struct('start', [-4,0], 'stop', [0,0],   'comp', 2, 'value', 0)]; % horizontal corner edge
+BC = [BC, struct('start', [-4,0], 'stop', [-4,2],  'comp', 1, 'value', @(x,y) y*(2-y))]; % vertical left edge
+BC = [BC, struct('start', [0,-1], 'stop', [0,0],   'comp', 1, 'value', 0)];              % vertical corner edge
+% BC = [BC, struct('start', [10,-1],'stop', [10,2],  'comp', 1, 'value', @(x,y) (y+1)*(2-y)*(2/3)^3)]; % vertical right edge
 
-BC{6}  = struct('start', [-4,2], 'stop', [10,2],  'comp', 1, 'value', 0, 'weak', true); % horizontal top edge
-BC{7}  = struct('start', [0,-1], 'stop', [10,-1], 'comp', 1, 'value', 0, 'weak', true); % horizontal bottom edge
-BC{8}  = struct('start', [-4,0], 'stop', [0,0],   'comp', 1, 'value', 0, 'weak', true); % horizontal corner edge
-BC{9}  = struct('start', [-4,0], 'stop', [-4,2],  'comp', 2, 'value', 0, 'weak', true); % vertical left edge
-BC{10}  = struct('start', [0,-1], 'stop', [0,0],  'comp', 2, 'value', 0, 'weak', true); % vertical corner edge
-% BC{11}  = struct('start', [10,-1],'stop', [10,2], 'comp', 2, 'value', 0, 'weak', true); % vertical right edge
+BC = [BC, struct('start', [-4,2], 'stop', [10,2],  'value', [0;0], 'weak', true)]; % horizontal top edge
+BC = [BC, struct('start', [0,-1], 'stop', [10,-1], 'value', [0;0], 'weak', true)]; % horizontal bottom edge
+BC = [BC, struct('start', [-4,0], 'stop', [0,0],   'value', [0;0], 'weak', true)]; % horizontal corner edge
+BC = [BC, struct('start', [-4,0], 'stop', [-4,2],  'value', @(x,y)[y*(2-y);0], 'weak', true)]; % vertical left edge
+BC = [BC, struct('start', [0,-1], 'stop', [0,0],   'value', [0;0], 'weak', true)]; % vertical corner edge
+% BC = [BC, struct('start', [10,-1],'stop', [10,2], 'value', [0;0], 'weak', true)]; % vertical right edge
 
-% BC{9}  = struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', 0, 'weak', false);
-% BC{10} = struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', 0, 'weak', false);
-% BC{11} = struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', 0, 'weak', false);
-% BC{12} = struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', 0, 'weak', false);
+% BC = [BC, struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', 0)];
+% BC = [BC, struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', 0)];
+% BC = [BC, struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', 0)];
+% BC = [BC, struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', 0)];
 
 main_init;
+% i = find(((lr.knots(:,1) <  0 & lr.knots(:,lr.p(1)+2) > 0) | ...
+% %           (lr.knots(:,2) == 0 & lr.knots(:,lr.p(1)+1) == 0)) & ...
+%            lr.knots(:,lr.p(1)+3) < 0 );
+% j = find(((lr.knots(:,lr.p(1)+3) <  0 & lr.knots(:,end) > 0) | ...
+%           (lr.knots(:,lr.p(1)+4) == 0 & lr.knots(:,end-1) == 0)) & ...
+%            lr.knots(:,1) < 0 );
+% g = lr.getGrevillePoint();
+% figure; 
+%   lr.plot('parametric', 'basis'); hold on;
+%   axis equal;
+%   ylim([-2 3]);
+%   xlim([-4 10]);
+%   plot(g(i,1), g(i,2), 'ko', 'MarkerSize', 10, 'MarkerFaceColor', [0.9843137, 0.2, 0.2], 'MarkerEdgeColor', 'black');
+%   plot(g(j,1), g(j,2), 'ko', 'MarkerSize', 10, 'MarkerFaceColor', [0.9843137, 0.2, 0.2], 'MarkerEdgeColor', 'black');
+%   set(gcf, 'Position', [0,0,1000, 600]);
+%   saveas(gcf, 'edge-func-C0-basis-ext.pdf', 'pdf');
+% figure;
+%   plotContinuityMesh(lr);
+%   axis equal;
+%   ylim([-2 3]);
+%   xlim([-4 10]);
+%   set(gcf, 'Position', [0,0,1000, 600]);
+%   saveas(gcf, 'edge-func-C0-lines-ext.pdf', 'pdf');
+% break;
+
 main_assemble;
 
 if Problem.Static
@@ -75,4 +96,40 @@ else
   main_time_loop;
 end
 
-main_dump_results;
+main_dump_final_results;
+
+% figure; 
+%   plotContinuityMesh(lru);
+%   set(gca, 'FontSize', 24);
+%   title('U discretization');
+%   axis equal;
+%   saveas(gcf, 'backstep-space-u.pdf', 'pdf');
+% figure; 
+%   plotContinuityMesh(lrv);
+%   set(gca, 'FontSize', 24);
+%   title('V discretization');
+%   axis equal;
+%   saveas(gcf, 'backstep-space-v.pdf', 'pdf');
+% figure; 
+%   plotContinuityMesh(lrp);
+%   set(gca, 'FontSize', 24);
+%   title('P discretization');
+%   axis equal;
+%   saveas(gcf, 'backstep-space-p.pdf', 'pdf');
+% 
+% figure(1);
+% saveas(gcf, 'backstep-u.png', 'png');
+% figure(2);
+% saveas(gcf, 'backstep-v.png', 'png');
+% figure(3);
+% saveas(gcf, 'backstep-p.png', 'png');
+% for i=1:4
+%   figure(i);
+%   axis equal
+%   ylim([-2 3]);
+%   xlim([-4 10]);
+%   set(gcf, 'Position', [0,0,1000,600]);
+% end
+% saveas(2, 'coarse-v.png', 'png');
+% saveas(3, 'coarse-p.png', 'png');
+% saveas(4, 'coarse-pace.pdf', 'pdf');
