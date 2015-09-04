@@ -35,17 +35,21 @@ timer = cputime; tic;
 for i=2:nSteps
   lastTime = toc;
   fprintf('Time: %g (step %d/%d):\n', time(i), i, nSteps);
+  integratorUsed = '';
 
   % initial guess for newton stepping = previous time step
   v   = u;
+
   for newtIt=1:Problem.Newton_Max_It
     un = u(nonEdge); 
     vn = v(nonEdge);
 
-    if strcmp(time_integrator, 'Backward Euler')
+    if i<4 || strcmp(time_integrator, 'Backward Euler')
+      integratorUsed = 'Backward Euler';
       lhs = k*dF(vn);
       rhs = k* F(vn);
     elseif strcmp(time_integrator, 'Crank-Nicolsen')
+      integratorUsed = 'Crank-Nicolsen';
       lhs = k/2*(dF(vn)         );
       rhs = k/2*( F(vn) + F(un) );
     end
@@ -60,6 +64,7 @@ for i=2:nSteps
     end
   end
   fprintf('  Newton iteration converged after %d iterations at residual %g\n', newtIt, norm(dv));
+  fprintf('  Time integrator              : %s\n', integratorUsed);
   fprintf('  Pressure at top right corner : %g\n', v(topRightCorner));
   fprintf('  Max u-velocity controlpoint  : %g\n', max(v(1:n1)));
   fprintf('  Max v-velocity controlpoint  : %g\n', max(v(n1+1:n1+n2)));
@@ -92,7 +97,7 @@ for i=2:nSteps
     timeLeft = mod(timeLeft,60);
   end
   fprintf('%d seconds\n', floor(timeLeft));
-  fprintf('  Estimated completion: %s\n', datestr(datetime(c)));
+  % fprintf('  Estimated completion: %s\n', datestr(datetime(c)));
 
   uAll(:,i) = u;
 end
