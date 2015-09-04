@@ -38,17 +38,26 @@ elseif(strcmp(name, 'backstep'))
 	lr = LRSplineSurface(p, [xrange(1)*ones(1,p(1)), linspace(xrange(1),xrange(2),nel(1)+1), xrange(2)*ones(1,p(1))], [yrange(1)*ones(1,p(2)), linspace(yrange(1),yrange(2),nel(2)+1), yrange(2)*ones(1,p(2))]);
 
 	disp 'Refining geometry';
-	lr.insertLine([xrange(1), 0], [(p(1)-1)*Problem.H_Max, 0], p(2)); % horizontal line
-	lr.insertLine([0, yrange(1)], [0, (p(2)-1)*Problem.H_Max], p(1)); % vertical   line
 	nRef = ceil(log2(Problem.H_Max / Problem.H_Min));
-	dist = 1.4;
+	dist = 1.5;
 	for k=1:nRef
-		x = lr.knots(:,lr.p(1)+2);
-		y = lr.knots(:,end);
-		i = find((x-0).^2 + (y+1).^2 <= dist^2);
-		dist = dist * 2/ 3;
-		lr.refine(i,'basis');
+		xNE = lr.knots(:,lr.p(1)+2);
+		yNE = lr.knots(:,end); % north-east
+		xNW = lr.knots(:,1);
+		yNW = lr.knots(:,end); % nort-west
+		xSE = lr.knots(:,lr.p(1)+2);
+		ySE = lr.knots(:,lr.p(1)+3); % south-east
+    % pick all points around bottom corner
+		i = find((xNE-0).^2 + (yNE+1).^2 <= dist^2);
+    % pick all points around top interior corner
+		j = find((xNE-0).^2 + (yNE-0).^2 <= dist^2 & ...
+		         (xNW-0).^2 + (yNW-0).^2 <= dist^2 & ...
+		         (xSE-0).^2 + (ySE-0).^2 <= dist^2);
+		dist = dist * 7 / 12;
+		lr.refine([i;j],'basis');
 	end
+	lr.insertLine([xrange(1), 0], [(p(1)-1)*Problem.H_Min, 0], p(2)); % horizontal line
+	lr.insertLine([0, yrange(1)], [0, (p(2)-1)*Problem.H_Min], p(1)); % vertical   line
 end
 
 
