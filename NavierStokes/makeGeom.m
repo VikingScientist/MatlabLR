@@ -1,20 +1,20 @@
 function lr = makeGeom(name, p, n)
 
 if nargin<2 % default polynomial degree
-	p = [4,4];
+  p = [4,4];
 end
 if nargin<3 % default number of basis functions degree
-	n = 2*p+1;
+  n = 2*p+1;
 end
 
 %%%    random mesh (not too pretty)
 if strcmp(name,'random')
-	knot1 = [zeros(1,p(1)), 0:n(1)-p(1), (n(1)-p(1))*ones(1,p(1))];
-	knot2 = [zeros(1,p(2)), 0:n(2)-p(2), (n(2)-p(2))*ones(1,p(2))];
-	[y x] = meshgrid(linspace(0,1,n(2)), linspace(0,1,n(1)));
-	x = x + (rand(n)-.5).^3*(2/n(1))*3;
-	y = y + (rand(n)-.5).^3*(2/n(2))*3;
-	lr = LRSplineSurface(p, knot1, knot2, [x(:)'; y(:)']);
+  knot1 = [zeros(1,p(1)), 0:n(1)-p(1), (n(1)-p(1))*ones(1,p(1))];
+  knot2 = [zeros(1,p(2)), 0:n(2)-p(2), (n(2)-p(2))*ones(1,p(2))];
+  [y x] = meshgrid(linspace(0,1,n(2)), linspace(0,1,n(1)));
+  x = x + (rand(n)-.5).^3*(2/n(1))*3;
+  y = y + (rand(n)-.5).^3*(2/n(2))*3;
+  lr = LRSplineSurface(p, knot1, knot2, [x(:)'; y(:)']);
 
 %%%    spinning mesh
 elseif strcmp(name,'twirl')
@@ -23,9 +23,9 @@ elseif strcmp(name,'twirl')
     lr = [];
     return 
   end
-	knot1 = [0 0 0 1 2 2 2];
-	knot2 = [0 0 0 1 2 2 2];
-	[x y] = meshgrid(linspace(-1,1,4), linspace(-1,1,4)); % create uniform control points
+  knot1 = [0 0 0 1 2 2 2];
+  knot2 = [0 0 0 1 2 2 2];
+  [x y] = meshgrid(linspace(-1,1,4), linspace(-1,1,4)); % create uniform control points
   theta = 2*pi/8;
   xend = x;
   yend = y;
@@ -93,5 +93,5 @@ elseif strcmp(name,'twirl')
 %     plot(xend,  yend,  'ko-'); 
 %     plot(xend', yend', 'ko-'); 
 
-	lr = LRSplineSurface(p, knot1_high_p, knot2_high_p, [xend(:)'; yend(:)']);
+  lr = LRSplineSurface(p, knot1_high_p, knot2_high_p, [xend(:)'; yend(:)']);
 end

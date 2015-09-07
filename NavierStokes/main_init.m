@@ -60,18 +60,18 @@ end
 
 filename = sprintf('%s/%s/%s-p%d%d-re%d-T%d', Problem.Title, Problem.Subtitle, Problem.Identifier, Problem.Polynomial_Degree, floor(Problem.Reynolds), floor(Problem.Time_Range(2)));
 if ~exist(Problem.Title, 'dir')
-	mkdir(Problem.Title);
+  mkdir(Problem.Title);
 end
 if ~exist([Problem.Title, '/', Problem.Subtitle], 'dir')
-	mkdir([Problem.Title, '/', Problem.Subtitle])
+  mkdir([Problem.Title, '/', Problem.Subtitle])
 end
 if exist([filename, '.mat' ], 'file')
-	Problem.Identifier = 'a';
-	filename = sprintf('%s/%s/%s-p%d%d-re%d-T%d', Problem.Title, Problem.Subtitle, Problem.Identifier, Problem.Polynomial_Degree, floor(Problem.Reynolds), floor(Problem.Time_Range(2)));
-	while exist([filename, '.mat'], 'file')
-		Problem.Identifier = char(Problem.Identifier + 1);
-		filename = sprintf('%s/%s/%s-p%d%d-re%d-T%d', Problem.Title, Problem.Subtitle, Problem.Identifier, Problem.Polynomial_Degree, floor(Problem.Reynolds), floor(Problem.Time_Range(2)));
-	end
+  Problem.Identifier = 'a';
+  filename = sprintf('%s/%s/%s-p%d%d-re%d-T%d', Problem.Title, Problem.Subtitle, Problem.Identifier, Problem.Polynomial_Degree, floor(Problem.Reynolds), floor(Problem.Time_Range(2)));
+  while exist([filename, '.mat'], 'file')
+    Problem.Identifier = char(Problem.Identifier + 1);
+    filename = sprintf('%s/%s/%s-p%d%d-re%d-T%d', Problem.Title, Problem.Subtitle, Problem.Identifier, Problem.Polynomial_Degree, floor(Problem.Reynolds), floor(Problem.Time_Range(2)));
+  end
 end
 
 main_getGeom;
@@ -82,15 +82,15 @@ hmax = max(max(h));
 hmin = min(min(h));
 [a b] = rat(hmax);
 if a<5 && b<1e4
-	hmax = sprintf('%d/%d', a,b);
+  hmax = sprintf('%d/%d', a,b);
 else 
-	hmax = sprintf('%f', hmax);
+  hmax = sprintf('%f', hmax);
 end
 [a b] = rat(hmin);
 if a<5 && b<1e4
-	hmin = sprintf('%d/%d', a,b);
+  hmin = sprintf('%d/%d', a,b);
 else 
-	hmin = sprintf('%f', hmin);
+  hmin = sprintf('%f', hmin);
 end
 
 %%% debug print problem info
@@ -111,9 +111,9 @@ hmax = max(max(h));
 hmin = min(min(h));
 
 if isa(Problem.Time_Step, 'function_handle')
-	delta_time = Problem.Time_Step(hmax);
+  delta_time = Problem.Time_Step(hmax);
 else
-	delta_time = Problem.Time_Step;
+  delta_time = Problem.Time_Step;
 end
 
 if ~Problem.Static
@@ -145,7 +145,7 @@ if ~Problem.Static
   fprintf('    k        : %f\n', delta_time);
   fprintf('    # steps  : %d\n', nSteps);
   if isfield(Problem, 'Time_Startup_Steps')
-    fprintf('    startup  : %d steps in T=(%f, %f)\n', nSteps, time(1), time(1)+delta_time);
+    fprintf('    startup  : %d steps in T=(%f, %f)\n', Problem.Time_Startup_Steps, time(1), time(1)+delta_time);
   end
 end
 

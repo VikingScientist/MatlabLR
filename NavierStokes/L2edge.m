@@ -13,30 +13,30 @@ end
 
 p = lr.p;
 if start(1) == stop(1) % vertical line (const. xi)
-	edge = [find(lr.elements(:,1) == start(1)); ... % elements starting at this edge
-	        find(lr.elements(:,3) == start(1))];    % elements ending at this edge (one of these should contain zero elements)
-	edge = edge(find(lr.elements(edge,4) <= stop(2) & ...
-	                 lr.elements(edge,2) >= start(2))); % crop away elements not within the requested range
+  edge = [find(lr.elements(:,1) == start(1)); ... % elements starting at this edge
+          find(lr.elements(:,3) == start(1))];    % elements ending at this edge (one of these should contain zero elements)
+  edge = edge(find(lr.elements(edge,4) <= stop(2) & ...
+                   lr.elements(edge,2) >= start(2))); % crop away elements not within the requested range
 
-	i = find(lr.knots(:,2) == start(1) & lr.knots(:,p(1)+1) == start(1));
-	i = i(find(lr.knots(i,p(1)+3) < stop(2) & ...
-	           lr.knots(i,end   ) > start(2)));  % crop away functions not within the requested range
+  i = find(lr.knots(:,2) == start(1) & lr.knots(:,p(1)+1) == start(1));
+  i = i(find(lr.knots(i,p(1)+3) < stop(2) & ...
+             lr.knots(i,end   ) > start(2)));  % crop away functions not within the requested range
   vertical_edge = true;
 elseif start(2) == stop(2) % horizontal line (const. eta)
-	edge = [find(lr.elements(:,2) == start(2)); ... % elements starting at this edge
-	        find(lr.elements(:,4) == start(2))];    % elements ending at this edge (one of these should contain zero elements)
-	edge = edge(find(lr.elements(edge,3) <= stop(1) & ...
-	                 lr.elements(edge,1) >= start(1))); % crop away elements not within the requested range
+  edge = [find(lr.elements(:,2) == start(2)); ... % elements starting at this edge
+          find(lr.elements(:,4) == start(2))];    % elements ending at this edge (one of these should contain zero elements)
+  edge = edge(find(lr.elements(edge,3) <= stop(1) & ...
+                   lr.elements(edge,1) >= start(1))); % crop away elements not within the requested range
 
-	i = find(lr.knots(:,p(1)+4) == start(2) & lr.knots(:,end-1) == start(2));
-	i = i(find(lr.knots(i,1)      < stop(1) & ...
-	           lr.knots(i,p(1)+2) > start(1)));  % crop away functions not within the requested range
+  i = find(lr.knots(:,p(1)+4) == start(2) & lr.knots(:,end-1) == start(2));
+  i = i(find(lr.knots(i,1)      < stop(1) & ...
+             lr.knots(i,p(1)+2) > start(1)));  % crop away functions not within the requested range
   vertical_edge = false;
 else
-	disp 'Error: L2edge requests horizontal or vertical input lines';
-	i  = [];
-	cp = [];
-	return;
+  disp 'Error: L2edge requests horizontal or vertical input lines';
+  i  = [];
+  cp = [];
+  return;
 end
 [dontcare permute] = sortrows(lr.knots(i,:));
 i = i(permute);
@@ -53,15 +53,15 @@ if exist('df')
 end
 
 for j=jRange
-	u = grev(j,1);
-	v = grev(j,2);
-	el = lr.getElementContaining(u,v);
-	if exist('newEl')
-		el = newEl(el);
-	end
-	N = lr.computeBasis(u,v,1);
-	ind = lr.support{el};
-	A(i(j), ind) = N(1,:);
+  u = grev(j,1);
+  v = grev(j,2);
+  el = lr.getElementContaining(u,v);
+  if exist('newEl')
+    el = newEl(el);
+  end
+  N = lr.computeBasis(u,v,1);
+  ind = lr.support{el};
+  A(i(j), ind) = N(1,:);
   if isa(f, 'function_handle')
     b(i(j)) = f(u,v);
   elseif isfloat(f)
