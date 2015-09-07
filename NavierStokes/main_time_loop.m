@@ -36,6 +36,7 @@ for i=2:nSteps
   lastTime = toc;
   fprintf('Time: %g (step %d/%d):\n', time(i), i, nSteps);
   integratorUsed = '';
+  dt = time(i)-time(i-1);
 
   % initial guess for newton stepping = previous time step
   v   = u;
@@ -46,12 +47,12 @@ for i=2:nSteps
 
     if i<4 || strcmp(time_integrator, 'Backward Euler')
       integratorUsed = 'Backward Euler';
-      lhs = k*dF(vn);
-      rhs = k* F(vn);
+      lhs = dt*dF(vn);
+      rhs = dt* F(vn);
     elseif strcmp(time_integrator, 'Crank-Nicolsen')
       integratorUsed = 'Crank-Nicolsen';
-      lhs = k/2*(dF(vn)         );
-      rhs = k/2*( F(vn) + F(un) );
+      lhs = dt/2*(dF(vn)         );
+      rhs = dt/2*( F(vn) + F(un) );
     end
 
     lhs(1:ndof_vel,1:ndof_vel) = lhs(1:ndof_vel,1:ndof_vel) + M;

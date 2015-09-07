@@ -39,25 +39,31 @@ elseif(strcmp(name, 'backstep'))
 
 	disp 'Refining geometry';
 	nRef = ceil(log2(Problem.H_Max / Problem.H_Min));
-	dist = 1.5;
-	for k=1:nRef
+	dist = 1.6;
+	for myRef=1:nRef
 		xNE = lr.knots(:,lr.p(1)+2);
 		yNE = lr.knots(:,end); % north-east
 		xNW = lr.knots(:,1);
 		yNW = lr.knots(:,end); % nort-west
 		xSE = lr.knots(:,lr.p(1)+2);
 		ySE = lr.knots(:,lr.p(1)+3); % south-east
+		xSW = lr.knots(:,1);
+		ySW = lr.knots(:,lr.p(1)+3); % south-west
     % pick all points around bottom corner
 		i = find((xNE-0).^2 + (yNE+1).^2 <= dist^2);
     % pick all points around top interior corner
 		j = find((xNE-0).^2 + (yNE-0).^2 <= dist^2 & ...
 		         (xNW-0).^2 + (yNW-0).^2 <= dist^2 & ...
-		         (xSE-0).^2 + (ySE-0).^2 <= dist^2);
+		         (xSE-0).^2 + (ySE-0).^2 <= dist^2 );
+    % pick all points near the left edge
+    k = find(lr.knots(:,lr.p(1)+2)+4 < 2^(-myRef+1));
 		dist = dist * 7 / 12;
-		lr.refine([i;j],'basis');
+		lr.refine([j;k],'basis');
 	end
-	lr.insertLine([xrange(1), 0], [(p(1)-1)*Problem.H_Min, 0], p(2)); % horizontal line
-	lr.insertLine([0, yrange(1)], [0, (p(2)-1)*Problem.H_Min], p(1)); % vertical   line
+	lr.insertLine([xrange(1), 0], [(p(1)-1)*Problem.H_Min, 0], p(2)-1); % horizontal line
+	lr.insertLine([0, yrange(1)], [0, (p(2)-1)*Problem.H_Min], p(1)-1); % vertical   line
+	lr.insertLine([xrange(1), 0], [Problem.H_Min, 0], p(2)); % horizontal line
+	lr.insertLine([0, yrange(1)], [0, Problem.H_Min], p(1)); % vertical   line
 end
 
 

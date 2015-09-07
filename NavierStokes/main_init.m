@@ -48,6 +48,7 @@ if ~isfield(Problem, 'Force')
   end
 end
 if ~isfield(Problem, 'Time_Step')
+  % default time steps as given in "Isogeometric div-conforming B-splines for the unsteady NS-eq" by J.Evans & T.Hughes. (2013)
   Problem = setfield(Problem, 'Time_Step', @(h) min(h^((max(Problem.Polynomial_Degree)+1)/2), h^2 /4*Problem.Reynolds));
 end
 
@@ -129,7 +130,11 @@ if ~Problem.Static
   end
           
 
-  time = Problem.Time_Range(1):delta_time:Problem.Time_Range(2);
+  time = Problem.Time_Range(1):delta_time:Problem.Time_Range(2); % uniform time integration
+  if isfield(Problem, 'Time_Startup_Steps') % if specified, parition first time interval into n number of steps
+     startup_time = linspace(time(1), time(2), Problem.Time_Startup_Steps);
+     time = sort([time, startup_time(2:end-1)]);
+  end
   nSteps = length(time);
 
   %%% debug print time integration
@@ -139,5 +144,8 @@ if ~Problem.Static
   fprintf('    T(end)   : %f\n', time(end));
   fprintf('    k        : %f\n', delta_time);
   fprintf('    # steps  : %d\n', nSteps);
+  if isfield(Problem, 'Time_Startup_Steps')
+    fprintf('    startup  : %d steps in T=(%f, %f)\n', nSteps, time(1), time(1)+delta_time);
+  end
 end
 
