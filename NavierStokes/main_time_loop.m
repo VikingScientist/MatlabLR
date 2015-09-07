@@ -30,7 +30,6 @@ end
 
 topRightCorner = intersect(lrp.getEdge(2), lrp.getEdge(4))+n1+n2;
 
-% b = -A(:,velEdges)*velVal - D(:,presEdges)*presVal;
 timer = cputime; tic;
 for i=2:nSteps
   lastTime = toc;
@@ -98,7 +97,7 @@ for i=2:nSteps
     timeLeft = mod(timeLeft,60);
   end
   fprintf('%d seconds\n', floor(timeLeft));
-  % fprintf('  Estimated completion: %s\n', datestr(datetime(c)));
+  fprintf('  Estimated completion: %s\n', datestr(datetime(c)));
 
   uAll(:,i) = u;
 end
