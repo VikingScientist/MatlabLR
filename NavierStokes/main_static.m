@@ -1,22 +1,12 @@
 
+n1 = size(lru.knots,1);
+n2 = size(lrv.knots,1);
+n3 = size(lrp.knots,1);
 N = n1+n2+n3; % number of total degrees of freedom (pressure + velocity)
 n = n1+n2;    % number of velocity DOFs
 
 % initial guess u=0 with boundary conditions
 u = zeros(N,1);
-
-gu = lru.getGrevillePoint();
-gv = lrv.getGrevillePoint();
-gp = lrp.getGrevillePoint();
-for i=1:size(gu,1)
-  % u(i)       = Exact_solution.u(gu(i,1), gu(i,2));
-end
-for i=1:size(gv,1)
-  % u(i+n1)    = Exact_solution.v(gv(i,1), gv(i,2));
-end
-for i=1:size(gp,1)
-  % u(i+n1+n2) = Exact_solution.p(gv(i,1), gv(i,2));
-end
 
 edg = [velEdges; presEdges+n];
 val = [velVal  ; presVal];

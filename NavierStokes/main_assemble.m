@@ -3,12 +3,15 @@ fprintf('assembling system\n'); % add a linebreak since assembly proccedure prin
 assembleNavierStokes;
 fprintf('\n'); 
 
+bodyForce = b;
+b = zeros(size(b));
+
 %%% set boundary conditions
 disp 'setting boundary conditions'
 weaklyEnforceBndryCond;
-% edges = [lru.getEdge(1); lru.getEdge(2); lrv.getEdge(3)+n1; lrv.getEdge(4)+n1];
-% topCornersU = intersect(lru.getEdge(4), [lru.getEdge(1);lru.getEdge(2)]);
-% topCornersV = intersect(lrv.getEdge(4), [lrv.getEdge(1);lrv.getEdge(2)]) + n1;
+
+traction = b;
+b = zeros(size(b));
 
 edges     = [];
 edgVal    = [];
@@ -69,35 +72,29 @@ velVal       = edgVal(i);
 
 N = n1+n2+n3;
 n = n1+n2;
-% avgP_ind = sort(setdiff(1:10, presEdges));
-% avgP_ind = avgP_ind(1);
 bndry_NL_mat = zeros(N,N);
 inner_p = 1:n3;
 inner_p(presEdges) = [];
 inner_u = 1:n;
 inner_u(velEdges)  = [];
 
-fullD   = D;
-fullA   = A;
-fullB   = b;
-
-%%% put all boundary conditions into b-vector
+%%% put all boundary conditions into traction-vector
 if numel(velEdges)>0
   if Problem.Linear
-    b = b - [ A(:,velEdges)*velVal;  D(velEdges,:)'*velVal];  % linear stokes
+    traction = traction - [ A(:,velEdges)*velVal;  D(velEdges,:)'*velVal];  % linear stokes
   else
     NL;                        % (m,lk)
     NL2 = reshape(NL, n*n,n);  % (ml,k)
     NL3 = reshape(NL', n,n*n); % (l,km)
     bndry_u = zeros(n,1);
     bndry_u(velEdges) = velVal;
-    b = b - [ A(:,velEdges)*velVal + NL*kron(bndry_u,bndry_u);  D(velEdges,:)'*velVal]; % navier stokes
+    traction = traction - [ A(:,velEdges)*velVal + NL*kron(bndry_u,bndry_u);  D(velEdges,:)'*velVal]; % navier stokes
     bndry_NL_mat = reshape(bndry_u'*NL3, n,n)' + reshape(NL2*bndry_u, n,n);
   end
 end
 b_avg_p = 0;
 if numel(presEdges)>0
-  b = b - [ D(:,presEdges)*presVal; zeros(n3,1) ];
+  traction = traction - [ D(:,presEdges)*presVal; zeros(n3,1) ];
   % add contribution from the average pressure (if applicable)
   if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
     b_avg_p = b_avg_p - avg_p(presEdges)'*presVal;
@@ -127,38 +124,29 @@ for i=1:numel(velEdges)
   clearI(find(ind2==velEdges(i))) = 1;
 end
 NL(:,find(clearI)) = [];
-b([velEdges;presEdges+n]) = [];
+traction([velEdges;presEdges+n])  = [];
+bodyForce([velEdges;presEdges+n]) = [];
 
 n = n1+n2-numel(velEdges); % number of velocity DOFs (not counting edges)
+N = n1+n2+n3-numel(velEdges)-numel(presEdges); % number of velocity DOFs (not counting edges)
+n3 = numel(inner_p);
 
-%%% linear stokes system
-if Problem.Linear
-  if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
-    F  = @(u) [A*u(1:n) + D*u(n+1:end); D'*u(1:n);avg_p(inner_p)'*u(n+1:end)] - [b;b_avg_p];
-    dF = @(u) [A         , D                  ;
-               D'        , zeros(numel(inner_p));
-               zeros(1,n), avg_p(inner_p)'     ]; % augment linear system by additional row
-  else 
-    F  = @(u) [A*u(1:n) + D*u(n+1:end); D'*u(1:n)] - b;
-    dF = @(u) [A         , D                  ;
-               D'        , zeros(numel(inner_p))];
-  end
-% F  = @(u) [A*u(1:n) + D*u(n+1:end); Dt*u(1:n)]-b;
-% dF = @(u) [A, D; Dt [avg_p'; zeros(n3-1,n3)]];
-else
-%%% nolinear navier-stokes system (optimized memory)
+dF = @(u) [A  , D         ;
+           D' , zeros(n3)];
+F  = @(u)  dF(u)*u - bodyForce - traction;
+if ~Problem.Linear
   NL;                        % (m,lk)
   NL2 = reshape(NL, n*n,n);  % (ml,k)
   NL3 = reshape(NL', n,n*n); % (l,km)
-  if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
-    F  = @(u) [A*u(1:n) + D*u(n+1:end) +  NL*kron(u(1:n),u(1:n)) + bndry_NL_mat*u(1:n); D'*u(1:n); avg_p(inner_p)'*u(n+1:end)] - [b;b_avg_p];
-% F  = @(u) [A*u(1:n) + D*u(n+1:end) +  reshape(NL2*u(1:n), n,n)*u(1:n); D'*u(1:n); 0] - [b;0];
-    dF = @(u) [A + reshape(NL2*u(1:n), n,n) + reshape(u(1:n)'*NL3, n,n)' + bndry_NL_mat,  D; D', zeros(numel(inner_p)); zeros(1,n), avg_p(inner_p)'];
-% dF = @(u) [A + reshape(NL2*u(1:n), n,n) + NL*kron(speye(n),u(1:n)),    D; D', zeros(numel(inner_p)); zeros(1,n), avg_p(inner_p)'];
-% dF = @(u) [A + NL*kron(u(1:n),speye(n)) + NL*kron(speye(n),u(1:n)),    D; D', zeros(numel(inner_p)); zeros(1,n), avg_p(inner_p)'];
-  else
-    F  = @(u) [A*u(1:n) + D*u(n+1:end) +  NL*kron(u(1:n),u(1:n)) + bndry_NL_mat*u(1:n); D'*u(1:n)] - b;
-    dF = @(u) [A + reshape(NL2*u(1:n), n,n) + reshape(u(1:n)'*NL3, n,n)' + bndry_NL_mat,  D; D', zeros(numel(inner_p))];
-  end
+  dF = @(u) dF(u) + [reshape(NL2*u(1:n),n,n) + reshape(u(1:n)'*NL3, n,n)' + bndry_NL_mat, zeros(n,n3); zeros(n3,N)];
+  F  = @(u)  F(u) + [NL*kron(u(1:n),u(1:n)) + bndry_NL_mat*u(1:n); zeros(n3,1)];
+end
+if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
+  dF = @(u) [dF(u); zeros(1,n), avg_p(inner_p)'];
+  F  = @(u) [F(u);  avg_p(inner_p)'*u(n+1:end) - b_avg_p];
 end
 
+if ~Problem.Static
+  dF = @(u,t) dF(u);
+  F  = @(u,t)  F(u);
+end

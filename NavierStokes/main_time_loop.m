@@ -35,23 +35,25 @@ for i=2:nSteps
   lastTime = toc;
   fprintf('Time: %g (step %d/%d):\n', time(i), i, nSteps);
   integratorUsed = '';
-  dt = time(i)-time(i-1);
+  tnp1 = time(i);   % t_{n+1}
+  tn   = time(i-1); % t_{n}
+  dt   = tnp1-tn;
 
   % initial guess for newton stepping = previous time step
   v   = u;
 
   for newtIt=1:Problem.Newton_Max_It
-    un = u(nonEdge); 
-    vn = v(nonEdge);
+    un = u(nonEdge);  % u_{n}
+    vn = v(nonEdge);  % u_{n+1} (newton-iteration approximation of it)
 
     if i<4 || strcmp(time_integrator, 'Backward Euler')
       integratorUsed = 'Backward Euler';
-      lhs = dt*dF(vn);
-      rhs = dt* F(vn);
+      lhs = dt*dF(vn,tnp1);
+      rhs = dt* F(vn,tnp1);
     elseif strcmp(time_integrator, 'Crank-Nicolsen')
       integratorUsed = 'Crank-Nicolsen';
-      lhs = dt/2*(dF(vn)         );
-      rhs = dt/2*( F(vn) + F(un) );
+      lhs = dt/2*(dF(vn,tnp1)            );
+      rhs = dt/2*( F(vn,tnp1) + F(un,tn) );
     end
 
     lhs(1:ndof_vel,1:ndof_vel) = lhs(1:ndof_vel,1:ndof_vel) + M;
