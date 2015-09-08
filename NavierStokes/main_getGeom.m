@@ -27,6 +27,25 @@ elseif(strcmp(name, 'channel'))
 	nel    = [diff(xrange),diff(yrange)] / Problem.H_Max;
 	lr = LRSplineSurface(p, [xrange(1)*ones(1,p(1)), linspace(xrange(1),xrange(2),nel(1)+1), xrange(2)*ones(1,p(1))], [yrange(1)*ones(1,p(2)), linspace(yrange(1),yrange(2),nel(2)+1), yrange(2)*ones(1,p(2))]);
 
+elseif(strcmp(name, 'square_hole')) 
+	xrange = [-Problem.Geometry_param,2*Problem.Geometry_param];
+	yrange = [-Problem.Geometry_param,  Problem.Geometry_param];
+	nel    = [diff(xrange),diff(yrange)] / Problem.H_Max;
+	lr = LRSplineSurface(p, [xrange(1)*ones(1,p(1)), linspace(xrange(1),xrange(2),nel(1)+1), xrange(2)*ones(1,p(1))], [yrange(1)*ones(1,p(2)), linspace(yrange(1),yrange(2),nel(2)+1), yrange(2)*ones(1,p(2))]);
+	crop   = @(x,y) -1<=x && x<=1 && ...
+	                -1<=y && y<=1 ;
+	doCrop = true;
+	nRef = ceil(log2(Problem.H_Max / Problem.H_Min));
+	hmin = Problem.H_Max * 2^(-nRef);
+  refineCenter(lr, nRef);
+	lr.insertLine([-1-(p(1)-1)*hmin, -1], [1+(p(1)-1)*hmin, -1], p(2)-1); % horizontal lines
+	lr.insertLine([-1-(p(1)-1)*hmin,  1], [1+(p(1)-1)*hmin,  1], p(2)-1);
+	lr.insertLine([ 1, -1-(p(2)-1)*hmin], [ 1, 1+(p(2)-1)*hmin], p(1)-1); % vertical lines
+	lr.insertLine([-1, -1-(p(2)-1)*hmin], [-1, 1+(p(2)-1)*hmin], p(1)-1);
+	lr.insertLine([-1-hmin, -1], [ 1+hmin, -1], p(2));
+	lr.insertLine([-1-hmin,  1], [ 1+hmin,  1], p(2));
+	lr.insertLine([-1, -1-hmin], [-1,  1+hmin], p(1));
+	lr.insertLine([ 1, -1-hmin], [ 1,  1+hmin], p(1));
 
 %%% Corner drop on the inflow. Kind of like a reversed mirrored 'L'
 elseif(strcmp(name, 'backstep')) 
@@ -70,7 +89,7 @@ end
 
 
 %%%  refining geometry (corners)
-if ~strcmp(name, 'backstep')
+if ~strcmp(name, 'backstep') && ~strcmp(name, 'square_hole')
 	disp 'Refining geometry';
 	actual_h_max = max(max(lr.elements(:,3:4)-lr.elements(:,1:2))); % in contrast to the *requested* h_max given by Problem.H_Max
 	nRef = ceil(log2(actual_h_max / Problem.H_Min));
@@ -79,6 +98,12 @@ end
 
 time_refine = cputime - t; time_refine_wall = toc;
 
+% lr.clipArea(crop);
+% figure; lr.plot('parametric'); axis equal;
+% figure; plotContinuityMesh(lr); axis equal;
+% figure; lr.surf(ones(size(lr.elements,1),1), 'parametric'); axis equal;
+% disp 'press any key to continue';
+% pause;
 
 %%%  fetch the matching spaces
 t = cputime; tic;
