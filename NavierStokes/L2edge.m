@@ -17,6 +17,7 @@ if start(1) == stop(1) % vertical line (const. xi)
           find(lr.elements(:,3) == start(1))];    % elements ending at this edge (one of these should contain zero elements)
   edge = edge(find(lr.elements(edge,4) <= stop(2) & ...
                    lr.elements(edge,2) >= start(2))); % crop away elements not within the requested range
+  eval_from_left = lr.elements(edge(1),3)==start(1); % elements ending on this edge => evaluate in the limit from the left
 
   i = find(lr.knots(:,2) == start(1) & lr.knots(:,p(1)+1) == start(1));
   i = i(find(lr.knots(i,p(1)+3) < stop(2) & ...
@@ -27,6 +28,7 @@ elseif start(2) == stop(2) % horizontal line (const. eta)
           find(lr.elements(:,4) == start(2))];    % elements ending at this edge (one of these should contain zero elements)
   edge = edge(find(lr.elements(edge,3) <= stop(1) & ...
                    lr.elements(edge,1) >= start(1))); % crop away elements not within the requested range
+  eval_from_left = lr.elements(edge(1),4)==start(2); % elements ending on this edge => evaluate in the limit from the left
 
   i = find(lr.knots(:,p(1)+4) == start(2) & lr.knots(:,end-1) == start(2));
   i = i(find(lr.knots(i,1)      < stop(1) & ...
@@ -55,6 +57,13 @@ end
 for j=jRange
   u = grev(j,1);
   v = grev(j,2);
+  if eval_from_left
+    if vertical_edge
+      u = u-1e-13;
+    else
+      v = v-1e-13;
+    end
+  end
   el = lr.getElementContaining(u,v);
   if exist('newEl')
     el = newEl(el);
