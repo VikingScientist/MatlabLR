@@ -104,6 +104,8 @@ if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true && isfie
     b_avg_p = b_avg_p + BC{1}.value;
 end
 
+traction_derivative = [M(:,velEdges)*velVal; zeros(n3,1)];
+
 %%% remove boundary DOFs from the system
 n = n1+n2;
 A(:,velEdges)             = [];
@@ -124,8 +126,9 @@ for i=1:numel(velEdges)
   clearI(find(ind2==velEdges(i))) = 1;
 end
 NL(:,find(clearI)) = [];
-traction([velEdges;presEdges+n])  = [];
-bodyForce([velEdges;presEdges+n]) = [];
+traction(           [velEdges;presEdges+n]) = [];
+traction_derivative([velEdges;presEdges+n]) = [];
+bodyForce(          [velEdges;presEdges+n]) = [];
 
 n = n1+n2-numel(velEdges); % number of velocity DOFs (not counting edges)
 N = n1+n2+n3-numel(velEdges)-numel(presEdges); % number of velocity DOFs (not counting edges)
@@ -133,7 +136,7 @@ n3 = numel(inner_p);
 
 dF = @(u) [A  , D         ;
            D' , zeros(n3)];
-F  = @(u)  dF(u)*u - bodyForce - traction;
+F  = @(u)  dF(u)*u - bodyForce;
 if ~Problem.Linear
   NL;                        % (m,lk)
   NL2 = reshape(NL, n*n,n);  % (ml,k)
@@ -146,7 +149,20 @@ if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
   F  = @(u) [F(u);  avg_p(inner_p)'*u(n+1:end) - b_avg_p];
 end
 
-if ~Problem.Static
+if Problem.Static
+  F = @(u) F(u) - traction;
+else 
+  if isfield(Problem, 'Boundary_Startup') 
+    T0 = Problem.Boundary_Startup(1)
+    T1 = Problem.Boundary_Startup(2)
+    % create a cubic polynomial in time which satisfy f(T0)=0, f(T1)=1, f'(T0)=0, f'(T1)=0
+    t_poly       = [1,T0,T0^2,T0^3;  1,T1,T1^2,T1^3;  0,1,2*T0,3*T0^2;   0,1,2*T1,3*T1^2] \ [0;1;0;0];
+    timeScale    = @(t) (t>=T0 && t<=T1) * [1, t,  t^2,  t^3]*t_poly + (t>T1);
+    timeScaleDer = @(t) (t>=T0 && t<=T1) * [0, 1,2*t,  3*t^2]*t_poly;
+  else
+    timeScale    = @(t) 1;
+    timeScaleDer = @(t) 0;
+  end
   dF = @(u,t) dF(u);
-  F  = @(u,t)  F(u);
+  F  = @(u,t)  F(u) - traction*timeScale(t) - traction_derivative*timeScaleDer(t);
 end

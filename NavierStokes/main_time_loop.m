@@ -6,7 +6,7 @@ n = n1+n2;
 u        = zeros(N,1);
 edg = [velEdges; presEdges+n];
 val = [velVal  ; presVal];
-u(edg) = val;
+u(edg) = val*timeScale(0);
 nonEdge = 1:N;
 nonEdge(edg) = [];
 
@@ -46,7 +46,7 @@ for i=2:nSteps
     un = u(nonEdge);  % u_{n}
     vn = v(nonEdge);  % u_{n+1} (newton-iteration approximation of it)
 
-    if i<4 || strcmp(time_integrator, 'Backward Euler')
+    if i<0 || strcmp(time_integrator, 'Backward Euler')
       integratorUsed = 'Backward Euler';
       lhs = dt*dF(vn,tnp1);
       rhs = dt* F(vn,tnp1);
@@ -72,6 +72,7 @@ for i=2:nSteps
   fprintf('  Max v-velocity controlpoint  : %g\n', max(v(n1+1:n1+n2)));
   fprintf('  Max pressure controlpoint    : %g\n', max(v(n+1:end)));
   u = v;
+  u(edg) = val*timeScale(tnp1);
   if Problem.Paraview
     vel = plotA*u(1:n);
     pressure = plotB*u(n+1:end);
