@@ -111,7 +111,7 @@ hmax = max(max(h));
 hmin = min(min(h));
 
 if isa(Problem.Time_Step, 'function_handle')
-  delta_time = Problem.Time_Step(hmax);
+  delta_time = Problem.Time_Step(hmin);
 else
   delta_time = Problem.Time_Step;
 end
@@ -132,8 +132,12 @@ if ~Problem.Static
 
   time = Problem.Time_Range(1):delta_time:Problem.Time_Range(2); % uniform time integration
   if isfield(Problem, 'Time_Startup_Steps') % if specified, parition first time interval into n number of steps
-     startup_time = linspace(time(1), time(2), Problem.Time_Startup_Steps);
-     time = sort([time, startup_time(2:end-1)]);
+
+    if ~isfield(Problem, 'Boundary_Startup')
+      Problem = setfield(Problem, 'Boundary_Startup',  time(1:2)); % if not specified, set the boundary-speed-up to the first regular interval
+    end
+    startup_time = linspace(time(1), time(2), Problem.Time_Startup_Steps);
+    time = sort([time, startup_time(2:end-1)]);
   end
   nSteps = length(time);
 

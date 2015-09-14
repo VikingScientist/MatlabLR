@@ -27,15 +27,15 @@ for i=1:numel(BC)
   if BC{i}.comp == 1 % condition on u-component 
     if isfield(BC{i}, 'tangent') 
       if exist('newElU')
-        [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value, 'df', BC{i}.tangent, 'newEl', newElU);
+        [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value, 'df', BC{i}.tangent, 'newEl', newElU, 'geom', lr, 'newElGeom', newEl)
       else
-        [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value, 'df', BC{i}.tangent);
+        [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value, 'df', BC{i}.tangent, 'geom', lr);
       end
     else
       if exist('newElU')
-        [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value, 'newEl', newElU);
+        [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value, 'newEl', newElU, 'geom', lr, 'newElGeom', newEl);
       else
-        [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value);
+        [thisCP thisI] = L2edge(lru, BC{i}.start, BC{i}.stop, BC{i}.value, 'geom', lr);
       end
     end
     edges  = [edges;  thisI];
@@ -43,15 +43,15 @@ for i=1:numel(BC)
   elseif BC{i}.comp == 2 % condition on v-component 
     if isfield(BC{i}, 'tangent') 
       if exist('newElU')
-        [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value, 'df', BC{i}.tangent, 'newEl', newElV);
+        [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value, 'df', BC{i}.tangent, 'newEl', newElV, 'geom', lr, 'newElGeom', newEl);
       else
-        [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value, 'df', BC{i}.tangent);
+        [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value, 'df', BC{i}.tangent, 'geom', lr);
       end
     else
       if exist('newElU')
-        [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value, 'newEl', newElV);
+        [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value, 'newEl', newElV, 'geom', lr, 'newElGeom', newEl);
       else
-        [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value);
+        [thisCP thisI] = L2edge(lrv, BC{i}.start, BC{i}.stop, BC{i}.value, 'geom', lr);
       end
     end
     thisI = thisI + n1;
@@ -153,8 +153,8 @@ if Problem.Static
   F = @(u) F(u) - traction;
 else 
   if isfield(Problem, 'Boundary_Startup') 
-    T0 = Problem.Boundary_Startup(1)
-    T1 = Problem.Boundary_Startup(2)
+    T0 = Problem.Boundary_Startup(1);
+    T1 = Problem.Boundary_Startup(2);
     % create a cubic polynomial in time which satisfy f(T0)=0, f(T1)=1, f'(T0)=0, f'(T1)=0
     t_poly       = [1,T0,T0^2,T0^3;  1,T1,T1^2,T1^3;  0,1,2*T0,3*T0^2;   0,1,2*T1,3*T1^2] \ [0;1;0;0];
     timeScale    = @(t) (t>=T0 && t<=T1) * [1, t,  t^2,  t^3]*t_poly + (t>T1);

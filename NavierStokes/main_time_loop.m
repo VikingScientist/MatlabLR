@@ -100,7 +100,7 @@ for i=2:nSteps
     timeLeft = mod(timeLeft,60);
   end
   fprintf('%d seconds\n', floor(timeLeft));
-  fprintf('  Estimated completion: %s\n', datestr(datetime(c)));
+  % fprintf('  Estimated completion: %s\n', datestr(datetime(c)));
 
   uAll(:,i) = u;
 end

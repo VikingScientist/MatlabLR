@@ -21,13 +21,14 @@ for edge=1:numel(BC)
   end
   if bc.start(1) == bc.stop(1)     % vertical line   (const. xi)
 	  elmStart = find(lr.elements(:,1) == bc.start(1)); % elements starting at this edge
-	  elmEnd   = find(lr.elements(:,3) == bc.start(1)); % elements ending at this edge (one of these should contain zero elements)
-    if numel(elmStart) > 0
-      elEdge        = elmStart;
+	  elmEnd   = find(lr.elements(:,3) == bc.start(1)); % elements ending at this edge 
+    elEdge   = [elmStart; elmEnd];
+	  elEdge = elEdge(find(lr.elements(elEdge,4) <= bc.stop(2) & ...
+	                       lr.elements(elEdge,2) >= bc.start(2))); % crop away elements not within the requested range
+    if lr.elements(elEdge(1),1)==bc.start(1) 
       left_edge     = true;
       running_param = 'v';
-    elseif numel(elmEnd) > 0
-      elEdge        = elmEnd;
+    elseif lr.elements(elEdge(1),3)==bc.start(1) 
       left_edge     = false;
       running_param = 'v';
     else
@@ -35,17 +36,16 @@ for edge=1:numel(BC)
       bc
       break;
     end
-	  elEdge = elEdge(find(lr.elements(elEdge,4) <= bc.stop(2) & ...
-	                       lr.elements(elEdge,2) >= bc.start(2))); % crop away elements not within the requested range
   elseif bc.start(2) == bc.stop(2) % horizontal line (const. eta)
 	  elmStart = find(lr.elements(:,2) == bc.start(2)); % elements starting at this edge
 	  elmEnd   = find(lr.elements(:,4) == bc.start(2)); % elements ending at this edge (one of these should contain zero elements)
-    if numel(elmStart) > 0
-      elEdge        = elmStart;
+    elEdge   = [elmStart; elmEnd];
+	  elEdge = elEdge(find(lr.elements(elEdge,3) <= bc.stop(1) & ...
+	                       lr.elements(elEdge,1) >= bc.start(1))); % crop away elements not within the requested range
+    if lr.elements(elEdge(1),2)==bc.start(2) 
       left_edge     = true;
       running_param = 'u';
-    elseif numel(elmEnd) > 0
-      elEdge        = elmEnd;
+    elseif lr.elements(elEdge(1),4)==bc.start(2) 
       left_edge     = false;
       running_param = 'u';
     else
@@ -53,8 +53,6 @@ for edge=1:numel(BC)
       bc
       break;
     end
-	  elEdge = elEdge(find(lr.elements(elEdge,3) <= bc.stop(1) & ...
-	                       lr.elements(elEdge,1) >= bc.start(1))); % crop away elements not within the requested range
   else % illegal line parameters
 	  disp 'Error: weaklyEnforceBndryCond requests only horizontal or vertical input lines';
     break;
@@ -86,6 +84,19 @@ for edge=1:numel(BC)
     sup2 = numel(globIv);
     sup3 = numel(globIp);
     globIvel = [globIu, globIv];
+
+    % figure out element physical size
+    N  = bezierToBsplineBasis(bezier.lr , nGauss+1, nGauss+1, C , du, dv);
+    map = computeGeometry(lr, el, N);
+    sw = map.x; % south-west corner
+    N  = bezierToBsplineBasis(bezier.lr , nGauss+2, nGauss+1, C , du, dv);
+    map = computeGeometry(lr, el, N);
+    se = map.x; % south-east corner
+    N  = bezierToBsplineBasis(bezier.lr , nGauss+1, nGauss+2, C , du, dv);
+    map = computeGeometry(lr, el, N);
+    nw = map.x; % north-west corner
+    hu = se(1) - sw(1);
+    hv = nw(2) - sw(2);
 
     if running_param == 'v'
       for i=1:nGauss,
@@ -131,8 +142,8 @@ for edge=1:numel(BC)
         n = [n(1),  0,   n(2),  0  ;
               0,   n(1),  0,   n(2)]; 
 
-        A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/dv*testVel'*testVel)*detJw;
-        b(globIvel)           = b(globIvel)           - 2*my*(symVel'*n'*ubc                         - penalty/dv*testVel'*ubc)    *detJw;
+        A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/hv*testVel'*testVel)*detJw;
+        b(globIvel)           = b(globIvel)           - 2*my*(symVel'*n'*ubc                         - penalty/hv*testVel'*ubc)    *detJw;
 
       end % end gauss point iteration
     elseif running_param == 'u'
@@ -179,8 +190,8 @@ for edge=1:numel(BC)
           ubc = bc.value;
         end
 
-        A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/du*testVel'*testVel)*detJw;
-        b(globIvel)           = b(globIvel)           - 2*my*(symVel'*n'*ubc                         - penalty/du*testVel'*ubc)    *detJw;
+        A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/hu*testVel'*testVel)*detJw;
+        b(globIvel)           = b(globIvel)           - 2*my*(symVel'*n'*ubc                         - penalty/hu*testVel'*ubc)    *detJw;
       end % end gauss point iteration
     end   % end u/v running-parameter if statement
   end     % end element on edge loop
