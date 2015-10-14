@@ -8,6 +8,7 @@ if ~exist('v')
 end
 if ~exist('p')
   p = simplify(int(1/Problem.Reynolds*(diff(diff(u,x),x)+diff(diff(u,y),y)) - diff(u,x)*u - diff(u,y)*v, x)); % created to make zero x-direction forces (nonlinear case)
+  p = simplify(int(1/Problem.Reynolds*(diff(diff(u,x),x)+diff(diff(u,y),y))               - diff(u,y)*v, x)); % created to make zero x-direction forces (   linear case)
 end
 
 force_x            = -1/Problem.Reynolds*(diff(diff(u,x),x)+diff(diff(u,y),y)) + diff(p,x);

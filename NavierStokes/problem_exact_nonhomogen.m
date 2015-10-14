@@ -58,15 +58,20 @@ BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 2, 'value', Exact_soluti
 BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 1, 'value', Exact_solution.u, 'weak', false)]; %, 'tangent', [dudy(0,0), dudy(0,1)])];
 BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 1, 'value', Exact_solution.u, 'weak', false)]; %, 'tangent', [dudy(1,0), dudy(1,1)])];
 
-BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', velocityField, 'weak', true)]; %, 'tangent', [dudx(0,0), dudx(1,0)])];
-BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', velocityField, 'weak', true)]; %, 'tangent', [dudx(0,1), dudx(1,1)])];
-BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', velocityField, 'weak', true)]; %, 'tangent', [dvdy(0,0), dvdy(0,1)])];
-BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', velocityField, 'weak', true)]; %, 'tangent', [dvdy(1,0), dvdy(1,1)])];
+% BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', velocityField, 'weak', true)]; %, 'tangent', [dudx(0,0), dudx(1,0)])];
+% BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', velocityField, 'weak', true)]; %, 'tangent', [dudx(0,1), dudx(1,1)])];
+% BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', velocityField, 'weak', true)]; %, 'tangent', [dvdy(0,0), dvdy(0,1)])];
+% BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', velocityField, 'weak', true)]; %, 'tangent', [dvdy(1,0), dvdy(1,1)])];
 
-% BC = [BC, struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', Exact_solution.p(0,0))];
-% BC = [BC, struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', Exact_solution.p(1,0))];
-% BC = [BC, struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', Exact_solution.p(0,1))];
-% BC = [BC, struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', Exact_solution.p(1,1))];
+BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', Exact_solution.u)];
+BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', Exact_solution.u)];
+BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', Exact_solution.v)];
+BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', Exact_solution.v)];
+
+BC = [BC, struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', Exact_solution.p(0,0))];
+BC = [BC, struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', Exact_solution.p(1,0))];
+BC = [BC, struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', Exact_solution.p(0,1))];
+BC = [BC, struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', Exact_solution.p(1,1))];
 
 if exist('Convergence_rates')
   if ~Problem.Static

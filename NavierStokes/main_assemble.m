@@ -134,9 +134,12 @@ n = n1+n2-numel(velEdges); % number of velocity DOFs (not counting edges)
 N = n1+n2+n3-numel(velEdges)-numel(presEdges); % number of velocity DOFs (not counting edges)
 n3 = numel(inner_p);
 
+%%% always include these terms
 dF = @(u) [A  , D         ;
            D' , zeros(n3)];
 F  = @(u)  dF(u)*u - bodyForce;
+
+%%% in case of Navier-Stokes, add non-linear convection terms
 if ~Problem.Linear
   NL;                        % (m,lk)
   NL2 = reshape(NL, n*n,n);  % (ml,k)
@@ -144,11 +147,8 @@ if ~Problem.Linear
   dF = @(u) dF(u) + [reshape(NL2*u(1:n),n,n) + reshape(u(1:n)'*NL3, n,n)' + bndry_NL_mat, zeros(n,n3); zeros(n3,N)];
   F  = @(u)  F(u) + [NL*kron(u(1:n),u(1:n)) + bndry_NL_mat*u(1:n); zeros(n3,1)];
 end
-if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
-  dF = @(u) [dF(u); zeros(1,n), avg_p(inner_p)'];
-  F  = @(u) [F(u);  avg_p(inner_p)'*u(n+1:end) - b_avg_p];
-end
 
+%%% add boundary conditions 
 if Problem.Static
   F = @(u) F(u) - traction;
 else 
@@ -166,3 +166,22 @@ else
   dF = @(u,t) dF(u);
   F  = @(u,t)  F(u) - traction*timeScale(t) - traction_derivative*timeScaleDer(t);
 end
+
+%%% augment system by an additional row for the average pressure
+if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
+  dF = @(u) [dF(u); zeros(1,n), avg_p(inner_p)'];
+  F  = @(u) [F(u);  avg_p(inner_p)'*u(n+1:end) - b_avg_p];
+end
+
+[rhs1, lhs1] = collocationPoint(lr, lru, lrv, lrp, 0,0, Problem.Force, my);
+[rhs2, lhs2] = collocationPoint(lr, lru, lrv, lrp, 1,0, Problem.Force, my);
+[rhs3, lhs3] = collocationPoint(lr, lru, lrv, lrp, 0,1, Problem.Force, my);
+[rhs4, lhs4] = collocationPoint(lr, lru, lrv, lrp, 1,1, Problem.Force, my);
+col  = sparse([rhs1;rhs2;rhs3;rhs4]);
+colB = [lhs1;lhs2;lhs3;lhs4];
+colB = colB - col(:,velEdges) * velVal;
+col(:,velEdges) = [];
+
+dF = @(u) [dF(u); col];
+F  = @(u) [F(u);  colB];
+

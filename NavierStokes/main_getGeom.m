@@ -27,7 +27,7 @@ elseif(strcmp(name, 'channel'))
 	nel    = [diff(xrange),diff(yrange)] / Problem.H_Max;
 	lr = LRSplineSurface(p, [xrange(1)*ones(1,p(1)), linspace(xrange(1),xrange(2),nel(1)+1), xrange(2)*ones(1,p(1))], [yrange(1)*ones(1,p(2)), linspace(yrange(1),yrange(2),nel(2)+1), yrange(2)*ones(1,p(2))]);
 
-elseif(strcmp(name, 'square_hole')) 
+elseif(strcmp(name, 'square_hole') || strcmp(name, 'cylinder_hole'))
 	xrange = [-Problem.Geometry_param,2*Problem.Geometry_param];
 	yrange = [-Problem.Geometry_param,  Problem.Geometry_param];
 	nel    = [diff(xrange),diff(yrange)] / Problem.H_Max;
@@ -46,6 +46,12 @@ elseif(strcmp(name, 'square_hole'))
 	lr.insertLine([-1-hmin,  1], [ 1+hmin,  1], p(2));
 	lr.insertLine([-1, -1-hmin], [-1,  1+hmin], p(1));
 	lr.insertLine([ 1, -1-hmin], [ 1,  1+hmin], p(1));
+  if(strcmp(name, 'cylinder_hole')) 
+    disp 'assmbling A matrix'
+    assemblePoisson;
+    disp 'press any key to break';
+    pause;
+  end
 
 %%% Corner drop on the inflow. Kind of like a reversed mirrored 'L'
 elseif(strcmp(name, 'backstep')) 
@@ -58,7 +64,7 @@ elseif(strcmp(name, 'backstep'))
 
 	disp 'Refining geometry';
 	nRef = ceil(log2(Problem.H_Max / Problem.H_Min));
-	dist = 1.6;
+	dist = 1.8;
 	for myRef=1:nRef
 		xNE = lr.knots(:,lr.p(1)+2);
 		yNE = lr.knots(:,end); % north-east
