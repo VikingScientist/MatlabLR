@@ -20,11 +20,11 @@ for edge=1:numel(BC)
     continue;
   end
   if bc.start(1) == bc.stop(1)     % vertical line   (const. xi)
-	  elmStart = find(lr.elements(:,1) == bc.start(1)); % elements starting at this edge
-	  elmEnd   = find(lr.elements(:,3) == bc.start(1)); % elements ending at this edge 
+    elmStart = find(lr.elements(:,1) == bc.start(1)); % elements starting at this edge
+    elmEnd   = find(lr.elements(:,3) == bc.start(1)); % elements ending at this edge 
     elEdge   = [elmStart; elmEnd];
-	  elEdge = elEdge(find(lr.elements(elEdge,4) <= bc.stop(2) & ...
-	                       lr.elements(elEdge,2) >= bc.start(2))); % crop away elements not within the requested range
+    elEdge = elEdge(find(lr.elements(elEdge,4) <= bc.stop(2) & ...
+                         lr.elements(elEdge,2) >= bc.start(2))); % crop away elements not within the requested range
     if lr.elements(elEdge(1),1)==bc.start(1) 
       left_edge     = true;
       running_param = 'v';
@@ -37,11 +37,11 @@ for edge=1:numel(BC)
       break;
     end
   elseif bc.start(2) == bc.stop(2) % horizontal line (const. eta)
-	  elmStart = find(lr.elements(:,2) == bc.start(2)); % elements starting at this edge
-	  elmEnd   = find(lr.elements(:,4) == bc.start(2)); % elements ending at this edge (one of these should contain zero elements)
+    elmStart = find(lr.elements(:,2) == bc.start(2)); % elements starting at this edge
+    elmEnd   = find(lr.elements(:,4) == bc.start(2)); % elements ending at this edge (one of these should contain zero elements)
     elEdge   = [elmStart; elmEnd];
-	  elEdge = elEdge(find(lr.elements(elEdge,3) <= bc.stop(1) & ...
-	                       lr.elements(elEdge,1) >= bc.start(1))); % crop away elements not within the requested range
+    elEdge = elEdge(find(lr.elements(elEdge,3) <= bc.stop(1) & ...
+                         lr.elements(elEdge,1) >= bc.start(1))); % crop away elements not within the requested range
     if lr.elements(elEdge(1),2)==bc.start(2) 
       left_edge     = true;
       running_param = 'u';
@@ -54,7 +54,7 @@ for edge=1:numel(BC)
       break;
     end
   else % illegal line parameters
-	  disp 'Error: weaklyEnforceBndryCond requests only horizontal or vertical input lines';
+    disp 'Error: weaklyEnforceBndryCond requests only horizontal or vertical input lines';
     break;
   end
   
