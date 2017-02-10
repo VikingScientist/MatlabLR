@@ -125,8 +125,7 @@ if ~Problem.Static
          strcmp( integrator_name, 'relue', 7)
     time_integrator = 'Backward Euler';
   else
-    fprintf('Error: Unkown time integrator: \"%s\"\n', Problem.Time_Integrator)
-    break;
+    error(sprintf('Error: Unkown time integrator: \"%s\"\n', Problem.Time_Integrator))
   end
           
 
