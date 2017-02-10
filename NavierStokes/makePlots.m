@@ -255,5 +255,5 @@ if plotAll || (exist('plotDiscretization')==1 && plotDiscretization==true)
 		title('P discretization');
 end
 
-time_plot = cputime - t;
-time_plot_wall = toc;
+time.plot     = cputime - t;
+walltime.plot = toc;

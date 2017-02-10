@@ -3,20 +3,8 @@
 addpath('../lib')
 
 %%% reset timers 
-time_assemble      = 0;
-time_plot          = 0;
-time_postprocess   = 0;
-time_refine        = 0;
-time_makeSpace     = 0;
-time_timeStepping  = 0;
-time_savetofile    = 0;
-time_assemble_wall    = 0;
-time_plot_wall        = 0;
-time_postprocess_wall = 0;
-time_refine_wall      = 0;
-time_makeSpace_wall   = 0;
-time_timeStepping_wall= 0;
-time_savetofile_wall  = 0;
+time     = struct('assemble', 0);
+walltime = struct('assemble', 0);
 
 %%% plotting parameters
 plotAll            = false;

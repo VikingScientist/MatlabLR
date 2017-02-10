@@ -195,7 +195,8 @@ if ~strcmp(name, 'backstep') && ~strcmp(name, 'square_hole') && ~strcmp(name, 'c
 	refineCorners(lr, nRef);
 end
 
-time_refine = cputime - t; time_refine_wall = toc;
+time.refine     = cputime - t;
+walltime.refine = toc;
 
 % lr.clipArea(crop);
 % figure; lr.plot('parametric'); axis equal;
@@ -223,5 +224,6 @@ if doCrop
 	newElV(oldElV) = 1:numel(oldElV);
 	newElP(oldElP) = 1:numel(oldElP);
 end
-time_makeSpace = cputime - t; time_makeSpace_wall = toc;
+time.makeSpace     = cputime - t;
+walltime.makeSpace = toc;
 

@@ -154,5 +154,5 @@ end
 
 % A = [A, D; D', zeros(n3,n3)];
 
-time_assemble        = cputime - t;
-time_assemble_wall   = toc;
+time.assemble        = cputime - t;
+walltime.assemble    = toc;

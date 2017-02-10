@@ -156,5 +156,5 @@ end
 fprintf('\n');
 % end element loop
 
-time_posptprocess     = cputime - t;
-time_postprocess_wall = toc;
+time.posptprocess    = cputime - t;
+walltime.postprocess = toc;

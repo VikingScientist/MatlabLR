@@ -105,5 +105,6 @@ for i=2:nSteps
   uAll(:,i) = u;
 end
 fprintf('\n');
-time_timeStepping = cputime - timer; time_timeStepping_wall = toc;
+time.timeStepping     = cputime - timer;
+walltime.timeStepping = toc;
 

@@ -1,4 +1,6 @@
 
+t = cputime;
+tic;
 n1 = size(lru.knots,1);
 n2 = size(lrv.knots,1);
 n3 = size(lrp.knots,1);
@@ -65,4 +67,6 @@ fprintf('  Max pressure controlpoint    : %g\n', max(u(n+1:end)));
 % u(nonEdge) = lhs \ rhs;
 
 uAll = u;
+time.solve        = cputime - t;
+walltime.solve    = toc;
 

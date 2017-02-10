@@ -1,6 +1,7 @@
 Problem
 u = uAll;
 
+t = cputime; tic;
 if exist('Convergence_rates')
 
   yStart = result_uh_H1(end, :);
@@ -122,7 +123,10 @@ if Problem.Static
     writeVTK2(strcat(filename, '.vtk'), title,  x,y,mesh,   velX,velY,pressure);
   end
 end
+time.plot     = cputime - t;
+walltime.plot = toc;
 
+t = cputime; tic;
 if Problem.Save_Results
   filename
   lr.save( [filename, '-lr.lr' ]);
@@ -135,4 +139,6 @@ if Problem.Save_Results
     save(filename, 'Problem', 'uAll', 'time');
   end
 end
+time.savetofile     = cputime - t;
+walltime.savetofile = toc;
 
