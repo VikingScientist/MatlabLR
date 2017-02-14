@@ -114,6 +114,8 @@ M(:,velEdges)             = [];
 M(velEdges,:)             = [];
 D(velEdges,:)             = [];
 D(:,presEdges)            = [];
+P(velEdges,:)             = [];
+P(:,presEdges)            = [];
 bndry_NL_mat(:,velEdges)  = [];
 bndry_NL_mat(velEdges,:)  = [];
 NL(velEdges,:)            = [];
@@ -134,7 +136,7 @@ n = n1+n2-numel(velEdges); % number of velocity DOFs (not counting edges)
 N = n1+n2+n3-numel(velEdges)-numel(presEdges); % number of velocity DOFs (not counting edges)
 n3 = numel(inner_p);
 
-dF = @(u) [A  , D         ;
+dF = @(u) [A  , P         ;
            D' , zeros(n3)];
 F  = @(u)  dF(u)*u - bodyForce;
 if ~Problem.Linear

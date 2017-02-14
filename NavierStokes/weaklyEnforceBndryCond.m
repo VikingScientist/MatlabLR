@@ -142,8 +142,8 @@ for edge=1:numel(BC)
         n = [n(1),  0,   n(2),  0  ;
               0,   n(1),  0,   n(2)]; 
 
-        A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/hv*testVel'*testVel)*detJw;
-        b(globIvel)           = b(globIvel)           - 2*my*(symVel'*n'*ubc                         - penalty/hv*testVel'*ubc)    *detJw;
+        A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(gradVel'*n'*testVel + testVel'*n*gradVel - penalty/hv*testVel'*testVel)*detJw;
+        b(globIvel)           = b(globIvel)           - 2*my*(gradVel'*n'*ubc                          - penalty/hv*testVel'*ubc)    *detJw;
 
       end % end gauss point iteration
     elseif running_param == 'u'
@@ -190,8 +190,8 @@ for edge=1:numel(BC)
           ubc = bc.value;
         end
 
-        A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/hu*testVel'*testVel)*detJw;
-        b(globIvel)           = b(globIvel)           - 2*my*(symVel'*n'*ubc                         - penalty/hu*testVel'*ubc)    *detJw;
+        A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(gradVel'*n'*testVel + testVel'*n*gradVel - penalty/hu*testVel'*testVel)*detJw;
+        b(globIvel)           = b(globIvel)           - 2*my*(gradVel'*n'*ubc                          - penalty/hu*testVel'*ubc)    *detJw;
       end % end gauss point iteration
     end   % end u/v running-parameter if statement
   end     % end element on edge loop

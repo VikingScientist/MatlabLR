@@ -67,7 +67,7 @@ elseif(strcmp(name, 'square_hole') || strcmp(name, 'cylinder_hole'))
   end
 
 elseif(strcmp(name, 'benchmark_cylinder'))
-  xrange = [-4, 12];
+  xrange = [-4, 24];
   yrange = [-4, 4];
   hmax   = Problem.H_Max;
   nel    = [diff(xrange),diff(yrange)] / hmax;
@@ -142,9 +142,9 @@ elseif(strcmp(name, 'benchmark_cylinder'))
   newCP = lr.cp + cp';
   newCP = newCP/4*0.20 + 0.20;
   lr.setControlPoints(newCP);
-  figure; lr.surf(ones(size(lr.elements,1),1)); axis equal; 
-  disp 'press any key to continue';
-  pause;
+  % figure; lr.surf(ones(size(lr.elements,1),1)); axis equal; 
+  % disp 'press any key to continue';
+  % pause;
 
 %%% Corner drop on the inflow. Kind of like a reversed mirrored 'L'
 elseif(strcmp(name, 'backstep')) 

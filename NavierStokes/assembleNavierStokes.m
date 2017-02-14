@@ -12,6 +12,7 @@ A = sparse(n1+n2,n1+n2);
 NL= sparse(n1+n2,(n1+n2)*(n1+n2));
 M = sparse(n1+n2,n1+n2);
 D = sparse(n1+n2,n3);
+P = sparse(n1+n2,n3);
 B = sparse(n3,n3);
 b = zeros(N, 1);
 avg_p = zeros(n3, 1);
@@ -62,6 +63,7 @@ for el=1:nel,
   Ak  = zeros(sup1+sup2);
   Mk  = zeros(sup1+sup2);
   Dk  = zeros(sup1+sup2, sup3);
+  Pk  = zeros(sup1+sup2, sup3);
   NLk = zeros((sup1+sup2)^2, sup1+sup2);
 
   C  = lr.getBezierExtraction( el  );
@@ -91,12 +93,13 @@ for el=1:nel,
 
       % create the proper vector representation of basis functions
       testP   = Np(1,:);
+      gradP   = Np(2:3,:);
       testVel = [Nu(1,:), zeros(1,sup2); zeros(1,sup1), Nv(1,:)];    % vector basis functions
       gradVel = [Nu(2:3,:), zeros(2,sup2);zeros(2,sup1), Nv(2:3,:)]; % 
       gradVel = gradVel([1,3,2,4],:);                                % row-wise: u_1,1  u_2,1  u_1,2  u_2,2
 
       % alter through piola mapping
-      testP             = piolaTransform(map, testP);
+      [testP   gradP]   = piolaTransform(map, testP,   gradP);
       [testVel gradVel] = piolaTransform(map, testVel, gradVel);
 
       % compute quanteties of interest
@@ -115,9 +118,10 @@ for el=1:nel,
       % N_{i,i}    = divergence of a (vector) basis function
       %
 
-      Ak = Ak  + 2*my * symVel'*symVel   * detJw;  % N_{i,j}^k  N_{i,j}^l  diffusion term,  for all (k,l)
+      Ak = Ak  + 2*my *gradVel'*gradVel  * detJw;  % N_{i,j}^k  N_{i,j}^l  diffusion term,  for all (k,l)
       Mk = Mk  +       testVel'*testVel  * detJw;  % N_i^k      N_i^l      mass matrix,     for all (k,l)
       Dk = Dk  -        divVel'*testP    * detJw;  % N_{i,i}^k  M^l        pressure term    for all (k,l)
+      Pk = Pk  +       testVel'*gradP    * detJw;
       tmp1 = gradVel([1,3],:)'*testVel;            % N_i^k      N_{j,i}^l                   for j=1, all (l,k)
       tmp2 = gradVel([2,4],:)'*testVel;            % N_i^k      N_{j,i}^l                   for j=2, all (l,k)
       NLk  = NLk + (tmp1(:)*testVel(1,:)+...
@@ -148,6 +152,7 @@ for el=1:nel,
   A(globIvel, globIvel)  = A(globIvel, globIvel)  + Ak;
   M(globIvel, globIvel)  = M(globIvel, globIvel)  + Mk;
   D(globIvel, locIp)     = D(globIvel, locIp)     + Dk;
+  P(globIvel, locIp)     = P(globIvel, locIp)     + Pk;
   NL(globIvel, lk_index) = NL(globIvel, lk_index) + NLk';
 end
 % end element loop

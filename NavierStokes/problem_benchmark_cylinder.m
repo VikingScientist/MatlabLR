@@ -14,13 +14,13 @@ Problem = struct(...
 'Geometry_param'    ,  3,          ...
 'Polynomial_Degree' ,  [2,2],      ...
 'H_Max'             ,  1/1,          ...
-'H_Min'             ,  1/16,       ...
-'Reynolds'          ,  1000,         ...
+'H_Min'             ,  1/4,       ...
+'Reynolds'          ,  2000,         ...
 'Geom_TOL'          ,  1e-8,      ...
 'Newton_TOL'        ,  1e-10,      ...
 'Newton_Max_It'     ,  12,         ...
 'Force'             ,  @(x,y)[0;0],...
-'Static'            ,  false,       ...
+'Static'            ,  true,       ...
 'Linear'            ,  false,       ...
 'Paraview'          ,  true,      ...
 'MatlabPlot'        ,  false,       ...
@@ -32,24 +32,24 @@ Problem = struct(...
 
 L = 4;
 H = 0.15 + 0.1 + 0.16; % height of domain
-Um = 2;              % velocity at middle point
+Um = .3;              % velocity at middle point
 inflow = @(x,y) 4*Um*y*(H-y)/H^2;
 BC     = cell(0);
-BC = [BC, struct('start', [ -L,  L], 'stop', [4*L, L],  'comp', 2, 'value', 0)]; % horizontal top edge
-BC = [BC, struct('start', [ -L, -L], 'stop', [4*L,-L],  'comp', 2, 'value', 0)]; % horizontal bottom edge
+BC = [BC, struct('start', [ -L,  L], 'stop', [7*L, L],  'comp', 2, 'value', 0)]; % horizontal top edge
+BC = [BC, struct('start', [ -L, -L], 'stop', [7*L,-L],  'comp', 2, 'value', 0)]; % horizontal bottom edge
 BC = [BC, struct('start', [ -1,  1], 'stop', [  1, 1],  'comp', 2, 'value', 0)]; % horizontal inner top edge
 BC = [BC, struct('start', [ -1, -1], 'stop', [  1,-1],  'comp', 2, 'value', 0)]; % horizontal inner bottom edge
 BC = [BC, struct('start', [ -L, -L], 'stop', [ -L, L],  'comp', 1, 'value', inflow)]; % vertical left edge
-% BC = [BC, struct('start', [4*L, -L], 'stop', [4*L, L],  'comp', 1, 'value', 0)]; % vertical right edge
+% BC = [BC, struct('start', [7*L, -L], 'stop', [7*L, L],  'comp', 1, 'value', 0)]; % vertical right edge
 BC = [BC, struct('start', [ -1, -1], 'stop', [ -1, 1],  'comp', 1, 'value', 0)]; % vertical inner left edge
 BC = [BC, struct('start', [  1, -1], 'stop', [  1, 1],  'comp', 1, 'value', 0)]; % vertical inner right edge
 
-BC = [BC, struct('start', [ -L,  L], 'stop', [4*L, L],  'value', [0;0], 'weak', true)]; % horizontal top edge
-BC = [BC, struct('start', [ -L, -L], 'stop', [4*L,-L],  'value', [0;0], 'weak', true)]; % horizontal bottom edge
+BC = [BC, struct('start', [ -L,  L], 'stop', [7*L, L],  'value', [0;0], 'weak', true)]; % horizontal top edge
+BC = [BC, struct('start', [ -L, -L], 'stop', [7*L,-L],  'value', [0;0], 'weak', true)]; % horizontal bottom edge
 BC = [BC, struct('start', [ -1,  1], 'stop', [  1, 1],  'value', [0;0], 'weak', true)]; % horizontal inner top edge
 BC = [BC, struct('start', [ -1, -1], 'stop', [  1,-1],  'value', [0;0], 'weak', true)]; % horizontal inner bottom edge
 BC = [BC, struct('start', [ -L, -L], 'stop', [ -L, L],  'value', @(x,y)[inflow(x,y);0], 'weak', true)]; % vertical left edge
-% BC = [BC, struct('start', [4*L, -L], 'stop', [4*L, L],  'value', [0;0], 'weak', true)]; % vertical right edge
+% BC = [BC, struct('start', [7*L, -L], 'stop', [7*L, L],  'value', [0;0], 'weak', true)]; % vertical right edge
 BC = [BC, struct('start', [ -1, -1], 'stop', [ -1, 1],  'value', [0;0], 'weak', true)]; % vertical inner left edge
 BC = [BC, struct('start', [  1, -1], 'stop', [  1, 1],  'value', [0;0], 'weak', true)]; % vertical inner right edge
 
@@ -87,7 +87,9 @@ figure;
 
 Ubar = inflow(0,H/2)*2/3;
 D = .1;
-C_D = 2*(I1+I2+I3+I4)/D/Ubar^2
+C = 2*(I1+I2+I3+I4)/D/Ubar^2;
+C_D = C(1)
+C_L = C(2)
 
 xi  = [-1-1e-13,0];
 map = computeGeometry(lr, newEl(lr.getElementContaining(xi(1),xi(2))), lr.computeBasis(xi(1),xi(2),2));
