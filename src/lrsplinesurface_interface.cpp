@@ -245,9 +245,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 				mexErrMsgTxt("Refine_basis: function index out of range");
 		}
 		
-		lr->setMaxTjoints(-1);
-		lr->setCloseGaps(false);
-		lr->setMaxAspectRatio(0, false);
 		lr->setRefMultiplicity(mult);
 		lr->refineBasisFunction(basis);
 		return;
