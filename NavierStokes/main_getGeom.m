@@ -85,10 +85,10 @@ elseif(strcmp(name, 'backstep'))
 		dist = dist * 7 / 12;
 		lr.refine([j;k],'basis');
 	end
-	lr.insertLine([xrange(1), 0], [(p(1)-1)*Problem.H_Min, 0], p(2)-1); % horizontal line
-	lr.insertLine([0, yrange(1)], [0, (p(2)-1)*Problem.H_Min], p(1)-1); % vertical   line
-	lr.insertLine([xrange(1), 0], [Problem.H_Min, 0], p(2)); % horizontal line
-	lr.insertLine([0, yrange(1)], [0, Problem.H_Min], p(1)); % vertical   line
+	% lr.insertLine([xrange(1), 0], [(p(1)-1)*Problem.H_Min, 0], p(2)); % horizontal line
+	% lr.insertLine([0, yrange(1)], [0, (p(2)-1)*Problem.H_Min], p(1)); % vertical   line
+	lr.insertLine([xrange(1), 0], [0, 0], p(2)); % horizontal line
+	lr.insertLine([0, yrange(1)], [0, 0], p(1)); % vertical   line
 end
 
 
@@ -121,9 +121,11 @@ if doCrop
 	[oldBasisU oldElU] = lru.clipArea(crop);
 	[oldBasisV oldElV] = lrv.clipArea(crop);
 	[oldBasisP oldElP] = lrp.clipArea(crop);
+	newEl  = zeros(size(lr.elements, 1),1);
 	newElU = zeros(size(lru.elements,1),1);
 	newElV = zeros(size(lrv.elements,1),1);
 	newElP = zeros(size(lrp.elements,1),1);
+	newEl( oldEl ) = 1:numel(oldEl );
 	newElU(oldElU) = 1:numel(oldElU);
 	newElV(oldElV) = 1:numel(oldElV);
 	newElP(oldElP) = 1:numel(oldElP);

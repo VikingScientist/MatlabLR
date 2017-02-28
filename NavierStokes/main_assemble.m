@@ -173,15 +173,29 @@ if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
   F  = @(u) [F(u);  avg_p(inner_p)'*u(n+1:end) - b_avg_p];
 end
 
-[rhs1, lhs1] = collocationPoint(lr, lru, lrv, lrp, 0,0, Problem.Force, my);
-[rhs2, lhs2] = collocationPoint(lr, lru, lrv, lrp, 1,0, Problem.Force, my);
-[rhs3, lhs3] = collocationPoint(lr, lru, lrv, lrp, 0,1, Problem.Force, my);
-[rhs4, lhs4] = collocationPoint(lr, lru, lrv, lrp, 1,1, Problem.Force, my);
-col  = sparse([rhs1;rhs2;rhs3;rhs4]);
-colB = [lhs1;lhs2;lhs3;lhs4];
+disp 'adding pressure collocation points'
+e = 1e-13;
+% [lhs1, rhs1] = collocationPoint(lr, lru, lrv, lrp, -4, 0, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
+% [lhs2, rhs2] = collocationPoint(lr, lru, lrv, lrp, -4, 2, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
+% [lhs3, rhs3] = collocationPoint(lr, lru, lrv, lrp,  0,-1, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
+% [lhs4, rhs4] = collocationPoint(lr, lru, lrv, lrp,  0, 0, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
+% [lhs5, rhs5] = collocationPoint(lr, lru, lrv, lrp, -e, e, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
+% [lhs6, rhs6] = collocationPoint(lr, lru, lrv, lrp,  e,-e, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
+[lhs1, rhs1] = collocationPoint(lr, lru, lrv, lrp, 0, 0, Problem.Force, my);
+[lhs2, rhs2] = collocationPoint(lr, lru, lrv, lrp, 0, 1, Problem.Force, my);
+[lhs3, rhs3] = collocationPoint(lr, lru, lrv, lrp, 1, 0, Problem.Force, my);
+[lhs4, rhs4] = collocationPoint(lr, lru, lrv, lrp, 1, 1, Problem.Force, my);
+% [lhs5, rhs5] = collocationPoint(lr, lru, lrv, lrp, -e, e, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
+% [lhs6, rhs6] = collocationPoint(lr, lru, lrv, lrp,  e,-e, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
+% col  = sparse([lhs1;lhs2;lhs3;lhs4;lhs5;lhs6]);
+% colB = [rhs1;rhs2;rhs3;rhs4;rhs5;rhs6];
+col  = sparse([lhs1;lhs2;lhs3;lhs4]);
+colB = [rhs1;rhs2;rhs3;rhs4];
 colB = colB - col(:,velEdges) * velVal;
 col(:,velEdges) = [];
+% col  = [];
+% colB = [];
 
-dF = @(u) [dF(u); col];
-F  = @(u) [F(u);  colB];
+dF = @(u) [dF(u);  col];
+F  = @(u) [ F(u); col*u - colB];
 

@@ -22,8 +22,8 @@ Problem = struct(...
 'Geometry'          ,  'id',   ...
 'Geometry_param'    ,  5,          ...
 'Polynomial_Degree' ,  [3,3],      ...
-'H_Max'             ,  1/2,        ...
-'H_Min'             ,  1/2,        ...
+'H_Max'             ,  1/4,        ...
+'H_Min'             ,  1/4,        ...
 'Reynolds'          ,  1,         ...
 'Geom_TOL'          ,  1e-10,      ...
 'Newton_TOL'        ,  1e-10,      ...
@@ -37,35 +37,37 @@ Problem = struct(...
 'Time_Range'        ,  [0,10]);
 
 syms x y
-% u(x,y) = 2*exp(x)*(x-1)^2*x^2*(y^2-y)*(2*y-1);
-% v(x,y) = -exp(x)*(x-1)*x*(-2+x*(x+3))*(y-1)^2*y^2;
-% p(x,y) = (-424+156*exp(1)+(y^2-y)*(-456+exp(x)*(456+x^2*(228-5*(y^2-y))+2*x*(-228+(y^2-y))+2*x^3*(-36+(y^2-y))+x^4*(12+(y^2-y)))));
-phi(x,y) = x^2*(x-1)^2*y^2*(y-1)^2;
-p(x,y)   = x*(x-1)*y*(y-1);
+u(x,y) = 2*exp(x)*(x-1)^2*x^2*(y^2-y)*(2*y-1);
+v(x,y) = -exp(x)*(x-1)*x*(-2+x*(x+3))*(y-1)^2*y^2;
+p(x,y) = (-424+156*exp(1)+(y^2-y)*(-456+exp(x)*(456+x^2*(228-5*(y^2-y))+2*x*(-228+(y^2-y))+2*x^3*(-36+(y^2-y))+x^4*(12+(y^2-y)))));
+% p(x,y) = exp(1)*log(x+y+1)*x;
+% phi(x,y) = x^2*(x-1)^2*y^2*(y-1)^2;
+% p(x,y)   = x*(x-1)*y*(y-1);
+% phi(x,y) = log(x+y+.15)*x*y-sin(x);
+% p(x,y)   = x^3*cos(y) + log(x*y+.2);
 
 main_make_exact_solution;
-break;
 
-Convergence_rates = struct( ...
-'uniform',      true,       ...
-'p_values',      2:4,       ...
-'iterations',    3);
+% Convergence_rates = struct( ...
+% 'uniform',      true,       ...
+% 'p_values',      2:4,       ...
+% 'iterations',    3);
 
 
 BC     = cell(0);
 BC = [BC, struct('pressure_integral', true, 'value', pressure_exact_avg)];
-BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 2, 'value', 0, 'weak', false)];
-BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 2, 'value', 0, 'weak', false)];
-BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 1, 'value', 0, 'weak', false)];
-BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 1, 'value', 0, 'weak', false)];
+BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 2, 'value', Exact_solution.v, 'weak', false)];
+BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 2, 'value', Exact_solution.v, 'weak', false)];
+BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 1, 'value', Exact_solution.u, 'weak', false)];
+BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 1, 'value', Exact_solution.u, 'weak', false)];
 % BC = [BC, struct('start', [0,0], 'stop', [1,0], 'value', [0;0], 'weak', true)];
 % BC = [BC, struct('start', [0,1], 'stop', [1,1], 'value', [0;0], 'weak', true)];
 % BC = [BC, struct('start', [0,0], 'stop', [0,1], 'value', [0;0], 'weak', true)];
 % BC = [BC, struct('start', [1,0], 'stop', [1,1], 'value', [0;0], 'weak', true)];
-BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', 0, 'weak', false)];
-BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', 0, 'weak', false)];
-BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', 0, 'weak', false)];
-BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', 0, 'weak', false)];
+BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', Exact_solution.u, 'weak', false)];
+BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', Exact_solution.u, 'weak', false)];
+BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', Exact_solution.v, 'weak', false)];
+BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', Exact_solution.v, 'weak', false)];
 % BC = [BC, struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', Exact_solution.p(0,0))];
 % BC = [BC, struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', Exact_solution.p(1,0))];
 % BC = [BC, struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', Exact_solution.p(0,1))];
@@ -73,8 +75,7 @@ BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', 0, 'weak', f
 
 if exist('Convergence_rates')
   if ~Problem.Static
-    disp('Error: convergence rate simulations have to be couppled with static simulations')
-    break;
+    error('convergence rate simulations have to be couppled with static simulations')
   end
   result_h     = zeros(Convergence_rates.iterations,numel(Convergence_rates.p_values));
   result_uh_H1 = zeros(Convergence_rates.iterations,numel(Convergence_rates.p_values));
