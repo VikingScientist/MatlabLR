@@ -19,9 +19,9 @@ Problem = struct(...
 'Identifier'        ,  'a',        ...
 'Geometry'          ,  'id',   ...
 'Geometry_param'    ,  5,          ...
-'Polynomial_Degree' ,  [3,3],      ...
-'H_Max'             ,  1/2, ...
-'H_Min'             ,  1/2, ...
+'Polynomial_Degree' ,  [2,2],      ...
+'H_Max'             ,  1/4, ...
+'H_Min'             ,  1/4, ...
 'Reynolds'          ,  1,         ...
 'Geom_TOL'          ,  1e-10,      ...
 'Newton_TOL'        ,  1e-10,      ...
@@ -38,10 +38,10 @@ phi(x,y) = exp(x)*sin(y);
 p(x,y) = log(x + y + 1)*(x^2 + y^2);
 main_make_exact_solution;
 
-Convergence_rates = struct( ...
-'uniform',      true,       ...
-'p_values',      1:3,       ...
-'iterations',    3);
+% Convergence_rates = struct( ...
+% 'uniform',      true,       ...
+% 'p_values',      1:3,       ...
+% 'iterations',    3);
 
 first  = @(x) x(1);
 second = @(x) x(2);
@@ -53,30 +53,30 @@ velocityField = @(x,y) [Exact_solution.u(x,y); Exact_solution.v(x,y)];
 
 BC     = cell(0);
 BC = [BC, struct('pressure_integral', true, 'value', pressure_exact_avg)];
-BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 2, 'value', Exact_solution.v, 'weak', false)]; %, 'tangent', [dvdx(0,0), dvdx(1,0)])];
-BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 2, 'value', Exact_solution.v, 'weak', false)]; %, 'tangent', [dvdx(0,1), dvdx(1,1)])];
-BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 1, 'value', Exact_solution.u, 'weak', false)]; %, 'tangent', [dudy(0,0), dudy(0,1)])];
-BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 1, 'value', Exact_solution.u, 'weak', false)]; %, 'tangent', [dudy(1,0), dudy(1,1)])];
+BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 2, 'value', Exact_solution.v, 'weak', false, 'tangent', dvdx)];
+BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 2, 'value', Exact_solution.v, 'weak', false, 'tangent', dvdx)];
+BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 1, 'value', Exact_solution.u, 'weak', false, 'tangent', dudy)];
+BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 1, 'value', Exact_solution.u, 'weak', false, 'tangent', dudy)];
 
 % BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', velocityField, 'weak', true)]; %, 'tangent', [dudx(0,0), dudx(1,0)])];
 % BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', velocityField, 'weak', true)]; %, 'tangent', [dudx(0,1), dudx(1,1)])];
 % BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', velocityField, 'weak', true)]; %, 'tangent', [dvdy(0,0), dvdy(0,1)])];
 % BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', velocityField, 'weak', true)]; %, 'tangent', [dvdy(1,0), dvdy(1,1)])];
 
-BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', Exact_solution.u)];
-BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', Exact_solution.u)];
-BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', Exact_solution.v)];
-BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', Exact_solution.v)];
+BC = [BC, struct('start', [0,0], 'stop', [1,0], 'comp', 1, 'value', Exact_solution.u, 'tangent', dudx)];
+BC = [BC, struct('start', [0,1], 'stop', [1,1], 'comp', 1, 'value', Exact_solution.u, 'tangent', dudx)];
+BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', Exact_solution.v, 'tangent', dvdy)];
+BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', Exact_solution.v, 'tangent', dvdy)];
 
-BC = [BC, struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', Exact_solution.p(0,0))];
-BC = [BC, struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', Exact_solution.p(1,0))];
-BC = [BC, struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', Exact_solution.p(0,1))];
-BC = [BC, struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', Exact_solution.p(1,1))];
+% BC = [BC, struct('start', [0,0], 'stop', [0,0], 'comp', 3, 'value', Exact_solution.p(0,0))];
+% BC = [BC, struct('start', [1,0], 'stop', [1,0], 'comp', 3, 'value', Exact_solution.p(1,0))];
+% BC = [BC, struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', Exact_solution.p(0,1))];
+% BC = [BC, struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', Exact_solution.p(1,1))];
 
 if exist('Convergence_rates')
   if ~Problem.Static
-    disp('Error: convergence rate simulations have to be couppled with static simulations')
-    break;
+    error('convergence rate simulations have to be couppled with static simulations')
+    return
   end
   result_h       = zeros(Convergence_rates.iterations,numel(Convergence_rates.p_values));
   result_uh_H1   = zeros(Convergence_rates.iterations,numel(Convergence_rates.p_values));

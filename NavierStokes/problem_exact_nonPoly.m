@@ -73,6 +73,12 @@ BC = [BC, struct('start', [1,0], 'stop', [1,1], 'comp', 2, 'value', Exact_soluti
 % BC = [BC, struct('start', [0,1], 'stop', [0,1], 'comp', 3, 'value', Exact_solution.p(0,1))];
 % BC = [BC, struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', Exact_solution.p(1,1))];
 
+% collocation points
+BC = [BC, struct('collocation', true, 'u', 0, 'v', 0)];
+BC = [BC, struct('collocation', true, 'u', 0, 'v', 1)];
+BC = [BC, struct('collocation', true, 'u', 1, 'v', 0)];
+BC = [BC, struct('collocation', true, 'u', 1, 'v', 1)];
+
 if exist('Convergence_rates')
   if ~Problem.Static
     error('convergence rate simulations have to be couppled with static simulations')

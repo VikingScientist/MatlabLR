@@ -22,9 +22,8 @@ n3 = size(lrp.knots,1);
 
 el = lr.getElementContaining(u,v);
 if exist('newEl')==1
-  el = newEl(el)
+  el = newEl(el);
 end
-lr.elements(el,:)
 
 el_du = lr.elements(el,3) - lr.elements(el,1);
 el_dv = lr.elements(el,4) - lr.elements(el,2);
@@ -74,13 +73,17 @@ end
 
 % create the proper vector representation of basis functions
 testP   = Np(1,:);
-testVel = [Nu(1,:), zeros(1,sup2); zeros(1,sup1), Nv(1,:)];    % vector basis functions
-gradVel = [Nu(2:3,:), zeros(2,sup2);zeros(2,sup1), Nv(2:3,:)]; % 
+testVel = [Nu(  1,:), zeros(1,sup2); zeros(1,sup1), Nv(  1,:)]; % vector basis functions
+gradVel = [Nu(2:3,:), zeros(2,sup2); zeros(2,sup1), Nv(2:3,:)]; % 
 gradVel = gradVel([1,3,2,4],:);                                % row-wise: u_1,1  u_2,1  u_1,2  u_2,2
 lhs = zeros(1,n1+n2+n3);
+tmp         = f(map.x(1), map.x(2));
+% lhs(globIu) = -my*(Nu(4,:) + Nu(6,:));
+% lhs(globIv) = -my*(Nv(4,:) + Nv(6,:));
+% lhs(globIp) = Np(2,:) + Np(3,:);
+% rhs         = tmp(1) + tmp(2);
 lhs(globIu) = -my*(Nu(4,:) + Nu(6,:));
 lhs(globIp) = Np(2,:);
-tmp         = f(map.x(1), map.x(2));
 rhs         = tmp(1);
 
 if u==0 && v==0,

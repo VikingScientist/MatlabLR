@@ -17,11 +17,23 @@ edges     = [];
 edgVal    = [];
 presEdges = [];
 presVal   = [];
+col       = [];
+colB      = [];
 for i=1:numel(BC)
   if isfield(BC{i}, 'weak') && BC{i}.weak==true % skip weak boundary conditions (these are handled in another function)
     continue;
   end
   if isfield(BC{i}, 'pressure_integral') && BC{i}.pressure_integral==true % skip average pressure  boundary conditions (handled at different place)
+    continue;
+  end
+  if isfield(BC{i}, 'collocation')
+    if exist('newElU')
+      [lhs, rhs] = collocationPoint(lr, lru, lrv, lrp,  BC{i}.u, BC{i}.v, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
+    else
+      [lhs, rhs] = collocationPoint(lr, lru, lrv, lrp,  BC{i}.u, BC{i}.v, Problem.Force, my);
+    end
+    col  = [col ;lhs];
+    colB = [colB;rhs];
     continue;
   end
   if BC{i}.comp == 1 % condition on u-component 
@@ -67,6 +79,8 @@ for i=1:numel(BC)
 end
 
 % strip down DOFs appearing on multple edges (i.e. corners)
+[dontcare i] = sort(edges);
+[edges(i), edgVal(i)];
 [velEdges i] = unique(edges);
 velVal       = edgVal(i);
 
@@ -173,29 +187,12 @@ if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
   F  = @(u) [F(u);  avg_p(inner_p)'*u(n+1:end) - b_avg_p];
 end
 
-disp 'adding pressure collocation points'
-e = 1e-13;
-% [lhs1, rhs1] = collocationPoint(lr, lru, lrv, lrp, -4, 0, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
-% [lhs2, rhs2] = collocationPoint(lr, lru, lrv, lrp, -4, 2, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
-% [lhs3, rhs3] = collocationPoint(lr, lru, lrv, lrp,  0,-1, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
-% [lhs4, rhs4] = collocationPoint(lr, lru, lrv, lrp,  0, 0, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
-% [lhs5, rhs5] = collocationPoint(lr, lru, lrv, lrp, -e, e, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
-% [lhs6, rhs6] = collocationPoint(lr, lru, lrv, lrp,  e,-e, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
-[lhs1, rhs1] = collocationPoint(lr, lru, lrv, lrp, 0, 0, Problem.Force, my);
-[lhs2, rhs2] = collocationPoint(lr, lru, lrv, lrp, 0, 1, Problem.Force, my);
-[lhs3, rhs3] = collocationPoint(lr, lru, lrv, lrp, 1, 0, Problem.Force, my);
-[lhs4, rhs4] = collocationPoint(lr, lru, lrv, lrp, 1, 1, Problem.Force, my);
-% [lhs5, rhs5] = collocationPoint(lr, lru, lrv, lrp, -e, e, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
-% [lhs6, rhs6] = collocationPoint(lr, lru, lrv, lrp,  e,-e, Problem.Force, my, 'newEl', newEl, 'newElU', newElU, 'newElV', newElV, 'newElP', newElP);
-% col  = sparse([lhs1;lhs2;lhs3;lhs4;lhs5;lhs6]);
-% colB = [rhs1;rhs2;rhs3;rhs4;rhs5;rhs6];
-col  = sparse([lhs1;lhs2;lhs3;lhs4]);
-colB = [rhs1;rhs2;rhs3;rhs4];
+fprintf('adding %d pressure collocation points\n', numel(colB));
+
 colB = colB - col(:,velEdges) * velVal;
 col(:,velEdges) = [];
-% col  = [];
-% colB = [];
+col  = sparse(col);
 
-dF = @(u) [dF(u);  col];
+dF = @(u) [dF(u); col];
 F  = @(u) [ F(u); col*u - colB];
 

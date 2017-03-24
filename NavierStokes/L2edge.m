@@ -103,8 +103,8 @@ for j=jRange
     end
   end
 end
-cp = A \ b;
-cp = cp(i);
+cp = A(i,i) \ b(i);
+% cp = cp(i);
 % full(A(i,i))
 % full(b(i))
 % cp
