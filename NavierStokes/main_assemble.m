@@ -183,16 +183,28 @@ end
 
 %%% augment system by an additional row for the average pressure
 if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
-  dF = @(u) [dF(u); zeros(1,n), avg_p(inner_p)'];
-  F  = @(u) [F(u);  avg_p(inner_p)'*u(n+1:end) - b_avg_p];
+  if Problem.Static
+    dF = @(u) [dF(u); zeros(1,n), avg_p(inner_p)'];
+    F  = @(u) [F(u);  avg_p(inner_p)'*u(n+1:end) - b_avg_p];
+  else
+    dF = @(u,t) [dF(u,t); zeros(1,n), avg_p(inner_p)'];
+    F  = @(u,t) [ F(u,t);  avg_p(inner_p)'*u(n+1:end) - b_avg_p];
+  end
 end
 
-fprintf('adding %d pressure collocation points\n', numel(colB));
-
-colB = colB - col(:,velEdges) * velVal;
-col(:,velEdges) = [];
-col  = sparse(col);
-
-dF = @(u) [dF(u); col];
-F  = @(u) [ F(u); col*u - colB];
+if numel(colB>0)
+  fprintf('adding %d pressure collocation points\n', numel(colB));
+  
+  colB = colB - col(:,velEdges) * velVal;
+  col(:,velEdges) = [];
+  col  = sparse(col);
+  
+  if Problem.Static
+    dF = @(u) [dF(u); col];
+    F  = @(u) [ F(u); col*u - colB];
+  else
+    dF = @(u,t) [dF(u,t); col];
+    F  = @(u,t) [ F(u,t); col*u - colB];
+  end
+end
 

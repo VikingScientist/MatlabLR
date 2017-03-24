@@ -131,8 +131,13 @@ for edge=1:numel(BC)
         n = [n(1),  0,   n(2),  0  ;
               0,   n(1),  0,   n(2)]; 
 
-        A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/dv*testVel'*testVel)*detJw;
-        b(globIvel)           = b(globIvel)           - 2*my*(symVel'*n'*ubc                         - penalty/dv*testVel'*ubc)    *detJw;
+        if isfield(Problem, 'Symmetric_gradient') && Problem.Symmetric_gradient==false
+          A(globIvel, globIvel) = A(globIvel, globIvel) -   my*(gradVel'*n'*testVel + testVel'*n*gradVel - penalty/dv*testVel'*testVel)*detJw;
+          b(globIvel)           = b(globIvel)           -   my*(gradVel'*n'*ubc                          - penalty/dv*testVel'*ubc)    *detJw;
+        else
+          A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel  + testVel'*n*symVel  - penalty/dv*testVel'*testVel)*detJw;
+          b(globIvel)           = b(globIvel)           - 2*my*(symVel'*n'*ubc                           - penalty/dv*testVel'*ubc)    *detJw;
+        end
 
       end % end gauss point iteration
     elseif running_param == 'u'
@@ -179,8 +184,13 @@ for edge=1:numel(BC)
           ubc = bc.value;
         end
 
-        A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel + testVel'*n*symVel - penalty/du*testVel'*testVel)*detJw;
-        b(globIvel)           = b(globIvel)           - 2*my*(symVel'*n'*ubc                         - penalty/du*testVel'*ubc)    *detJw;
+        if isfield(Problem, 'Symmetric_gradient') && Problem.Symmetric_gradient==false
+          A(globIvel, globIvel) = A(globIvel, globIvel) -   my*(gradVel'*n'*testVel + testVel'*n*gradVel - penalty/du*testVel'*testVel)*detJw;
+          b(globIvel)           = b(globIvel)           -   my*(gradVel'*n'*ubc                          - penalty/du*testVel'*ubc)    *detJw;
+        else
+          A(globIvel, globIvel) = A(globIvel, globIvel) - 2*my*(symVel'*n'*testVel  + testVel'*n*symVel  - penalty/du*testVel'*testVel)*detJw;
+          b(globIvel)           = b(globIvel)           - 2*my*(symVel'*n'*ubc                           - penalty/du*testVel'*ubc)    *detJw;
+        end
       end % end gauss point iteration
     end   % end u/v running-parameter if statement
   end     % end element on edge loop

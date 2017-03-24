@@ -81,14 +81,15 @@ elseif(strcmp(name, 'backstep'))
 		         (xNW-0).^2 + (yNW-0).^2 <= dist^2 & ...
 		         (xSE-0).^2 + (ySE-0).^2 <= dist^2 );
     % pick all points near the left edge
-    k = find(lr.knots(:,lr.p(1)+2)+4 < 2^(-myRef+1));
+    % k = find(lr.knots(:,lr.p(1)+2)+4 < 2^(-myRef+1));
+    k = [];
 		dist = dist * 7 / 12;
 		lr.refine([j;k],'basis');
 	end
-	% lr.insertLine([xrange(1), 0], [(p(1)-1)*Problem.H_Min, 0], p(2)); % horizontal line
-	% lr.insertLine([0, yrange(1)], [0, (p(2)-1)*Problem.H_Min], p(1)); % vertical   line
-	lr.insertLine([xrange(1), 0], [0, 0], p(2)); % horizontal line
-	lr.insertLine([0, yrange(1)], [0, 0], p(1)); % vertical   line
+	lr.insertLine([xrange(1), 0], [(p(1)-1)*Problem.H_Min, 0], p(2)); % horizontal line
+	lr.insertLine([0, yrange(1)], [0, (p(2)-1)*Problem.H_Min], p(1)); % vertical   line
+	% lr.insertLine([xrange(1), 0], [0, 0], p(2)); % horizontal line
+	% lr.insertLine([0, yrange(1)], [0, 0], p(1)); % vertical   line
 end
 
 

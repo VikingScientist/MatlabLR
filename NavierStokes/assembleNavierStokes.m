@@ -115,7 +115,12 @@ for el=1:nel,
       % N_{i,i}    = divergence of a (vector) basis function
       %
 
-      Ak = Ak  + 2*my * symVel'*symVel   * detJw;  % N_{i,j}^k  N_{i,j}^l  diffusion term,  for all (k,l)
+      % defaults to symmetric gradient operator
+      if isfield(Problem, 'Symmetric_gradient') && Problem.Symmetric_gradient==false
+        Ak = Ak  +   my *gradVel'*gradVel* detJw;  % N_{i,j}^k  N_{i,j}^l  diffusion term,  for all (k,l)
+      else
+        Ak = Ak  + 2*my * symVel'*symVel * detJw;  % N_{i,j}^k  N_{i,j}^l  diffusion term,  for all (k,l)
+      end
       Mk = Mk  +       testVel'*testVel  * detJw;  % N_i^k      N_i^l      mass matrix,     for all (k,l)
       Dk = Dk  -        divVel'*testP    * detJw;  % N_{i,i}^k  M^l        pressure term    for all (k,l)
       tmp1 = gradVel([1,3],:)'*testVel;            % N_i^k      N_{j,i}^l                   for j=1, all (l,k)

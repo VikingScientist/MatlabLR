@@ -31,6 +31,7 @@ Problem = struct(...
 'Newton_TOL'        ,  1e-10,      ...
 'Newton_Max_It'     ,  12,         ...
 'Force'             ,  @(x,y)[0;0],...
+'Symmetric_gradient',  false,       ...
 'Static'            ,  true,       ...
 'Linear'            ,  true,       ...
 'Paraview'          ,  false,      ...
@@ -52,16 +53,22 @@ BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 1, 'value', @(x,y)1e3*y*
 % BC = [BC, struct('start', [L,0], 'stop', [L,1], 'comp', 1, 'value', @(x,y)y*(1-y))]; % right   
 
 % tangential direction boundary conditions
-BC = [BC, struct('start', [0,0], 'stop', [L,0], 'comp', 1, 'value', 0)]; % bottom
-BC = [BC, struct('start', [0,1], 'stop', [L,1], 'comp', 1, 'value', 0)]; % top
-BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', 0)]; % left
+% BC = [BC, struct('start', [0,0], 'stop', [L,0], 'comp', 1, 'value', 0)]; % bottom
+% BC = [BC, struct('start', [0,1], 'stop', [L,1], 'comp', 1, 'value', 0)]; % top
+% BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', 0)]; % left
+% BC = [BC, struct('start', [L,0], 'stop', [L,1], 'comp', 2, 'value', 0)]; % right   
+
+% weakly enforce tangential direction boundary conditions
+BC = [BC, struct('start', [0,0], 'stop', [L,0], 'comp', 1, 'value', [0;0], 'weak', true)]; % bottom
+BC = [BC, struct('start', [0,1], 'stop', [L,1], 'comp', 1, 'value', [0;0], 'weak', true)]; % top
+BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', @(x,y)[1e3*y*(1-y);0], 'weak', true)]; % left
 % BC = [BC, struct('start', [L,0], 'stop', [L,1], 'comp', 2, 'value', 0)]; % right   
 
 % collocation points
-BC = [BC, struct('collocation', true, 'u', 0, 'v', 0)];
-BC = [BC, struct('collocation', true, 'u', 0, 'v', 1)];
-BC = [BC, struct('collocation', true, 'u', L, 'v', 0)];
-BC = [BC, struct('collocation', true, 'u', L, 'v', 1)];
+% BC = [BC, struct('collocation', true, 'u', 0, 'v', 0)];
+% BC = [BC, struct('collocation', true, 'u', 0, 'v', 1)];
+% BC = [BC, struct('collocation', true, 'u', L, 'v', 0)];
+% BC = [BC, struct('collocation', true, 'u', L, 'v', 1)];
 
 main_init;
 
