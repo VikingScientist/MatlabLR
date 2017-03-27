@@ -9,6 +9,7 @@ b = zeros(size(b));
 %%% set boundary conditions
 disp 'setting boundary conditions'
 weaklyEnforceBndryCond;
+neumannBndryCond;
 
 traction = b;
 b = zeros(size(b));
@@ -21,6 +22,9 @@ col       = [];
 colB      = [];
 for i=1:numel(BC)
   if isfield(BC{i}, 'weak') && BC{i}.weak==true % skip weak boundary conditions (these are handled in another function)
+    continue;
+  end
+  if isfield(BC{i}, 'neumann') && BC{i}.neumann==true % skip neumann boundary conditions (these are handled in another function)
     continue;
   end
   if isfield(BC{i}, 'pressure_integral') && BC{i}.pressure_integral==true % skip average pressure  boundary conditions (handled at different place)
@@ -70,11 +74,13 @@ for i=1:numel(BC)
     edges  = [edges;  thisI];
     edgVal = [edgVal; thisCP];
   elseif BC{i}.comp == 3 % condition on pressure-component 
-    p = lrp.p(1);
-    presI = find(abs(lrp.knots(:,2)   - BC{i}.start(1)) < Problem.Geom_TOL &  abs(lrp.knots(:,p+1) - BC{i}.start(1)) < Problem.Geom_TOL & ...
-                 abs(lrp.knots(:,p+4) - BC{i}.start(2)) < Problem.Geom_TOL &  abs(lrp.knots(:,end-1) - BC{i}.start(2)) < Problem.Geom_TOL );
-    presEdges = [presEdges; presI];
-    presVal   = [presVal  ; BC{i}.value];
+    if exist('newElP')
+      [thisCP thisI] = L2edge(lrp, BC{i}.start, BC{i}.stop, BC{i}.value, 'newEl', newElP);
+    else
+      [thisCP thisI] = L2edge(lrp, BC{i}.start, BC{i}.stop, BC{i}.value );
+    end
+    presEdges = [presEdges; thisI];
+    presVal   = [presVal  ; thisCP];
   end
 end
 
@@ -163,6 +169,8 @@ if ~Problem.Linear
 end
 
 %%% add boundary conditions 
+MPC   = [];
+MPC_B = [];
 if Problem.Static
   F = @(u) F(u) - traction;
 else 
@@ -190,14 +198,22 @@ if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
     dF = @(u,t) [dF(u,t); zeros(1,n), avg_p(inner_p)'];
     F  = @(u,t) [ F(u,t);  avg_p(inner_p)'*u(n+1:end) - b_avg_p];
   end
+  MPC   = [MPC  ; zeros(1,n), avg_p(inner_p)'];
+  MPC_B = [MPC_B; b_avg_p];
 end
 
 if numel(colB>0)
   fprintf('adding %d pressure collocation points\n', numel(colB));
   
-  colB = colB - col(:,velEdges) * velVal;
-  col(:,velEdges) = [];
+  colB = colB - col(:,velEdges)        * velVal;
+  if numel(presVal)>0
+  colB = colB - col(:,presEdges+n1+n2) * presVal;
+  end
+  col(:,[velEdges; presEdges+n1+n2]) = [];
   col  = sparse(col);
+
+  MPC   = [MPC  ; col];
+  MPC_B = [MPC_B; colB];
   
   if Problem.Static
     dF = @(u) [dF(u); col];

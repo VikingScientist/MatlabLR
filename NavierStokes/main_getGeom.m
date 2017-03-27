@@ -81,8 +81,7 @@ elseif(strcmp(name, 'backstep'))
 		         (xNW-0).^2 + (yNW-0).^2 <= dist^2 & ...
 		         (xSE-0).^2 + (ySE-0).^2 <= dist^2 );
     % pick all points near the left edge
-    % k = find(lr.knots(:,lr.p(1)+2)+4 < 2^(-myRef+1));
-    k = [];
+    k = find(lr.knots(:,lr.p(1)+2)+4 < 2^(-myRef+1));
 		dist = dist * 7 / 12;
 		lr.refine([j;k],'basis');
 	end

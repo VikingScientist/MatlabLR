@@ -58,6 +58,8 @@ for i=2:nSteps
 
     lhs(1:ndof_vel,1:ndof_vel) = lhs(1:ndof_vel,1:ndof_vel) + M;
     rhs(1:ndof_vel)            = rhs(1:ndof_vel)            + M*(vn(1:ndof_vel)-un(1:ndof_vel));
+    lhs = [lhs; MPC];
+    rhs = [rhs; MPC_B];
     dv = lhs \ -rhs;
 
     v(nonEdge) = v(nonEdge) + dv;
@@ -65,6 +67,7 @@ for i=2:nSteps
       break;
     end
   end
+  clc;
   fprintf('  Newton iteration converged after %d iterations at residual %g\n', newtIt, norm(dv));
   fprintf('  Time integrator              : %s\n', integratorUsed);
   fprintf('  Pressure at top right corner : %g\n', v(topRightCorner));
