@@ -3,6 +3,10 @@
 #include <fstream>
 #include <sstream>
 #include <LRSpline/LRSplineSurface.h>
+#ifdef HAS_GOTOOLS
+  #include <GoTools/geometry/SplineSurface.h>
+  #include <GoTools/geometry/ObjectHeader.h>
+#endif
 #include <mex.h>
 #include <matrix.h>
 #include "class_handle.hpp"
@@ -123,6 +127,33 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		// clean up and exit
 		in.close();
 		return;
+	}
+
+	// Load
+	if (!strcmp("loadg2", cmd)) {
+#ifdef HAS_GOTOOLS
+		// Check parameters
+		if (nlhs < 0 || nrhs < 3)
+			mexErrMsgTxt("Load: Unexpected arguments.");
+		// rewrap filename from mxArray to char*
+		int len = mxGetM(prhs[2]) * mxGetN(prhs[2]);
+		char filename[len+1];
+		mxGetString(prhs[2], filename, len+1); // adds a terminal 0-character by itself
+		// read the spline surface from input file
+		ifstream in;
+		in.open(filename);
+    Go::ObjectHeader head;
+    Go::SplineSurface surf;
+    in >> head >> surf;
+		// clean up and exit
+		in.close();
+    // create LR-spline object from GoTools object
+    delete lr;
+    lr = new LRSplineSurface(&surf);
+		return;
+#else
+		mexErrMsgTxt("LoadG2: Library compiled without GoTools support");
+#endif
 	}
 
 	// Print    

@@ -38,6 +38,7 @@ classdef LRSplineSurface < handle
 %     print                - Prints raw c++ lr data structure
 %     save                 - Saves the backend c++ lr data to file
 %     load                 - Load the backend c++ lr data from file
+%     loadG2               - Load the backend c++ lr data from file
 
 	properties(SetAccess = private, Hidden = false)
 		p        % polynomial degree
@@ -143,7 +144,24 @@ classdef LRSplineSurface < handle
 			if ~strcmp(class(filename), 'char')
 				throw(MException('LRSplineSurface:load', 'Error: Invalid file name'));
 			end
+      if strcmp(filename(end-2:end), '.g2')
+			  this.loadG2(filename);
+        return
+      end
 			lrsplinesurface_interface('load', this.objectHandle, filename);
+			this.updatePrimitives();
+		end
+
+		function loadG2(this, filename)
+		% LOAD  Reads the backend c++ representation of this LR-spline object from file
+		% LRSplineSurface.load(filename)
+		%
+		%   parameters:
+		%     filename - the name of the file
+			if ~strcmp(class(filename), 'char')
+				throw(MException('LRSplineSurface:load', 'Error: Invalid file name'));
+			end
+			lrsplinesurface_interface('loadg2', this.objectHandle, filename);
 			this.updatePrimitives();
 		end
 
