@@ -45,30 +45,30 @@ Problem = struct(...
 
 L  = Problem.Geometry_param;
 BC = cell(0);
-% BC = [BC, struct('pressure_integral', true, 'value', 0)];
+BC = [BC, struct('pressure_integral', true, 'value', 0)];
 % normal direction boundary condition
 BC = [BC, struct('start', [0,0], 'stop', [L,0], 'comp', 2, 'value', 0)]; % bottom
 BC = [BC, struct('start', [0,1], 'stop', [L,1], 'comp', 2, 'value', 0)]; % top
 BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 1, 'value', @(x,y)y*(1-y))]; % left
-% BC = [BC, struct('start', [L,0], 'stop', [L,1], 'comp', 1, 'value', @(x,y)y*(1-y))]; % right   
+BC = [BC, struct('start', [L,0], 'stop', [L,1], 'comp', 1, 'value', @(x,y)y*(1-y))]; % right   
 
 % tangential direction boundary conditions
-BC = [BC, struct('start', [0,0], 'stop', [L,0], 'comp', 1, 'value', 0)]; % bottom
-BC = [BC, struct('start', [0,1], 'stop', [L,1], 'comp', 1, 'value', 0)]; % top
-BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', 0)]; % left
+% BC = [BC, struct('start', [0,0], 'stop', [L,0], 'comp', 1, 'value', 0)]; % bottom
+% BC = [BC, struct('start', [0,1], 'stop', [L,1], 'comp', 1, 'value', 0)]; % top
+% BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', 0)]; % left
 % BC = [BC, struct('start', [L,0], 'stop', [L,1], 'comp', 2, 'value', 0)]; % right   
 
 % weakly enforce tangential direction boundary conditions
-% BC = [BC, struct('start', [0,0], 'stop', [L,0], 'comp', 1, 'value', [0;0], 'weak', true)]; % bottom
-% BC = [BC, struct('start', [0,1], 'stop', [L,1], 'comp', 1, 'value', [0;0], 'weak', true)]; % top
-% BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', @(x,y)[y*(1-y);0], 'weak', true)]; % left
-% BC = [BC, struct('start', [L,0], 'stop', [L,1], 'comp', 2, 'value', 0)]; % right   
+BC = [BC, struct('start', [0,0], 'stop', [L,0], 'comp', 1, 'value', [0;0], 'weak', true)]; % bottom
+BC = [BC, struct('start', [0,1], 'stop', [L,1], 'comp', 1, 'value', [0;0], 'weak', true)]; % top
+BC = [BC, struct('start', [0,0], 'stop', [0,1], 'comp', 2, 'value', @(x,y)[y*(1-y);0], 'weak', true)]; % left
+BC = [BC, struct('start', [L,0], 'stop', [L,1], 'comp', 2, 'value', 0)]; % right   
 
 % collocation points
 BC = [BC, struct('collocation', true, 'u', 0, 'v', 0)];
 BC = [BC, struct('collocation', true, 'u', 0, 'v', 1)];
-% BC = [BC, struct('collocation', true, 'u', L, 'v', 0)];
-% BC = [BC, struct('collocation', true, 'u', L, 'v', 1)];
+BC = [BC, struct('collocation', true, 'u', L, 'v', 0)];
+BC = [BC, struct('collocation', true, 'u', L, 'v', 1)];
 
 main_init;
 
@@ -81,4 +81,7 @@ else
 end
 
 main_dump_final_results;
+saveas(1, 'channel-all-weak-dirichlet-u.png', 'png');
+saveas(2, 'channel-all-weak-dirichlet-v.png', 'png');
+saveas(3, 'channel-all-weak-dirichlet-p.png', 'png');
 

@@ -81,6 +81,16 @@ for i=1:numel(BC)
     end
     presEdges = [presEdges; thisI];
     presVal   = [presVal  ; thisCP];
+%    e1 = lrp.getEdge(1);
+%    e2 = lrp.getEdge(2);
+%    e3 = lrp.getEdge(3);
+%    e4 = lrp.getEdge(4);
+%    c1 = intersect(e1,e3);
+%    c2 = intersect(e2,e3);
+%    c3 = intersect(e1,e4);
+%    c4 = intersect(e2,e4);
+%    presEdges = [c1;c2;c3;c4];
+%    presVal   = [ 0; 0; 0; 0];
   end
 end
 

@@ -32,4 +32,13 @@ Exact_solution = struct(           ...
 'grad_v',   matlabFunction([ diff(v,x); diff(v,y) ])  ...
 );
 
+if isfield(Problem, 'Latex') && Problem.Latex == true
+  if exist('phi')
+    fprintf('phi = %s\n\n', latex(phi));
+  end
+  fprintf('u   = %s\n\n', latex([u;v]));
+  fprintf('p   = %s\n\n', latex(p));
+  fprintf('f   = %s\n\n', latex([force_x;force_y]));
+end
+
 clear u v p x y f g phi force_x force_y force_x_NL force_y_NL % remove all symbolic variables from memory

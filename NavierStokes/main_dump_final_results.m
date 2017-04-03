@@ -15,7 +15,7 @@ if exist('Convergence_rates')
     legendEntries{i} = sprintf('p=%d', Convergence_rates.p_values(i));
   end
   for i=1:numel(expected_rates)
-    legendEntries{i+numel(expected_rates)} = sprintf('$$\\mathcal{O}(h^{-%d})$$', expected_rates(i));
+    legendEntries{i+numel(expected_rates)} = sprintf('$$\\mathcal{O}(h^{%d})$$', expected_rates(i));
   end
   figure;
     loglog(result_h, result_uh_H1, 'o-');
@@ -27,8 +27,8 @@ if exist('Convergence_rates')
     legend(legendEntries, 'interpreter', 'latex', 'Location', 'NorthWest');
     set(gca, 'FontSize', 16);
     xlabel('Mesh size $$h$$', 'interpreter', 'latex')
-    ylabel('$$\|u-u_h\|_{H^1} / \|u\|_{H^1}$$', 'interpreter', 'Latex');
-    % saveas(gcf, 'conv-umr-u-cavity-re200000-cheat.pdf', 'pdf');
+    ylabel('$$|u-u_h|_{H^1} / |u|_{H^1}$$', 'interpreter', 'Latex');
+    % saveas(gcf, 'buffa-conv-u-zero-p-in-corner.pdf', 'pdf');
 
   yStart = result_ph_L2(end, :);
   yStart = yStart * 1.5;
@@ -41,7 +41,7 @@ if exist('Convergence_rates')
     legendEntries{i} = sprintf('p=%d', Convergence_rates.p_values(i));
   end
   for i=1:numel(expected_rates)
-    legendEntries{i+numel(expected_rates)} = sprintf('$$\\mathcal{O}(h^{-%d})$$', expected_rates(i));
+    legendEntries{i+numel(expected_rates)} = sprintf('$$\\mathcal{O}(h^{%d})$$', expected_rates(i));
   end
   figure;
     loglog(result_h, result_ph_L2, 'o-');
@@ -54,7 +54,7 @@ if exist('Convergence_rates')
     set(gca, 'FontSize', 16);
     xlabel('Mesh size $$h$$', 'interpreter', 'latex')
     ylabel('$$\|p-p_h\|_{L^2} / \|p\|_{L^2}$$', 'interpreter', 'Latex');
-    % saveas(gcf, 'conv-umr-p-cavity-re200000-cheat.pdf', 'pdf');
+    % saveas(gcf, 'buffa-conv-p-zero-p-in-corner.pdf', 'pdf');
 end
 
 if Problem.Static
@@ -79,7 +79,7 @@ if Problem.Static
     figure; hold on;
       patch('Faces', mesh, 'Vertices', [x,y,z], 'CData', z, 'FaceColor', 'interp', 'EdgeColor', 'none');
       plot3(x(edges), y(edges), z(edges), 'k-');
-      set(gca, 'FontSize', 24);
+      set(gca, 'FontSize', 18);
       title('U solution');
       xlim(xrange);
       ylim(yrange);
@@ -89,7 +89,7 @@ if Problem.Static
     figure; hold on;
       patch('Faces', mesh, 'Vertices', [x,y,z], 'CData', z, 'FaceColor', 'interp', 'EdgeColor', 'none');
       plot3(x(edges), y(edges), z(edges), 'k-');
-      set(gca, 'FontSize', 24);
+      set(gca, 'FontSize', 18);
       title('V solution');
       xlim(xrange);
       ylim(yrange);
@@ -99,7 +99,7 @@ if Problem.Static
     figure; hold on;
       patch('Faces', mesh, 'Vertices', [x,y,z], 'CData', z, 'FaceColor', 'interp', 'EdgeColor', 'none');
       plot3(x(edges), y(edges), z(edges), 'k-');
-      set(gca, 'FontSize', 24);
+      set(gca, 'FontSize', 18);
       title('P solution');
       xlim(xrange);
       ylim(yrange);
