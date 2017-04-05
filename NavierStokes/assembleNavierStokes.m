@@ -62,6 +62,7 @@ for el=1:nel,
   Ak  = zeros(sup1+sup2);
   Mk  = zeros(sup1+sup2);
   Dk  = zeros(sup1+sup2, sup3);
+  Bk  = zeros(sup3);
   NLk = zeros((sup1+sup2)^2, sup1+sup2);
 
   C  = lr.getBezierExtraction( el  );
@@ -122,6 +123,7 @@ for el=1:nel,
         Ak = Ak  + 2*my * symVel'*symVel * detJw;  % N_{i,j}^k  N_{i,j}^l  diffusion term,  for all (k,l)
       end
       Mk = Mk  +       testVel'*testVel  * detJw;  % N_i^k      N_i^l      mass matrix,     for all (k,l)
+      Bk = Bk  +         testP'*testP    * detJw;  % M^k        M^l        mass matrix,     for all (k,l)
       Dk = Dk  -        divVel'*testP    * detJw;  % N_{i,i}^k  M^l        pressure term    for all (k,l)
       tmp1 = gradVel([1,3],:)'*testVel;            % N_i^k      N_{j,i}^l                   for j=1, all (l,k)
       tmp2 = gradVel([2,4],:)'*testVel;            % N_i^k      N_{j,i}^l                   for j=2, all (l,k)
@@ -130,10 +132,8 @@ for el=1:nel,
 
       % right-hand side 
       fVal = Problem.Force(map.x(1), map.x(2));
-      b(globIvel) = b(globIvel) + testVel'*fVal * detJw;
-
-      avg_p(locIp)   = avg_p(locIp)   + testP'*detJw;
-      B(locIp,locIp) = B(locIp,locIp) + testP'*testP*detJw;
+      b(globIvel)  = b(globIvel) + testVel'*fVal * detJw;
+      avg_p(locIp) = avg_p(locIp)+   testP'      * detJw;
 
     end
   end
@@ -153,6 +153,7 @@ for el=1:nel,
   A(globIvel, globIvel)  = A(globIvel, globIvel)  + Ak;
   M(globIvel, globIvel)  = M(globIvel, globIvel)  + Mk;
   D(globIvel, locIp)     = D(globIvel, locIp)     + Dk;
+  B(locIp,    locIp)     = B(locIp,    locIp)     + Bk;
   NL(globIvel, lk_index) = NL(globIvel, lk_index) + NLk';
 end
 % end element loop
