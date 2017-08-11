@@ -27,6 +27,6 @@ SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${BUILD_DIR})
 
 # mex-compile c++ and put .m-files in the right place
 ADD_CUSTOM_TARGET(matlab-lrspline ALL
-  COMMAND ${MATLAB_MEX} CC=${MATLAB_CC} -I${PROJECT_SOURCE_DIR}/include ${DEFINITIONS} ${PROJECT_SOURCE_DIR}/src/lrsplinesurface_interface.cpp -lLRSpline -outdir ${BUILD_DIR} -O
+  COMMAND ${MATLAB_MEX} CC=${MATLAB_CC} -I${PROJECT_SOURCE_DIR}/include ${INCLUDES} ${DEFINITIONS} ${PROJECT_SOURCE_DIR}/src/lrsplinesurface_interface.cpp ${LIBS} -outdir ${BUILD_DIR} -O
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/src/matlab ${BUILD_DIR})
 

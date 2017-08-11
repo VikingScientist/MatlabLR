@@ -10,23 +10,26 @@ function lrgui
 
   %  Construct the components.
   hnew = uicontrol('Style','pushbutton','String','New',...
-         'Position',[315,220,70,25],...
+         'Position',[315,240,70,25],...
          'Callback',@newbutton_Callback);
   hrefine = uicontrol('Style','pushbutton',...
          'String','Refine',...
-         'Position',[315,180,70,25],...
+         'Position',[315,200,70,25],...
          'Callback',@refinebutton_Callback); 
+  hload = uicontrol('Style','pushbutton','String','Load',...
+         'Position',[315,160,70,25],...
+         'Callback',@loadbutton_Callback);
   hsave = uicontrol('Style','pushbutton','String','Save',...
-         'Position',[315,135,70,25],...
+         'Position',[315,120,70,25],...
          'Callback',@savebutton_Callback);
   htext = uicontrol('Style','text','String','Refinement strategy',...
-         'Position',[325,90,60,15]);
+         'Position',[300,60,80,35]);
   hpopup = uicontrol('Style','popupmenu',...
          'String',{'Elements','Functions'},...
-         'Position',[300,50,100,25],...
+         'Position',[300,30,100,25],...
          'Callback',@popup_menu_Callback);
   ha = axes('Units','Pixels','Position',[50,60,200,185]); 
-  align([hnew,hrefine,hsave,htext,hpopup],'Center','None');
+  align([hnew,hrefine,hload,hsave,htext,hpopup],'Center','None');
   
   % Create the data to plot.
   current_mesh = LRSplineSurface([3,3], [10,10]);
@@ -37,6 +40,7 @@ function lrgui
   f.Units = 'normalized';
   ha.Units = 'normalized';
   hnew.Units = 'normalized';
+  hload.Units = 'normalized';
   hsave.Units = 'normalized';
   hrefine.Units = 'normalized';
   htext.Units = 'normalized';
@@ -105,6 +109,15 @@ function lrgui
     redraw_mesh();
   end 
 
+  function loadbutton_Callback(source,eventdata) 
+  % Display mesh plot of the currently selected data.
+    [file path] = uigetfile({'*.g2;*.lr', 'Geometry files (*.g2,*.lr)'});
+    if file ~= 0
+      current_mesh.load([path,file]);
+      redraw_mesh();
+    end
+  end
+
   function savebutton_Callback(source,eventdata) 
   % Display mesh plot of the currently selected data.
     [file path] = uiputfile('out.lr');
@@ -125,6 +138,8 @@ function lrgui
       case 'f'
         hpopup.Value = 2;
         popup_menu_Callback(hpopup,e);
+      case 'l'
+        loadbutton_Callback(src, e);
       case 's'
         savebutton_Callback(src, e);
       case 'n'
