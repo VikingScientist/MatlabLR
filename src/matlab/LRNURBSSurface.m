@@ -88,9 +88,9 @@ classdef LRNURBSSurface < handle
 				knot2 = varargin{3};
 				cp    = varargin{4};
 				n = [numel(knot1)-p(1)-1, numel(knot2)-p(2)-1];
-                if(size(varargin{4},2) ~= n(1)*n(2))
-					throw(MException('LRNURBSSurface:constructor', 'Error: Control points should have n(1)*n(2) columns and 3 rows'));
-                end
+				if(size(varargin{4},2) ~= n(1)*n(2))
+					throw(MException('LRNURBSSurface:constructor', 'Error: Control points should have n(1)*n(2) columns'));
+				end
 			end
 			
 			this.objectHandle   = lrsplinesurface_interface('new', p, knot1, knot2, cp);
@@ -368,29 +368,29 @@ classdef LRNURBSSurface < handle
 				derivs = 0;
 			elseif(nargin > 3)
 				derivs = varargin{1};
-				if(derivs > 1)
-					throw(MException('LRNURBSSurface:computeBasis', 'Error: Derivatives above 1st order not implemented'));
+				if(derivs > 2)
+					throw(MException('LRNURBSSurface:computeBasis', 'Error: Derivatives above 2st order not implemented'));
 				end
 			end
-			N = lrsplinesurface_interface('compute_basis', this.objectHandle, [u v], varargin{:});
+			B = lrsplinesurface_interface('compute_basis', this.objectHandle, [u v], varargin{:});
 			z = lrsplinesurface_interface('point',         this.objectHandle, [u v], varargin{:});
 			iel = this.getElementContaining(u, v);
 			sup = this.support{iel};
-			w   = this.cp(end,sup); % weight controlpoints
-			W   = z(end,1);         % weight function
-            if(derivs > -1)
-				N(1,:) = N(1,:).*w / W;
-            end
-            if(derivs > 0)
-				N(2,:) = (N(2,:)*W-N(1,:)*z(end,2)).* w / W^2;
-				N(3,:) = (N(3,:)*W-N(1,:)*z(end,3)).* w / W^2;
-            end
-            if(derivs > 1)
+			w   = this.cp(end,sup); 
+			W   = z(end,1);         
+			if(derivs > -1)
+				N(1,:) = B(1,:).*w / W;
+			end
+			if(derivs > 0)
+				N(2,:) = (B(2,:)*W-B(1,:)*z(end,2)).* w / W^2;
+				N(3,:) = (B(3,:)*W-B(1,:)*z(end,3)).* w / W^2;
+			end
+			if(derivs > 1)
 				N(4,:) = ( (B(4,:)*W - B(1,:)*z(end,4) )*W^2 - ( B(2,:)*W-B(1,:)*z(end,2) ) * 2*W*z(end,2) ).* w / W^4;
-                N(5,:) = ( (B(5,:)*W+B(2,:)*z(end,3) - B(3,:)*z(end,2)-B(1,:)*z(end,5))*W^2 - ( B(2,:)*W-B(1,:)*z(end,2) ) * 2*W*z(end,3) ).* w / W^4;       
+				N(5,:) = ( (B(5,:)*W+B(2,:)*z(end,3) - B(3,:)*z(end,2)-B(1,:)*z(end,5))*W^2 - ( B(2,:)*W-B(1,:)*z(end,2) ) * 2*W*z(end,3) ).* w / W^4;       
 				N(6,:) = ( (B(6,:)*W - B(1,:)*z(end,6))*W^2 - (B(3,:)*W-B(1,:)*z(end,3)) * 2*W*z(end,3) ).* w / W^4;                                       
-            end
-
+			end
+			
 		end
 
 		function C = getBezierExtraction(this, element)
