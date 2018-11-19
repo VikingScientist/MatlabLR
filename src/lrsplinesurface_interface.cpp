@@ -100,7 +100,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			mexErrMsgTxt("Save: Unexpected arguments.");
 		// rewrap filename from mxArray to char*
 		int len = mxGetM(prhs[2]) * mxGetN(prhs[2]);
-		char filename[len+1];
+		char filename[1024];
 		mxGetString(prhs[2], filename, len+1); // adds a terminal 0-character by itself
 		// write the object to file
 		ofstream out;
@@ -118,7 +118,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			mexErrMsgTxt("Load: Unexpected arguments.");
 		// rewrap filename from mxArray to char*
 		int len = mxGetM(prhs[2]) * mxGetN(prhs[2]);
-		char filename[len+1];
+		char filename[1024];
 		mxGetString(prhs[2], filename, len+1); // adds a terminal 0-character by itself
 		// write the object to file
 		ifstream in;
