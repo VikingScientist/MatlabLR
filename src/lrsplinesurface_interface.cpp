@@ -17,7 +17,7 @@ using namespace LR;
 #define DOUBLE_TOL 1e-12
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
-	
+
 	char cmd[64];
 	if(nrhs < 1 || mxGetString(prhs[0], cmd, sizeof(cmd)))
 		mexErrMsgTxt("First input should be a command string, less than 64 characters long");
@@ -26,7 +26,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	/*********************************************************
 	 *******      Constructors and destructors             ***
 	 ********************************************************/
-	
+
 	if(!strcmp(cmd, "new")) {
 		// Check parameters
 		if (nlhs != 1)
@@ -202,7 +202,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			copy(vResult[i].begin(), vResult[i].end(), dResult+i*vResult[0].size());
 		if(nlhs > 1)
 			plhs[1] = mxCreateDoubleScalar(id+1);
-		
+
 		return;
 	}
 
@@ -218,10 +218,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
 		vector<double> vResult;
 		lr->getBezierExtraction(iEl, vResult);
-		plhs[0] = mxCreateDoubleMatrix(element->nBasisFunctions(),lr->order(0)*lr->order(1), mxREAL);
+		plhs[0] = mxCreateDoubleMatrix(element->nBasisFunctions(), element->order(0)*element->order(1), mxREAL);
 		double *dResult = mxGetPr(plhs[0]);
 		copy(vResult.begin(), vResult.end(), dResult);
-		
+
 		return;
 	}
 
@@ -241,14 +241,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			if(m*n != 2)
 				mexErrMsgTxt("insert_line: Invalid arguments");
 		}
-		int mult = 1;
+		int cont = 1;
 		if(nrhs > 3)
-			mult = floor(mxGetScalar(prhs[4]));
+			cont = floor(mxGetScalar(prhs[4]));
 
 		if( fabs(start[0] - stop[0]) < DOUBLE_TOL)
-			lr->insert_const_u_edge(start[0], start[1], stop[1], mult);
+			lr->insert_const_u_edge(start[0], start[1], stop[1], cont);
 		else if( fabs(start[1] - stop[1]) < DOUBLE_TOL)
-			lr->insert_const_v_edge(start[1], start[0], stop[0], mult);
+			lr->insert_const_v_edge(start[1], start[0], stop[0], cont);
 		else
 			mexErrMsgTxt("insert_line: Invalid arguments");
 
@@ -267,7 +267,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		double *b = mxGetPr(prhs[2]);
 		int m = mxGetM(prhs[2]);
 		int n = mxGetN(prhs[2]);
-		int mult = floor(mxGetScalar(prhs[3]));
+		int cont = floor(mxGetScalar(prhs[3]));
 		vector<int> basis(m*n);
 		for(size_t i=0; i<n*m; i++) {
 			basis[i] = floor(b[i]-1);
@@ -276,7 +276,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 				mexErrMsgTxt("Refine_basis: function index out of range");
 		}
 		
-		lr->setRefMultiplicity(mult);
+		lr->setRefContinuity(cont);
 		lr->refineBasisFunction(basis);
 		return;
 	}
@@ -291,7 +291,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		double *el = mxGetPr(prhs[2]);
 		int m    = mxGetM(prhs[2]);
 		int n    = mxGetN(prhs[2]);
-		int mult = floor(mxGetScalar(prhs[3]));
+		int cont = floor(mxGetScalar(prhs[3]));
 		vector<int> elements(m*n);
 		for(size_t i=0; i<n*m; i++) {
 			elements[i] = floor(el[i]-1);
@@ -299,7 +299,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 				mexErrMsgTxt("Refine_elements: element index out of range");
 		}
 		
-		lr->setRefMultiplicity(mult);
+		lr->setRefContinuity(cont);
 		lr->refineElement(elements);
 		return;
 	}
@@ -323,7 +323,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			mexErrMsgTxt("get_derivative_space: Unexpected arguments.");
 
 		vector<LRSplineSurface*> dlr = lr->getDerivativeSpace();
-		
+
 		plhs[0] = convertPtr2Mat<LRSplineSurface>(dlr[0]);
 		plhs[1] = convertPtr2Mat<LRSplineSurface>(dlr[1]);
 		return;
@@ -338,7 +338,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
 		int dp = floor(mxGetScalar(prhs[2]));
 		int dq = floor(mxGetScalar(prhs[3]));
-		
+
 		plhs[0] = convertPtr2Mat<LRSplineSurface>(lr->getRaiseOrderSpace(dp, dq));
 		return;
 	}
@@ -411,20 +411,82 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	}
 
 
+	// getEdgeFunctions
+	if (!strcmp("get_edge_functions", cmd)) {
+		// Check parameters
+		if (nlhs < 1 || nrhs < 4)
+			mexErrMsgTxt("Point: Unexpected arguments.");
+
+		// figure out the input parameters
+		int depth = 1;
+		int iEdg  = mxGetScalar(prhs[2]);
+		if (nrhs >= 4)
+			depth = mxGetScalar(prhs[3]);
+
+		parameterEdge edg;
+		if      (iEdg == 1) edg = WEST;
+		else if (iEdg == 2) edg = EAST;
+		else if (iEdg == 3) edg = SOUTH;
+		else if (iEdg == 4) edg = NORTH;
+
+		// call the c++ functions
+		vector<Basisfunction*> edgeBasis;
+		lr->getEdgeFunctions(edgeBasis, edg, depth);
+		vector<int> vResult;
+		for(auto b=edgeBasis.begin(); b<edgeBasis.end(); b++)
+			vResult.push_back((**b).getId());
+
+		// rewrap and return the results
+		plhs[0] = mxCreateDoubleMatrix(vResult.size(), 1, mxREAL);
+		double *dResult  = mxGetPr(plhs[0]);
+		copy(vResult.begin(), vResult.end(), dResult);
+
+		return;
+	}
+
+
+	// getEdgeElements
+	if (!strcmp("get_edge_elements", cmd)) {
+		// Check parameters
+		if (nlhs < 1 || nrhs < 4)
+			mexErrMsgTxt("Point: Unexpected arguments.");
+
+		// figure out the input parameters
+		int iEdg  = mxGetScalar(prhs[2]);
+
+		parameterEdge edg;
+		if      (iEdg == 1) edg = WEST;
+		else if (iEdg == 2) edg = EAST;
+		else if (iEdg == 3) edg = SOUTH;
+		else if (iEdg == 4) edg = NORTH;
+
+		// call the c++ functions
+		vector<Element*> edgeElms;
+		lr->getEdgeElements(edgeElms, edg);
+		vector<int> vResult;
+		for(auto e=edgeElms.begin(); e<edgeElms.end(); e++)
+			vResult.push_back((**e).getId());
+
+		// rewrap and return the results
+		plhs[0] = mxCreateDoubleMatrix(vResult.size(), 1, mxREAL);
+		double *dResult  = mxGetPr(plhs[0]);
+		copy(vResult.begin(), vResult.end(), dResult);
+
+		return;
+	}
+
+
 	// update primitives
 	if (!strcmp("get_primitives", cmd)) {
 		// Check parameters
 		if (nlhs < 0 || nrhs < 2)
 			mexErrMsgTxt("Get_primitives: Unexpected arguments.");
-		int p1 = lr->order(0);
-		int p2 = lr->order(1);
 		lr->generateIDs();
 		// write basis functions
 		if(nlhs > 0) {
 			int n   = lr->nBasisFunctions();
 			int dim = lr->dimension();
-			plhs[0]  = mxCreateDoubleMatrix(n, p1+p2+2, mxREAL);
-			double *knots = mxGetPr(plhs[0]);
+			plhs[0]  = mxCreateCellMatrix(n, 2);
 			double *cp;
 			double *w;
 			if(nlhs>1) {
@@ -438,15 +500,24 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			HashSet_iterator<Basisfunction*> it;
 			int i=0;
 			for(it=lr->basisBegin(); it!=lr->basisEnd(); ++it, ++i) {
+				int p1 = (**it).getOrder(0);
+				int p2 = (**it).getOrder(1);
+				mxArray *array_knots_u = mxCreateDoubleMatrix(1, p1+1, mxREAL);
+				mxArray *array_knots_v = mxCreateDoubleMatrix(1, p2+1, mxREAL);
+				double *knots_u = mxGetPr(array_knots_u);
+				double *knots_v = mxGetPr(array_knots_v);
 				for(int j=0; j<p1+1; j++)
-					knots[j*n+i] = (**it)[0][j]; // knot vector in u-direction
+					knots_u[j] = (**it)[0][j]; // knot vector in u-direction
 				for(int j=0; j<p2+1; j++)
-					knots[(j+p1+1)*n+i] = (**it)[1][j]; // knot vector in v-direction
+					knots_v[j] = (**it)[1][j]; // knot vector in v-direction
 				if(nlhs>1)
 					for(int j=0; j<dim; j++)
 						cp[i*dim+j] = (**it).cp(j); // control points
 				if(nlhs>2)
 					w[i] = (**it).w(); // weights
+
+				mxSetCell(plhs[0], i,   array_knots_u);
+				mxSetCell(plhs[0], i+n, array_knots_v);
 			}
 		}
 		if(nlhs > 3) {
@@ -467,7 +538,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 					meshline[i+2*n] = (**it).const_par_;
 					meshline[i+3*n] = (**it).stop_;
 				}
-				meshline[i+4*n] = (**it).multiplicity_;
+				meshline[i+4*n] = (**it).continuity_;
 			}
 		}
 		if(nlhs > 4) {
@@ -501,8 +572,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			int n = lr->nElements();
 			plhs[6] = mxCreateDoubleMatrix(2, 1, mxREAL);
 			double *p = mxGetPr(plhs[6]);
-			p[0] = lr->order(0)-1;
-			p[1] = lr->order(1)-1;
+			p[0] = lr->min_order(0)-1;
+			p[1] = lr->min_order(1)-1;
 		}
 		return;
 	}

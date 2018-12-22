@@ -100,7 +100,7 @@ classdef LRSplineSurface < handle
 					throw(MException('LRSplineSurface:constructor', 'Error: Control points should have n(1)*n(2) columns'));
 				end
 			end
-			
+
 			this.objectHandle = lrsplinesurface_interface('new', varargin{:});
 			this.bezierHash = [];
 			this.updatePrimitives();
@@ -444,9 +444,13 @@ classdef LRSplineSurface < handle
 		%     One or all parametric greville abscissae
 			if nargin > 1
 				i = varargin{1};
-				x = [sum(this.knots(i,2:(this.p(1)+1)))/this.p(1), sum(this.knots(i,(this.p(1)+4):(end-1)))/this.p(2)];
+				x = [mean(this.knots{i,1}(2:end-1)), mean(this.knots{i,2}(2:end-1))]
 			else
-				x = [sum(this.knots(:,2:(this.p(1)+1)),2)/this.p(1), sum(this.knots(:,(this.p(1)+4):(end-1)),2)/this.p(2)];
+				n = size(this.knots,1)
+				x = zeros(n,2)
+				for i=1:n
+					x(i,:) = [mean(this.knots{i,1}(2:end-1)), mean(this.knots{i,2}(2:end-1))]
+				end
 			end
 		end
 
@@ -549,7 +553,7 @@ classdef LRSplineSurface < handle
 					depth = varargin{i};
 				elseif(strcmp(varargin{i}, 'elements'))
 					elements = true;
-				else 
+				else
 					throw(MException('LRSplineSurface:getEdge', 'Error: Unkown parameters'));
 				end
 			end
@@ -557,41 +561,22 @@ classdef LRSplineSurface < handle
 			if(edge~=0 && edge~=1 && edge~=2 && edge~=3 && edge~=4)
 				throw(MException('LRSplineSurface:getEdge', 'Error: Invalid edge enumeration'));
 			end
-			if(edge == 1 || edge == 0)
-				umin = min(this.elements(:,1));
-				if(elements)
-					index = [index; find(this.elements(:,1) == umin)];
-				else
-					index = [index; find(this.knots(:, this.p(1)+1-depth) == umin)];
+
+			if edge == 0
+				index = []
+				for edg=1:4
+					if elements
+						index = [index; lrsplinesurface_interface('get_edge_elements', this.objectHandle, edg)];
+					else
+						index = [index; lrsplinesurface_interface('get_edge_functions', this.objectHandle, edg, depth)];
+					end
 				end
-			end
-			if(edge == 2 || edge == 0)
-				umax = max(this.elements(:,3));
-				if(elements)
-					index = [index; find(this.elements(:,3) == umax)];
+			else
+				if elements
+					index = lrsplinesurface_interface('get_edge_elements', this.objectHandle, edge);
 				else
-					index = [index; find(this.knots(:, 2+depth) == umax)];
+					index = lrsplinesurface_interface('get_edge_functions', this.objectHandle, edge, depth);
 				end
-			end
-			if(edge == 3 || edge == 0)
-				vmin = min(this.elements(:,2));
-				if(elements)
-					index = [index; find(this.elements(:,2) == vmin)];
-				else
-					index = [index; find(this.knots(:, end-1-depth) == vmin)];
-				end
-			end
-			if(edge == 4 || edge == 0)
-				vmax = max(this.elements(:,4));
-				if(elements)
-					index = [index; find(this.elements(:,4) == vmax)];
-				else
-					index = [index; find(this.knots(:, this.p(1)+4+depth) == vmax)];
-				end
-			end
-			% clear out any duplicates if one requests all edges
-			if(edge == 0)
-				index = unique(index);
 			end
 		end
 
@@ -674,7 +659,7 @@ classdef LRSplineSurface < handle
 				hold on;
 				for i=1:size(this.knots,1)
 					if parametric
-						x = [sum(this.knots(i,2:(this.p(1)+1))); sum(this.knots(i,(this.p(1)+4):(end-1)))] ./ this.p;
+						x = this.getGrevillePoint(i);
 					else
 						x = this.cp(:,i);
 					end
@@ -908,7 +893,7 @@ classdef LRSplineSurface < handle
 				grevU = zeros(2, nDOF);
 				grevX = zeros(2, nDOF);
 				for i=1:nDOF
-					grevU(:,i) = [sum(this.knots(i,2:(this.p(1)+1))); sum(this.knots(i,(this.p(1)+4):(end-1)))] ./ this.p;
+					grevU(:,i) = this.getGrevillePoint(i)
 					grevX(:,i) = this.point(grevU(1,i), grevU(2,i));
 				end
 			end
@@ -1257,10 +1242,10 @@ classdef LRSplineSurface < handle
 
 			removeBasis = [];
 			for i=1:size(this.knots,1)
-				[x,y] = meshgrid(this.knots(i,[1,this.p(1)+2]), this.knots(i,[this.p(1)+3, this.p(1)+this.p(2)+4]));
+				[x,y] = meshgrid(this.knots{i,1}([1,end]), this.knots{i,2}([1,end]));
 				keep  = false;
 				for j=1:2
-					for k=1:2,	
+					for k=1:2,
 						if ~toBeClipped(x(j,k), y(j,k))
 							keep = true;
 						end
