@@ -3,8 +3,8 @@ classdef LRSplineSurface < handle
 %     Locally Refined (LR) B-splines is a technique to achive local adaptivity while using smooth spline 
 %     functions. This is a sample library which implements these techniques and can be used for geometric
 %     representations or isogeometric analysis.
-%     
-% LRSplineSurface Properties: 
+%
+% LRSplineSurface Properties:
 %     p        - polynomial degree
 %     knots    - knot vectors
 %     cp       - control points
@@ -12,7 +12,7 @@ classdef LRSplineSurface < handle
 %     lines    - mesh lines, (u0,v0, u1,v1, m), where m is the multiplicity
 %     elements - fintite elements (u0, v0, u1, v1)
 %     support  - element to basis function support list
-%    
+%
 % LRSplineSurface Methods:
 %     LRSplineSurface      - Constructor
 %     copy                 - Performs a deep copy of the spline object
@@ -61,8 +61,8 @@ classdef LRSplineSurface < handle
 		% LRSplineSurface(p, n)
 		% LRSplineSurface(p, knotU, knotV)
 		% LRSplineSurface(p, knotU, knotV, controlpoint)
-		% 
-		%   parameters 
+		%
+		%   parameters
 		%     p            - polynomial degree in each direction (2 components)
 		%     n            - number of basis functions in each direction (2 components)
 		%     knotU        - global open knot vector in u-direction (n(1)+p(1)+1 components)
@@ -277,7 +277,7 @@ classdef LRSplineSurface < handle
 		function [intLRdu intLRdv] = getAntiDerivative(this)
 		% GETANTIDERIVATIVE gets the two integration space int{dx} and int{dy}
 		% [intLRdu intLRdv] = getAntiDerivative()
-		% 
+		%
 		%   parameters:
 		%     none
 		%   returns:
@@ -495,7 +495,7 @@ classdef LRSplineSurface < handle
 		% C = LRSplineSurface.getBezierExtraction(element)
 		%
 		%   parameters:
-		%     element - global index to the element 
+		%     element - global index to the element
 		%   returns:
 		%     a matrix with as many rows as there is active basis functions and (p(1)+1)*(p(2)+1) columns
 			if numel(this.bezierHash) == size(this.elements,1)
@@ -594,7 +594,7 @@ classdef LRSplineSurface < handle
 		%     'nviz'        - sets the line resolution for plots to use n points for drawing each line
 		%   returns:
 		%     handle to the figure
-			
+
 			nPtsPrLine  = 41;
 			enumeration = false;
 			parametric  = false;
@@ -647,7 +647,7 @@ classdef LRSplineSurface < handle
 				for i=1:size(this.elements, 1),
 					if(parametric)
 						x = [sum(this.elements(i, [1,3]))/2, sum(this.elements(i,[2,4]))/2];
-					else 
+					else
 						x = this.point(sum(this.elements(i, [1,3]))/2, sum(this.elements(i,[2,4]))/2);
 					end
 					text(x(1), x(2), num2str(i));
@@ -681,8 +681,8 @@ classdef LRSplineSurface < handle
 		%
 		%   parameters:
 		%     'nviz'       - sets the plotting resolution to n points per element [default: 6]
-		%     'diffX'      - A is the matrix of function derivatives with respect to X 
-		%     'diffY'      - A is the matrix of function derivatives with respect to Y 
+		%     'diffX'      - A is the matrix of function derivatives with respect to X
+		%     'diffY'      - A is the matrix of function derivatives with respect to Y
 		%     'parametric' - compute parametric derivatives instead of mapped derivatives
 		%   returns:
 		%     A            - is a sparse matrix of size nxm, where n is the number of visualization points and m the number of basis functions
@@ -690,7 +690,7 @@ classdef LRSplineSurface < handle
 		%     edges        - a matrix of 4*nElements colums, each column giving the plot index of the element boundaries
 		%     X            - x-coordinates of mesh evaluation (parametric or physical)
 		%     Y            - y-coordinates of mesh evaluation (parametric or physical)
-		%  
+		%
 		%   Example:
 		%     lr = LRSplineSurface([3,3], [7,7]);
 		%     lr.refine(1, 'basis');
@@ -789,7 +789,7 @@ classdef LRSplineSurface < handle
 						% evaluates physical mapping and jacobian
 						x  = this.cp(:,ind) * C * N;
 						J  = this.cp(:,ind) * C * dN; % jacobian matrix [dx/du,dx/dv; dy/du, dy/dv]
-						
+
 						if parametric
 							X(ptCount) = xi;
 							Y(ptCount) = eta;
@@ -801,7 +801,7 @@ classdef LRSplineSurface < handle
 								matrixLine = C*N;
 							end
 						else
-							dNdx = dN * inv(J); 
+							dNdx = dN * inv(J);
 							X(ptCount) = x(1);
 							Y(ptCount) = x(2);
 							if diffX
@@ -908,8 +908,8 @@ classdef LRSplineSurface < handle
 
 			bezierKnot1 = [ones(1, this.p(1)+1)*-1, ones(1, this.p(1)+1)];
 			bezierKnot2 = [ones(1, this.p(2)+1)*-1, ones(1, this.p(2)+1)];
-			[bezNu, bezNu_diff] = getBSplineBasisAndDerivative(this.p(1), xg, bezierKnot1); 
-			[bezNv, bezNv_diff] = getBSplineBasisAndDerivative(this.p(2), xg, bezierKnot2); 
+			[bezNu, bezNu_diff] = getBSplineBasisAndDerivative(this.p(1), xg, bezierKnot1);
+			[bezNv, bezNv_diff] = getBSplineBasisAndDerivative(this.p(2), xg, bezierKnot2);
 			for iel=1:size(this.elements, 1)
 				umin = this.elements(iel,1);
 				vmin = this.elements(iel,2);
@@ -949,7 +949,7 @@ classdef LRSplineSurface < handle
 							X(i,j) = x(1);
 							Y(i,j) = x(2);
 							% physical derivatives
-							dNdx = dN * inv(J); 
+							dNdx = dN * inv(J);
 						end
 						if function_result || secondary
 							if secondary
@@ -969,7 +969,7 @@ classdef LRSplineSurface < handle
 							U(i,j) = u(iel);
 						elseif diffX && parametric
 							U(i,j)  = u(ind) * C * dN(:,1);
-						elseif diffX 
+						elseif diffX
 							U(i,j)  = u(ind) * C * dNdx(:,1);
 						elseif diffY && parametric
 							U(i,j)  = u(ind) * C * dN(:,2);
@@ -1016,7 +1016,7 @@ classdef LRSplineSurface < handle
 			plot3(Xlines', Ylines', Zlines', 'k-');
 			if(per_element_result)
 				view(2);
-			else	
+			else
 				view(3);
 			end
 		end
@@ -1034,7 +1034,7 @@ classdef LRSplineSurface < handle
 		%     u            - control point results  OR  function handle
 		%     v            - contour lines
 		%     'nviz'       - sets the plotting resolution to n points per element
-		%     'diffX'      - plots the derivative with respect to X 
+		%     'diffX'      - plots the derivative with respect to X
 		%     'diffY'      - plots the derivative with respect to Y
 		%     'secondary'  - plots secondary solutions. Must provide input function of the type f=@(x,u,dudx), where x and dudx has two components
 		%     'nofill'     - uses contour, instead of contourf
@@ -1094,8 +1094,8 @@ classdef LRSplineSurface < handle
 
 			bezierKnot1 = [ones(1, this.p(1)+1)*-1, ones(1, this.p(1)+1)];
 			bezierKnot2 = [ones(1, this.p(2)+1)*-1, ones(1, this.p(2)+1)];
-			[bezNu, bezNu_diff] = getBSplineBasisAndDerivative(this.p(1), xg, bezierKnot1); 
-			[bezNv, bezNv_diff] = getBSplineBasisAndDerivative(this.p(2), xg, bezierKnot2); 
+			[bezNu, bezNu_diff] = getBSplineBasisAndDerivative(this.p(1), xg, bezierKnot1);
+			[bezNv, bezNv_diff] = getBSplineBasisAndDerivative(this.p(2), xg, bezierKnot2);
 			for iel=1:size(this.elements, 1)
 				umin = this.elements(iel,1);
 				vmin = this.elements(iel,2);
@@ -1209,7 +1209,7 @@ classdef LRSplineSurface < handle
 			if numel(m) == 1,
 				m = ones(size(start,1),1)*m;
 			end
-				
+
 			for i=1:size(start,1)
 				lrsplinesurface_interface('insert_line', this.objectHandle, start(i,:),stop(i,:),m(i));
 			end
@@ -1226,7 +1226,7 @@ classdef LRSplineSurface < handle
 				[x,y] = meshgrid(this.elements(i,[1,3]), this.elements(i,[2,4]));
 				keep  = false;
 				for j=1:2
-					for k=1:2,	
+					for k=1:2,
 						if ~toBeClipped(x(j,k), y(j,k))
 							keep = true;
 							break;

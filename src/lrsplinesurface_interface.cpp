@@ -64,7 +64,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	// Check there is a second input, which should be the class instance handle
 	if (nrhs < 2)
 		mexErrMsgTxt("Second input should be a class instance handle.");
-	
+
 	// Delete
 	if (!strcmp("delete", cmd)) {
 		// Destroy the C++ object
@@ -88,7 +88,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		plhs[0] = convertPtr2Mat<LRSplineSurface>(lr->copy());
 		return;
 	}
-	
+
 
 	/*********************************************************
 	 *******      Call the various class methods           ***
@@ -156,7 +156,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 #endif
 	}
 
-	// Print    
+	// Print
 	if (!strcmp("print", cmd)) {
 		// Check parameters
 		if (nlhs < 0 || nrhs < 2)
@@ -298,7 +298,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			if(elements[i]<0 || elements[i] >= lr->nElements())
 				mexErrMsgTxt("Refine_elements: element index out of range");
 		}
-		
+
 		lr->setRefContinuity(cont);
 		lr->refineElement(elements);
 		return;
@@ -311,7 +311,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			mexErrMsgTxt("get_primal_space: Unexpected arguments.");
 
 		LRSplineSurface* lrp = lr->getPrimalSpace();
-		
+
 		plhs[0] = convertPtr2Mat<LRSplineSurface>(lrp);
 		return;
 	}
