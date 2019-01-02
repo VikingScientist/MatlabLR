@@ -15,7 +15,7 @@ function lrgui
   hrefine = uicontrol('Style','pushbutton',...
          'String','Refine',...
          'Position',[315,200,70,25],...
-         'Callback',@refinebutton_Callback); 
+         'Callback',@refinebutton_Callback);
   hload = uicontrol('Style','pushbutton','String','Load',...
          'Position',[315,160,70,25],...
          'Callback',@loadbutton_Callback);
@@ -28,14 +28,14 @@ function lrgui
          'String',{'Elements','Functions'},...
          'Position',[300,30,100,25],...
          'Callback',@popup_menu_Callback);
-  ha = axes('Units','Pixels','Position',[50,60,200,185]); 
+  ha = axes('Units','Pixels','Position',[50,60,200,185]);
   align([hnew,hrefine,hload,hsave,htext,hpopup],'Center','None');
-  
+
   % Create the data to plot.
   current_mesh = LRSplineSurface([3,3], [10,10]);
-  
+
   % Initialize the GUI.
-  % Change units to normalized so components resize 
+  % Change units to normalized so components resize
   % automatically.
   f.Units = 'normalized';
   ha.Units = 'normalized';
@@ -48,7 +48,7 @@ function lrgui
 
   % add key-listener for keyboard hotkeys
   set(gcf, 'KeyPressFcn', @keypress);
-  
+
   %Create a mesh in the axes.
   H = current_mesh.plot('parametric');
   ref_elements = true;
@@ -64,7 +64,7 @@ function lrgui
   f.Visible = 'on';
 
   %  Callbacks for lrgui. These callbacks automatically
-  %  have access to component handles and initialized data 
+  %  have access to component handles and initialized data
   %  because they are nested at a lower level.
 
   %  Pop-up menu callback. Read the pop-up menu Value property
@@ -83,10 +83,10 @@ function lrgui
       end
       redraw_mesh();
     end
- 
-  % Push button callbacks. 
 
-  function newbutton_Callback(source,eventdata) 
+  % Push button callbacks.
+
+  function newbutton_Callback(source,eventdata)
   % Display surf plot of the currently selected data.
     % surf(current_data);
     x = inputdlg({'p1', 'p2', 'n1', 'n2'}, 'New LR spline', [1 8], {'3' '3' '10' '10'});
@@ -98,7 +98,7 @@ function lrgui
     end
   end
 
-  function refinebutton_Callback(source,eventdata) 
+  function refinebutton_Callback(source,eventdata)
   % Display contour plot of the currently selected data.
     % contour(current_data);
     if ref_elements
@@ -107,9 +107,9 @@ function lrgui
       current_mesh.refine(refine_list, 'basis');
     end
     redraw_mesh();
-  end 
+  end
 
-  function loadbutton_Callback(source,eventdata) 
+  function loadbutton_Callback(source,eventdata)
   % Display mesh plot of the currently selected data.
     [file path] = uigetfile({'*.g2;*.lr', 'Geometry files (*.g2,*.lr)'});
     if file ~= 0
@@ -118,7 +118,7 @@ function lrgui
     end
   end
 
-  function savebutton_Callback(source,eventdata) 
+  function savebutton_Callback(source,eventdata)
   % Display mesh plot of the currently selected data.
     [file path] = uiputfile('out.lr');
     if file ~= 0
@@ -183,7 +183,7 @@ function lrgui
         end
       end
       j = j+1;
-    end 
+    end
   end
 
   function redraw_mesh()
@@ -201,4 +201,4 @@ function lrgui
     set(gca, 'ButtonDownFcn', @mouseclick);
   end
 
-end 
+end
