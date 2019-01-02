@@ -547,15 +547,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			HashSet_iterator<Basisfunction*> it;
 			int i=0;
 			for(it=lr->basisBegin(); it!=lr->basisEnd(); ++it, ++i) {
-				int p1 = (**it).getOrder(0);
-				int p2 = (**it).getOrder(1);
-				mxArray *array_knots_u = mxCreateDoubleMatrix(1, p1+1, mxREAL);
-				mxArray *array_knots_v = mxCreateDoubleMatrix(1, p2+1, mxREAL);
+				int p1 = (**it).getOrder(0) - 1;
+				int p2 = (**it).getOrder(1) - 1;
+				mxArray *array_knots_u = mxCreateDoubleMatrix(1, p1+2, mxREAL);
+				mxArray *array_knots_v = mxCreateDoubleMatrix(1, p2+2, mxREAL);
 				double *knots_u = mxGetPr(array_knots_u);
 				double *knots_v = mxGetPr(array_knots_v);
-				for(int j=0; j<p1+1; j++)
+				for(int j=0; j<p1+2; j++)
 					knots_u[j] = (**it)[0][j]; // knot vector in u-direction
-				for(int j=0; j<p2+1; j++)
+				for(int j=0; j<p2+2; j++)
 					knots_v[j] = (**it)[1][j]; // knot vector in v-direction
 				if(nlhs>1)
 					for(int j=0; j<dim; j++)
@@ -622,8 +622,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			vector<Element*>::iterator it;
 			int i=0;
 			for(it=lr->elementBegin(); it<lr->elementEnd(); ++it, ++i) {
-				p[i  ] = (**it).order(0);
-				p[i+n] = (**it).order(1);
+				p[i  ] = (**it).order(0) - 1;
+				p[i+n] = (**it).order(1) - 1;
 			}
 		}
 		return;
