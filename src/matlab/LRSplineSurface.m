@@ -491,12 +491,12 @@ classdef LRSplineSurface < handle
 		%     One or all parametric greville abscissae
 			if nargin > 1
 				i = varargin{1};
-				x = [mean(this.knots{i,1}(2:end-1)), mean(this.knots{i,2}(2:end-1))]
+				x = [mean(this.knots{i,1}(2:end-1)), mean(this.knots{i,2}(2:end-1))];
 			else
-				n = size(this.knots,1)
-				x = zeros(n,2)
+				n = size(this.knots,1);
+				x = zeros(n,2);
 				for i=1:n
-					x(i,:) = [mean(this.knots{i,1}(2:end-1)), mean(this.knots{i,2}(2:end-1))]
+					x(i,:) = [mean(this.knots{i,1}(2:end-1)), mean(this.knots{i,2}(2:end-1))];
 				end
 			end
 		end
@@ -793,8 +793,8 @@ classdef LRSplineSurface < handle
 
 			bezierKnot1 = [ones(1, this.p(1)+1)*-1, ones(1, this.p(1)+1)];
 			bezierKnot2 = [ones(1, this.p(2)+1)*-1, ones(1, this.p(2)+1)];
-			[bezNu, bezNu_diff] = getBSplineBasisAndDerivative(this.p(1), xg, bezierKnot1); 
-			[bezNv, bezNv_diff] = getBSplineBasisAndDerivative(this.p(2), xg, bezierKnot2); 
+			[bezNu, bezNu_diff] = getBSplineBasisAndDerivative(this.p(1), xg, bezierKnot1);
+			[bezNv, bezNv_diff] = getBSplineBasisAndDerivative(this.p(2), xg, bezierKnot2);
 			ptCount   = 1;
 			meshCount = 1;
 			sparseCount = 1;
@@ -942,7 +942,7 @@ classdef LRSplineSurface < handle
 				grevU = zeros(2, nDOF);
 				grevX = zeros(2, nDOF);
 				for i=1:nDOF
-					grevU(:,i) = this.getGrevillePoint(i)
+					grevU(:,i) = this.getGrevillePoint(i);
 					grevX(:,i) = this.point(grevU(1,i), grevU(2,i));
 				end
 			end
@@ -1183,7 +1183,7 @@ classdef LRSplineSurface < handle
 						eta = (.5*xg(j)+.5)*(vmax-vmin)+vmin;
 
 						% compute all basis functions
-						N     = this.computeBasis(xi,eta, 1)
+						N     = this.computeBasis(xi,eta, 1);
 						dN    = N(2:3,:)';
 						N     = N(1,:)';
 						% N     = bezNu(:,i)       * bezNv(:,j)';
