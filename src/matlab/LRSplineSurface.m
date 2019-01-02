@@ -18,6 +18,7 @@ classdef LRSplineSurface < handle
 %     copy                 - Performs a deep copy of the spline object
 %     refine               - Performs local refinements
 %     raiseOrder           - Performs global degree elevation
+%     localRaiseOrder      - Performs local  degree elevation
 %     getFunc2Element      - Returns list of elements which a given function have support on
 %     getEdge              - Extracts functions with support on one of the four parametric edges
 %     getElementContaining - Get element index at parametric point (u,v)
@@ -174,6 +175,52 @@ classdef LRSplineSurface < handle
 			lrsplinesurface_interface('print', this.objectHandle);
 		end
 
+		function localRaiseOrder(this, varargin)
+		% LOCALRAISEORDER  Performs local degree elevation of elements or basis functions
+		% LRSplineSurface.localRaiseOrder()
+		% LRSplineSurface.localRaiseOrder(indices)
+		% LRSplineSurface.localRaiseOrder(indices, 'basis')
+		% LRSplineSurface.localRaiseOrder(indices, 'elements', 'p', newP)
+		%
+		%   parameters:
+		%     indices      - index of the basis function or elements to order elevate
+		%     'elements'   - tag certain elements for degree elevation
+		%     'basis'      - degree elevate certain functions
+		%     'p'          - sets the maximum new polynomial degree to raise
+		%   returns:
+		%     none
+			elements = false;              % and uniform refinement
+			indices  = 1:size(this.knots,1);
+			i        = 0;
+			p        = -1;
+			% read input parameters
+			while(i<nargin-1)
+				i=i+1;
+				if     strcmp(varargin{i}, 'elements')
+					elements = true;
+				elseif strcmp(varargin{i}, 'basis')
+					elements = false;
+				elseif strcmp(varargin{i}, 'p')
+					p = varargin{i+1};
+					i = i+1;
+				elseif(ischar(varargin{i}))
+					throw(MException('LRSplineSurface:refine',  'Error: Unknown refine parameter'));
+				else
+					indices = varargin{i};
+				end
+			end
+
+			% perform refinement
+			if(elements)
+				lrsplinesurface_interface('raise_order_elements', this.objectHandle, indices, p);
+			else
+				lrsplinesurface_interface('raise_order_basis',    this.objectHandle, indices);
+			end
+
+			% new LR-mesh... update static variables
+			this.bezierHash = [];
+			this.updatePrimitives();
+		end
 
 		function refine(this, varargin)
 		% REFINE  Performs local refinement of elements or basis functions. No arguments gives global uniform refinement

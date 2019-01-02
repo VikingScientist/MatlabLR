@@ -256,6 +256,53 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	}
 
 
+	// Raise order elements
+	if (!strcmp("raise_order_elements", cmd)) {
+		// Check parameters
+		if (nlhs < 0 || nrhs < 4)
+			mexErrMsgTxt("raise_order_elements: Unexpected arguments.");
+
+		// rewrap results into vector array
+		double *el = mxGetPr(prhs[2]);
+		double *p  = mxGetPr(prhs[3]);
+		int m = mxGetM(prhs[2]);
+		int n = mxGetN(prhs[2]);
+		vector<Element*> elms(m*n);
+		for(size_t i=0; i<n*m; i++) {
+			// error check input
+			if(el[i]<=0 || el[i] > lr->nElements())
+				mexErrMsgTxt("Raise_order_elements: element index out of range");
+			elms[i] = lr->getElement(floor(el[i]-1));
+		}
+
+		lr->order_elevate(elms, 0, (int) p[0]);
+		lr->order_elevate(elms, 1, (int) p[1]);
+		return;
+	}
+
+
+	// Raise order basisfunctions
+	if (!strcmp("raise_order_basis", cmd)) {
+		// Check parameters
+		if (nlhs < 0 || nrhs < 3)
+			mexErrMsgTxt("raise_order_basis: Unexpected arguments.");
+
+		// rewrap results into vector array
+		double *b = mxGetPr(prhs[2]);
+		int m = mxGetM(prhs[2]);
+		int n = mxGetN(prhs[2]);
+		vector<int> basis(m*n);
+		for(size_t i=0; i<n*m; i++) {
+			basis[i] = floor(b[i]-1);
+			// error check input
+			if(basis[i]<0 || basis[i] >= lr->nBasisFunctions())
+				mexErrMsgTxt("Raise_order_basis: function index out of range");
+		}
+
+		lr->orderElevateFunction(basis);
+		return;
+	}
+
 
 	// Refine basisfunctions
 	if (!strcmp("refine_basis", cmd)) {
@@ -275,7 +322,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			if(basis[i]<0 || basis[i] >= lr->nBasisFunctions())
 				mexErrMsgTxt("Refine_basis: function index out of range");
 		}
-		
+
 		lr->setRefContinuity(cont);
 		lr->refineBasisFunction(basis);
 		return;
@@ -570,10 +617,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		}
 		if(nlhs > 6) {
 			int n = lr->nElements();
-			plhs[6] = mxCreateDoubleMatrix(2, 1, mxREAL);
+			plhs[6] = mxCreateDoubleMatrix(n, 2, mxREAL);
 			double *p = mxGetPr(plhs[6]);
-			p[0] = lr->min_order(0)-1;
-			p[1] = lr->min_order(1)-1;
+			vector<Element*>::iterator it;
+			int i=0;
+			for(it=lr->elementBegin(); it<lr->elementEnd(); ++it, ++i) {
+				p[i  ] = (**it).order(0);
+				p[i+n] = (**it).order(1);
+			}
 		}
 		return;
 	}
