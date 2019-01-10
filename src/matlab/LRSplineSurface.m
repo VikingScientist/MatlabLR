@@ -135,36 +135,6 @@ classdef LRSplineSurface < handle
 			lrsplinesurface_interface('save', this.objectHandle, filename);
 		end
 
-		function load(this, filename)
-		% LOAD  Reads the backend c++ representation of this LR-spline object from file
-		% LRSplineSurface.load(filename)
-		%
-		%   parameters:
-		%     filename - the name of the file
-			if ~strcmp(class(filename), 'char')
-				throw(MException('LRSplineSurface:load', 'Error: Invalid file name'));
-			end
-      if strcmp(filename(end-2:end), '.g2')
-			  this.loadG2(filename);
-        return
-      end
-			lrsplinesurface_interface('load', this.objectHandle, filename);
-			this.updatePrimitives();
-		end
-
-		function loadG2(this, filename)
-		% LOAD  Reads the backend c++ representation of this LR-spline object from file
-		% LRSplineSurface.load(filename)
-		%
-		%   parameters:
-		%     filename - the name of the file
-			if ~strcmp(class(filename), 'char')
-				throw(MException('LRSplineSurface:load', 'Error: Invalid file name'));
-			end
-			lrsplinesurface_interface('loadg2', this.objectHandle, filename);
-			this.updatePrimitives();
-		end
-
 		function print(this)
 		% PRINT  Dumps the backend c++ representation of this LR-spline object to screen
 		% LRSplineSurface.print()
@@ -1211,6 +1181,41 @@ classdef LRSplineSurface < handle
 		end % end LRSplineSurface.contourf
 
 	end % end public methods
+
+	methods (Static = true)
+		function lr = load(filename)
+		% LOAD  Reads the backend c++ representation of this LR-spline object from file
+		% LRSplineSurface.load(filename)
+		%
+		%   parameters:
+		%     filename - the name of the file
+			if ~strcmp(class(filename), 'char')
+				throw(MException('LRSplineSurface:load', 'Error: Invalid file name'));
+			end
+			if strcmp(filename(end-2:end), '.g2')
+				lr = loadG2(filename);
+				return
+			end
+			lr = LRSplineSurface();
+			lrsplinesurface_interface('load', lr.objectHandle, filename);
+			lr.updatePrimitives();
+		end
+
+		function lr = loadG2(filename)
+		% LOAD  Reads the backend c++ representation of this LR-spline object from file
+		% LRSplineSurface.load(filename)
+		%
+		%   parameters:
+		%     filename - the name of the file
+			if ~strcmp(class(filename), 'char')
+				throw(MException('LRSplineSurface:load', 'Error: Invalid file name'));
+			end
+			lr = LRSplineSurface();
+			lrsplinesurface_interface('loadg2', lr.objectHandle, filename);
+			lr.updatePrimitives();
+		end
+	end % static methods
+
 
 	methods (Hidden = true)
 

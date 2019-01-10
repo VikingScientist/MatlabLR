@@ -65,7 +65,7 @@ classdef LRNURBSSurface < handle
 
 			% error check input
 			if(nargin == 0)
-				objectHandle   = 0;
+				this.objectHandle = lrsplinesurface_interface('new');
 				return;
 			end
 			if(nargin ~= 4)
@@ -126,19 +126,6 @@ classdef LRNURBSSurface < handle
 				throw(MException('LRNURBSSurface:save', 'Error: Invalid file name'));
 			end
 			lrsplinesurface_interface('save', this.objectHandle, filename);
-		end
-
-		function load(this, filename)
-		% LOAD  Reads the backend c++ representation of this LR-spline object from file
-		% LRNURBSSurface.load(filename)
-		%
-		%   parameters:
-		%     filename - the name of the file
-			if ~strcmp(class(filename), 'char')
-				throw(MException('LRNURBSSurface:load', 'Error: Invalid file name'));
-			end
-			lrsplinesurface_interface('load', this.objectHandle, filename);
-			this.updatePrimitives();
 		end
 
 		function print(this)
@@ -965,6 +952,24 @@ classdef LRNURBSSurface < handle
 % 		end % end LRNURBSSurface.contourf
 
 	end % end public methods
+
+	methods (Static = true)
+
+		function lr = load(filename)
+		% LOAD  Reads the backend c++ representation of this LR-spline object from file
+		% LRSplineSurface.load(filename)
+		%
+		%   parameters:
+		%     filename - the name of the file
+			if ~strcmp(class(filename), 'char')
+				throw(MException('LRSplineSurface:load', 'Error: Invalid file name'));
+			end
+			lr = LRNURBSSurface();
+			lrsplinesurface_interface('load', lr.objectHandle, filename);
+			lr.updatePrimitives();
+		end
+
+	end % static methods
 
 	methods (Hidden = true)
 
