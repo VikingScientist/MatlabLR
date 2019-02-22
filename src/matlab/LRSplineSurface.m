@@ -37,6 +37,7 @@ classdef LRSplineSurface < handle
 %     contourf             - Plot a contour mesh of a given scalar field
 %     plot                 - Plot the mesh structure 
 %     print                - Prints raw c++ lr data structure
+%     tikz                 - Output of tex files that compiles a tikz vector graphics figure
 %     save                 - Saves the backend c++ lr data to file
 %     load                 - Load the backend c++ lr data from file
 %     loadG2               - Load the backend c++ lr data from file
@@ -122,6 +123,17 @@ classdef LRSplineSurface < handle
 			newHandle  = lrsplinesurface_interface('copy', this.objectHandle);
 			copyObject = LRSplineSurface();
 			copyObject.setHandle(newHandle);
+        end
+        
+        function tikz(this, filename)
+		% export_to_tikz  saves the LR-spline object to to a tex-tikz file
+		%
+		%   parameters:
+		%     filename - the name of the file
+			if ~strcmp(class(filename), 'char')
+				throw(MException('LRSplineSurface:export_to_tikz', 'Error: Invalid file name'));
+			end
+			lrsplinesurface_tikz(this, filename);
 		end
 
 		function save(this, filename)
