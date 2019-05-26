@@ -275,8 +275,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			elms[i] = lr->getElement(floor(el[i]-1));
 		}
 
-		lr->order_elevate(elms, 0, (int) p[0]);
-		lr->order_elevate(elms, 1, (int) p[1]);
+		// lr->order_elevate(elms, 0, (int) p[0]);
+		// lr->order_elevate(elms, 1, (int) p[1]);
 		return;
 	}
 
