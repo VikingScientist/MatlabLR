@@ -598,12 +598,12 @@ classdef LRSplineSurface < handle
 		%
 		%   parameters:
 		%     n     - the local edge number (all=0, umin=1, umax=2, vmin=3, vmax=4)
-		%     depth - [optional] number of non-zero derivatives on the edge (default 0)
+		%     depth - [optional] number of "layers" from the edge. Depth-1 = non-zero derivatives on the edge (default 1)
 		%   returns:
 		%     list of all elements or basis function with support on this edge
 			elements = false;
 			index = [];
-			depth = 0;
+			depth = 1;
 			if(nargin < 2)
 				edge = 0;
 			end
@@ -630,6 +630,7 @@ classdef LRSplineSurface < handle
 						index = [index; lrsplinesurface_interface('get_edge_functions', this.objectHandle, edg, depth)];
 					end
 				end
+                index = unique(index)
 			else
 				if elements
 					index = lrsplinesurface_interface('get_edge_elements', this.objectHandle, edge);

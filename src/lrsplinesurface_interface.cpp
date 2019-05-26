@@ -461,8 +461,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	// getEdgeFunctions
 	if (!strcmp("get_edge_functions", cmd)) {
 		// Check parameters
-		if (nlhs < 1 || nrhs < 4)
-			mexErrMsgTxt("Point: Unexpected arguments.");
+		if (nlhs < 1 || nrhs < 3)
+			mexErrMsgTxt("GetEdgeFunctions: Unexpected arguments.");
 
 		// figure out the input parameters
 		int depth = 1;
@@ -481,7 +481,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		lr->getEdgeFunctions(edgeBasis, edg, depth);
 		vector<int> vResult;
 		for(auto b=edgeBasis.begin(); b<edgeBasis.end(); b++)
-			vResult.push_back((**b).getId());
+			vResult.push_back((**b).getId()+1);
 
 		// rewrap and return the results
 		plhs[0] = mxCreateDoubleMatrix(vResult.size(), 1, mxREAL);
@@ -495,8 +495,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	// getEdgeElements
 	if (!strcmp("get_edge_elements", cmd)) {
 		// Check parameters
-		if (nlhs < 1 || nrhs < 4)
-			mexErrMsgTxt("Point: Unexpected arguments.");
+		if (nlhs < 1 || nrhs < 3)
+			mexErrMsgTxt("GetEdgeElements: Unexpected arguments.");
 
 		// figure out the input parameters
 		int iEdg  = mxGetScalar(prhs[2]);
@@ -512,7 +512,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		lr->getEdgeElements(edgeElms, edg);
 		vector<int> vResult;
 		for(auto e=edgeElms.begin(); e<edgeElms.end(); e++)
-			vResult.push_back((**e).getId());
+			vResult.push_back((**e).getId()+1);
 
 		// rewrap and return the results
 		plhs[0] = mxCreateDoubleMatrix(vResult.size(), 1, mxREAL);
