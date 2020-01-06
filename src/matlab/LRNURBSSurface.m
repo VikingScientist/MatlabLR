@@ -1,10 +1,10 @@
 classdef LRNURBSSurface < handle
 % LRNURBSSurface Matlab wrapper class for c++ LR-spline object
-%     Locally Refined (LR) B-splines is a technique to achive local adaptivity while using smooth spline 
+%     Locally Refined (LR) B-splines is a technique to achive local adaptivity while using smooth spline
 %     functions. This is a sample library which implements these techniques and can be used for geometric
 %     representations or isogeometric analysis.
-%     
-% LRNURBSSurface Properties: 
+%
+% LRNURBSSurface Properties:
 %     p        - polynomial degree
 %     knots    - knot vectors
 %     cp       - control points (rational weights in last coordinate)
@@ -12,7 +12,7 @@ classdef LRNURBSSurface < handle
 %     lines    - mesh lines, (u0,v0, u1,v1, m), where m is the multiplicity
 %     elements - fintite elements (u0, v0, u1, v1)
 %     support  - element to basis function support list
-%    
+%
 % LRNURBSSurface Methods:
 %     LSNURBSSurface      - Constructor
 %     copy                 - Performs a deep copy of the spline object
@@ -26,11 +26,11 @@ classdef LRNURBSSurface < handle
 %     computeBasis         - Compute all basis functions (and their derivatives)
 %     getBezierExtraction  - Get the bezier extraction matrix for one element
 %     setContinuity        - Performs global continutiy reduction
-%     L2project            - L2-project results onto the spline basis 
+%     L2project            - L2-project results onto the spline basis
 %     surf                 - Plot scalar results in a surface plot (per element or per controlpoint)
 %     contour              - Use 'contourf' with the argument 'nofill'
 %     contourf             - Plot a contour mesh of a given scalar field
-%     plot                 - Plot the mesh structure 
+%     plot                 - Plot the mesh structure
 %     print                - Prints raw c++ lr data structure
 %     tikz                 - Output of tex files that compiles a tikz vector graphics figure
 %     save                 - Saves the backend c++ lr data to file
@@ -55,8 +55,8 @@ classdef LRNURBSSurface < handle
 		function this = LRNURBSSurface(varargin)
 		% LRNURBSSurface  Constructor, initialize a tensor product rational LRSplinSurface object
 		% LRNURBSSurface(p, knotU, knotV, controlpoint)
-		% 
-		%   parameters 
+		%
+		%   parameters
 		%     n            - number of basis functions in each direction (2 components)
 		%     p            - polynomial degree in each direction (2 components)
 		%     knotU        - global open knot vector in u-direction (n(1)+p(1)+1 components)
@@ -93,7 +93,7 @@ classdef LRNURBSSurface < handle
 					throw(MException('LRNURBSSurface:constructor', 'Error: Control points should have n(1)*n(2) columns'));
 				end
 			end
-			
+
 			this.objectHandle   = lrsplinesurface_interface('new', p, knot1, knot2, cp);
 			this.bezierHash = [];
 			this.updatePrimitives();
@@ -115,9 +115,9 @@ classdef LRNURBSSurface < handle
 			newHandle  = lrsplinesurface_interface('copy', this.objectHandle);
 			copyObject = LRNURBSSurface();
 			copyObject.setHandle(newHandle)
-        end
-        
-        function tikz(this, filename)
+		end
+
+		function tikz(this, filename)
 		% export_to_tikz  saves the LR-spline object to to a tex-tikz file
 		%
 		%   parameters:
@@ -353,7 +353,7 @@ classdef LRNURBSSurface < handle
 				n = size(z,2);
 				x = zeros(2,n);
 				W = z(3,1);    % weight function
-				dWdx = z(3,2); 
+				dWdx = z(3,2);
 				dWdy = z(3,3);
 				x(1,:) = z(1:2,1) / W; % [x,y] coordinate
 				x(2,:) = (z(1:2,2)*W-z(1:2,1)*dWdx)/W^2; % d/dxi  [x,y]
@@ -388,8 +388,8 @@ classdef LRNURBSSurface < handle
 			z = lrsplinesurface_interface('point',         this.objectHandle, [u v], varargin{:});
 			iel = this.getElementContaining(u, v);
 			sup = this.support{iel};
-			w   = this.cp(end,sup); 
-			W   = z(end,1);         
+			w   = this.cp(end,sup);
+			W   = z(end,1);
 			if(derivs > -1)
 				N(1,:) = B(1,:).*w / W;
 			end
@@ -399,10 +399,10 @@ classdef LRNURBSSurface < handle
 			end
 			if(derivs > 1)
 				N(4,:) = ( (B(4,:)*W - B(1,:)*z(end,4) )*W^2 - ( B(2,:)*W-B(1,:)*z(end,2) ) * 2*W*z(end,2) ).* w / W^4;
-				N(5,:) = ( (B(5,:)*W+B(2,:)*z(end,3) - B(3,:)*z(end,2)-B(1,:)*z(end,5))*W^2 - ( B(2,:)*W-B(1,:)*z(end,2) ) * 2*W*z(end,3) ).* w / W^4;       
-				N(6,:) = ( (B(6,:)*W - B(1,:)*z(end,6))*W^2 - (B(3,:)*W-B(1,:)*z(end,3)) * 2*W*z(end,3) ).* w / W^4;                                       
+				N(5,:) = ( (B(5,:)*W+B(2,:)*z(end,3) - B(3,:)*z(end,2)-B(1,:)*z(end,5))*W^2 - ( B(2,:)*W-B(1,:)*z(end,2) ) * 2*W*z(end,3) ).* w / W^4;
+				N(6,:) = ( (B(6,:)*W - B(1,:)*z(end,6))*W^2 - (B(3,:)*W-B(1,:)*z(end,3)) * 2*W*z(end,3) ).* w / W^4;
 			end
-			
+
 		end
 
 		function C = getBezierExtraction(this, element)
@@ -410,7 +410,7 @@ classdef LRNURBSSurface < handle
 		% C = LRNURBSSurface.getBezierExtraction(element)
 		%
 		%   parameters:
-		%     element - global index to the element 
+		%     element - global index to the element
 		%   returns
 		%     a matrix with as many rows as there is active basis functions and (p(1)+1)*(p(2)+1) columns
 			if numel(this.bezierHash) == size(this.elements,1)
@@ -468,7 +468,7 @@ classdef LRNURBSSurface < handle
 					depth = varargin{i};
 				elseif(strcmp(varargin{i}, 'elements'))
 					elements = true;
-				else 
+				else
 					throw(MException('LRNURBSSurface:getEdge', 'Error: Unkown parameters'));
 				end
 			end
@@ -524,11 +524,11 @@ classdef LRNURBSSurface < handle
 		%   parameters:
 		%     'enumeration' - tags all elements with their corresponding enumeration index
 		%     'basis'       - plots control points as dots (greville points if 'parametric' is specified)
-		%     'parametric'  - prints the elements in the parametric space instead of the physical 
+		%     'parametric'  - prints the elements in the parametric space instead of the physical
 		%     'nviz'        - sets the line resolution for plots to use n points for drawing each line
 		%   returns
 		%     handle to the figure
-			
+
 			nPtsPrLine  = 41;
 			enumeration = false;
 			parametric  = false;
@@ -581,7 +581,7 @@ classdef LRNURBSSurface < handle
 				for i=1:size(this.elements, 1),
 					if(parametric)
 						x = [sum(this.elements(i, [1,3]))/2, sum(this.elements(i,[2,4]))/2];
-					else 
+					else
 						x = this.point(sum(this.elements(i, [1,3]))/2, sum(this.elements(i,[2,4]))/2);
 					end
 					text(x(1), x(2), num2str(i));
@@ -620,7 +620,7 @@ classdef LRNURBSSurface < handle
 		%   parameters:
 		%     u            - control point results
 		%     'nviz'       - sets the plotting resolution to n points per element
-		%     'diffX'      - plots the derivative with respect to X 
+		%     'diffX'      - plots the derivative with respect to X
 		%     'diffY'      - plots the derivative with respect to Y
 		%     'secondary'  - plots secondary solutions such as functions of u and dudx
 		%     'parametric' - displays results in parametric space (and parametric derivatives)
@@ -689,8 +689,8 @@ classdef LRNURBSSurface < handle
 
 			bezierKnot1 = [ones(1, this.p(1)+1)*-1, ones(1, this.p(1)+1)];
 			bezierKnot2 = [ones(1, this.p(2)+1)*-1, ones(1, this.p(2)+1)];
-			[bezNu, bezNu_diff] = getBSplineBasisAndDerivative(this.p(1), xg, bezierKnot1); 
-			[bezNv, bezNv_diff] = getBSplineBasisAndDerivative(this.p(2), xg, bezierKnot2); 
+			[bezNu, bezNu_diff] = getBSplineBasisAndDerivative(this.p(1), xg, bezierKnot1);
+			[bezNv, bezNv_diff] = getBSplineBasisAndDerivative(this.p(2), xg, bezierKnot2);
 			for iel=1:size(this.elements, 1)
 				umin = this.elements(iel,1);
 				vmin = this.elements(iel,2);
@@ -738,7 +738,7 @@ classdef LRNURBSSurface < handle
 							X(i,j) = x(1);
 							Y(i,j) = x(2);
 							% physical derivatives
-							dNdx = dN * inv(Jt'); 
+							dNdx = dN * inv(Jt');
 						end
 						if function_result || secondary
 							if secondary
@@ -801,7 +801,7 @@ classdef LRNURBSSurface < handle
 			plot3(Xlines', Ylines', Zlines', 'k-');
 			if(per_element_result)
 				view(2);
-			else	
+			else
 				view(3);
 			end
 		end % end surf()
@@ -819,7 +819,7 @@ classdef LRNURBSSurface < handle
 % 		%     u            - control point results
 % 		%     v            - contour lines
 % 		%     'nviz'       - sets the plotting resolution to n points per element
-% 		%     'diffX'      - plots the derivative with respect to X 
+% 		%     'diffX'      - plots the derivative with respect to X
 % 		%     'diffY'      - plots the derivative with respect to Y
 % 		%     'secondary'  - plots secondary solutions such as functions of u and dudx
 % 		%     'nofill'     - uses contour, instead of contourf
@@ -836,7 +836,7 @@ classdef LRNURBSSurface < handle
 % 			nofill             = false;
 % 			nolines            = false;
 % 			sec_function       = 0;
-% 
+%
 % 			i = 1;
 % 			while i<nargin-2
 % 				if strcmp(varargin{i}, 'diffX')
@@ -1004,7 +1004,7 @@ classdef LRNURBSSurface < handle
 			if numel(m) == 1,
 				m = ones(size(start,1),1)*m;
 			end
-				
+
 			for i=1:size(start,1)
 				lrsplinesurface_interface('insert_line', this.objectHandle, start(i,:),stop(i,:),m(i));
 			end

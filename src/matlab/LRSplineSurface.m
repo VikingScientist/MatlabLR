@@ -123,9 +123,9 @@ classdef LRSplineSurface < handle
 			newHandle  = lrsplinesurface_interface('copy', this.objectHandle);
 			copyObject = LRSplineSurface();
 			copyObject.setHandle(newHandle);
-        end
-        
-        function tikz(this, filename)
+		end
+
+		function tikz(this, filename)
 		% export_to_tikz  saves the LR-spline object to to a tex-tikz file
 		%
 		%   parameters:
@@ -157,10 +157,10 @@ classdef LRSplineSurface < handle
 			if ~strcmp(class(filename), 'char')
 				throw(MException('LRSplineSurface:load', 'Error: Invalid file name'));
 			end
-      if strcmp(filename(end-2:end), '.g2')
-			  this.loadG2(filename);
-        return
-      end
+			if strcmp(filename(end-2:end), '.g2')
+				this.loadG2(filename);
+				return
+			end
 			lrsplinesurface_interface('load', this.objectHandle, filename);
 			this.updatePrimitives();
 		end
@@ -249,7 +249,7 @@ classdef LRSplineSurface < handle
 		%     'continuity' - set the refinement continuity to n (less than polynomial degree)
 		%   returns:
 		%     none
-            fix_continuity = false         % use fixed continuity
+			fix_continuity = false         % use fixed continuity
 			elements = false;              % refine elements
 			indices  = 1:size(this.knots,1);
 			i        = 0;
@@ -262,7 +262,7 @@ classdef LRSplineSurface < handle
 					elements = false;
 				elseif strcmp(varargin{i}, 'continuity')
 					continuity = max(this.p)-varargin{i+1};
-                    fix_continuity = true
+					fix_continuity = true
 					i=i+1;
 				elseif(ischar(varargin{i}))
 					throw(MException('LRSplineSurface:refine',  'Error: Unknown refine parameter'));
@@ -273,17 +273,17 @@ classdef LRSplineSurface < handle
 
 			% perform refinement
 			if(elements)
-                if(fix_continuity)
+				if(fix_continuity)
 				    lrsplinesurface_interface('refine_elements', this.objectHandle, indices, continuity);
-                else
+				else
 				    lrsplinesurface_interface('refine_elements', this.objectHandle, indices);
-                end
+				end
 			else
-                if(fix_continuity)
+				if(fix_continuity)
 				    lrsplinesurface_interface('refine_basis', this.objectHandle, indices, continuity);
-                else
+				else
 				    lrsplinesurface_interface('refine_basis', this.objectHandle, indices);
-                end
+				end
 			end
 
 			% new LR-mesh... update static variables
@@ -639,7 +639,7 @@ classdef LRSplineSurface < handle
 						index = [index; lrsplinesurface_interface('get_edge_functions', this.objectHandle, edg, depth)];
 					end
 				end
-                index = unique(index)
+				index = unique(index)
 			else
 				if elements
 					index = lrsplinesurface_interface('get_edge_elements', this.objectHandle, edge);
