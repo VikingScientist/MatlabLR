@@ -307,14 +307,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	// Refine basisfunctions
 	if (!strcmp("refine_basis", cmd)) {
 		// Check parameters
-		if (nlhs < 0 || nrhs < 4)
+		if (nlhs < 0 || nrhs < 3 || nrhs > 4)
 			mexErrMsgTxt("Refine_basis: Unexpected arguments.");
 
 		// rewrap results into vector array
 		double *b = mxGetPr(prhs[2]);
 		int m = mxGetM(prhs[2]);
 		int n = mxGetN(prhs[2]);
-		int cont = floor(mxGetScalar(prhs[3]));
 		vector<int> basis(m*n);
 		for(size_t i=0; i<n*m; i++) {
 			basis[i] = floor(b[i]-1);
@@ -322,6 +321,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			if(basis[i]<0 || basis[i] >= lr->nBasisFunctions())
 				mexErrMsgTxt("Refine_basis: function index out of range");
 		}
+        int cont = 0;
+        if(nrhs > 3) {
+		    cont = floor(mxGetScalar(prhs[3]));
+        } else {
+            int minimum_p = 1e8;
+		    for(int i : basis) {
+		        minimum_p = min(minimum_p, lr->getBasisfunction(i)->getOrder(0));
+		        minimum_p = min(minimum_p, lr->getBasisfunction(i)->getOrder(1));
+            }
+            cont = minimum_p - 2;
+        }
 
 		lr->setRefContinuity(cont);
 		lr->refineBasisFunction(basis);
@@ -332,19 +342,30 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	// Refine elements
 	if (!strcmp("refine_elements", cmd)) {
 		// Check parameters
-		if (nlhs < 0 || nrhs < 4)
+		if (nlhs < 0 || nrhs < 3 || nrhs > 4)
 			mexErrMsgTxt("Refine_elements: Unexpected arguments.");
 
 		double *el = mxGetPr(prhs[2]);
 		int m    = mxGetM(prhs[2]);
 		int n    = mxGetN(prhs[2]);
-		int cont = floor(mxGetScalar(prhs[3]));
 		vector<int> elements(m*n);
+
 		for(size_t i=0; i<n*m; i++) {
 			elements[i] = floor(el[i]-1);
 			if(elements[i]<0 || elements[i] >= lr->nElements())
 				mexErrMsgTxt("Refine_elements: element index out of range");
 		}
+        int cont = 0;
+        if(nrhs > 3) {
+		    cont = floor(mxGetScalar(prhs[3]));
+        } else {
+            int minimum_p = 1e8;
+		    for(int i : elements) {
+		        minimum_p = min(minimum_p, lr->getElement(i)->order(0));
+		        minimum_p = min(minimum_p, lr->getElement(i)->order(1));
+            }
+            cont = minimum_p - 2;
+        }
 
 		lr->setRefContinuity(cont);
 		lr->refineElement(elements);

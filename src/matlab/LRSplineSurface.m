@@ -9,7 +9,7 @@ classdef LRSplineSurface < handle
 %     knots    - knot vectors
 %     cp       - control points
 %     w        - weights
-%     lines    - mesh lines, (u0,v0, u1,v1, m), where m is the multiplicity
+%     lines    - mesh lines, (u0,v0, u1,v1, c), where c is the continuity
 %     elements - fintite elements (u0, v0, u1, v1)
 %     support  - element to basis function support list
 %
@@ -47,7 +47,7 @@ classdef LRSplineSurface < handle
 		knots    % knot vectors
 		cp       % control points
 		w        % weights
-		lines    % mesh lines, (u0,v0, u1,v1, m), where m is the multiplicity
+		lines    % mesh lines, (u0,v0, u1,v1, c), where c is the continuity
 		elements % fintite elements (u0, v0, u1, v1)
 		support  % element to basis function support list
 	end
@@ -249,8 +249,8 @@ classdef LRSplineSurface < handle
 		%     'continuity' - set the refinement continuity to n (less than polynomial degree)
 		%   returns:
 		%     none
-			mult     = 1;                  % default parameters, single line
-			elements = false;              % and uniform refinement
+            fix_continuity = false         % use fixed continuity
+			elements = false;              % refine elements
 			indices  = 1:size(this.knots,1);
 			i        = 0;
 			% read input parameters
@@ -261,7 +261,8 @@ classdef LRSplineSurface < handle
 				elseif strcmp(varargin{i}, 'basis')
 					elements = false;
 				elseif strcmp(varargin{i}, 'continuity')
-					mult = max(this.p)-varargin{i+1};
+					continuity = max(this.p)-varargin{i+1};
+                    fix_continuity = true
 					i=i+1;
 				elseif(ischar(varargin{i}))
 					throw(MException('LRSplineSurface:refine',  'Error: Unknown refine parameter'));
@@ -272,9 +273,17 @@ classdef LRSplineSurface < handle
 
 			% perform refinement
 			if(elements)
-				lrsplinesurface_interface('refine_elements', this.objectHandle, indices, mult);
+                if(fix_continuity)
+				    lrsplinesurface_interface('refine_elements', this.objectHandle, indices, continuity);
+                else
+				    lrsplinesurface_interface('refine_elements', this.objectHandle, indices);
+                end
 			else
-				lrsplinesurface_interface('refine_basis', this.objectHandle, indices, mult);
+                if(fix_continuity)
+				    lrsplinesurface_interface('refine_basis', this.objectHandle, indices, continuity);
+                else
+				    lrsplinesurface_interface('refine_basis', this.objectHandle, indices);
+                end
 			end
 
 			% new LR-mesh... update static variables
