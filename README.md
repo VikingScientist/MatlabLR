@@ -18,3 +18,16 @@ make
 ```
 in the root folder.
 
+## Compiling in Matlab
+Copy all `.cpp` and `.h` files from [LR B-splines](https://github.com/VikingScientist/LRsplines). It is sufficient to copy over the entire `src/`- and `include/`-folders. After this add the Eigen3 library in the folder `eigen3` in this project root folder. Eigen can be downloaded from the [eigen3 website](https://eigen.tuxfamily.org/index.php?title=Main_Page). The library can then be compiled by the command
+```
+mkdir lib
+mex src/*.cpp -Iinclude -output lib/lrsplinesurface_interface
+copyfile src/matlab/* lib
+```
+To start using the library, add this to the path
+```
+addpath('lib')
+```
+And test it all by running `lrgui`.
+
