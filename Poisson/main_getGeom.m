@@ -13,6 +13,23 @@ if(strncmp(name, 'id',2) || strcmp(name, 'square')),
 	nel = [1,1] / Problem.H_Max;
 	lr = LRSplineSurface(p, [xrange(1)*ones(1,p(1)), linspace(xrange(1),xrange(2),nel(1)+1), xrange(2)*ones(1,p(1))], [yrange(1)*ones(1,p(2)), linspace(yrange(1),yrange(2),nel(2)+1), yrange(2)*ones(1,p(2))]);
 
+%%% Identity (id, square) mapping 
+elseif(strcmp(name, 'lshape')),
+	nel = [2,1] / Problem.H_Max;
+	lr = LRSplineSurface([1,1], [xrange(1)*ones(1,1), linspace(xrange(1),xrange(2),3), xrange(2)*ones(1,1)], [yrange(1)*ones(1,1), linspace(yrange(1),yrange(2),2), yrange(2)*ones(1,1)], [-1,0;0,0;0,-1;-1,1;1,1;1,-1]');
+    lr.raiseOrder(p(1)-2, p(2)-2);
+    for i=1:-floor(log2(Problem.H_Max)),
+        lr.refine();
+    end
+    for i=-floor(log2(Problem.H_Max)):-floor(log2(Problem.H_Min))-1
+        epsilon = 1e-7;
+        xmid = mean(xrange);
+        ne = lr.support{lr.getElementContaining(xmid + epsilon, epsilon)}
+        nw = lr.support{lr.getElementContaining(xmid - epsilon, epsilon)}
+        lr.refine(union(ne,nw), 'basis')
+    end
+
+
 
 %%% vortex (twirl) geometry tests mapped geometry on the unit square
 elseif(strcmp(name, 'twirl') || strcmp(name, 'vortex') || strcmp(name, 'twist'))
@@ -95,7 +112,7 @@ end
 
 
 %%%  refining geometry (corners)
-if ~strcmp(name, 'backstep') && ~strcmp(name, 'square_hole')
+if ~strcmp(name, 'backstep') && ~strcmp(name, 'square_hole') && ~strcmp(name, 'lshape')
 	disp 'Refining geometry';
 	actual_h_max = max(max(lr.elements(:,3:4)-lr.elements(:,1:2))); % in contrast to the *requested* h_max given by Problem.H_Max
 	nRef = ceil(log2(actual_h_max / Problem.H_Min));
