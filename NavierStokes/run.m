@@ -50,7 +50,7 @@ main_init;
 % cc = zeros(size(lru.knots,1),1);
 % cc(iu) = u;
 % lru.surf(cc, 'parametric'); axis equal;
-% break;
+% return;
 
 main_assemble;
 

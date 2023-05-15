@@ -2,20 +2,12 @@ clear; close all;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Cavity-drive problem. No slip on all walls except top which has
-% prescribed slip u=u(x)
+% Exact solution problem. 
+%
+% u(x,y) = x^3 y^3
+% p(x,y) = x^2 y^2 - C
 %
 %
-%
-%           ---->  u=u(x)
-%         +-------------+
-%         |             |
-%     no  |             |  no
-%    slip |   Omega     | slip    
-%         |             |
-%         |             |
-%         +-------------+
-%            no slip                                 
 %                                                       
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -42,7 +34,7 @@ Problem = struct(...
 
 Convergence_rates = struct( ...
 'uniform',      true,       ...
-'p_values',      1:3,       ...
+'p_values',      2:2,       ...
 'iterations',    3);
 
 syms x y
@@ -75,7 +67,7 @@ BC = [BC, struct('start', [1,1], 'stop', [1,1], 'comp', 3, 'value', Exact_soluti
 if exist('Convergence_rates')
   if ~Problem.Static
     disp('Error: convergence rate simulations have to be couppled with static simulations')
-    break;
+    return;
   end
   result_h     = zeros(Convergence_rates.iterations,numel(Convergence_rates.p_values));
   result_uh_H1 = zeros(Convergence_rates.iterations,numel(Convergence_rates.p_values));

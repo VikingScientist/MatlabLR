@@ -71,7 +71,7 @@ BC = [BC, struct('start', [Problem.Geometry_param,0], 'stop', [Problem.Geometry_
 if exist('Convergence_rates')
   if ~Problem.Static
     disp('Error: convergence rate simulations have to be couppled with static simulations')
-    break;
+    return;
   end
   result_h     = zeros(Convergence_rates.iterations,numel(Convergence_rates.p_values));
   result_uh_H1 = zeros(Convergence_rates.iterations,numel(Convergence_rates.p_values));

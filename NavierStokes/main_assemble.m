@@ -149,6 +149,7 @@ end
 if isfield(BC{1}, 'pressure_integral') && BC{1}.pressure_integral==true
   dF = @(u) [dF(u); zeros(1,n), avg_p(inner_p)'];
   F  = @(u) [F(u);  avg_p(inner_p)'*u(n+1:end) - b_avg_p];
+  traction = [traction; 0];
 end
 
 if Problem.Static
