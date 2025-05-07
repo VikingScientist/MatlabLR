@@ -136,7 +136,7 @@ n = n1+n2-numel(velEdges); % number of velocity DOFs (not counting edges)
 N = n1+n2+n3-numel(velEdges)-numel(presEdges); % number of velocity DOFs (not counting edges)
 n3 = numel(inner_p);
 
-dF = @(u) [A  , P         ;
+dF = @(u) [A  , D         ;
            D' , zeros(n3)];
 F  = @(u)  dF(u)*u - bodyForce;
 if ~Problem.Linear

@@ -25,7 +25,12 @@ elseif(strcmp(name, 'channel'))
   xrange = [0,Problem.Geometry_param];
   yrange = [0,1];
   nel    = [diff(xrange),diff(yrange)] / Problem.H_Max;
-  lr = LRSplineSurface(p, [xrange(1)*ones(1,p(1)), linspace(xrange(1),xrange(2),nel(1)+1), xrange(2)*ones(1,p(1))], [yrange(1)*ones(1,p(2)), linspace(yrange(1),yrange(2),nel(2)+1), yrange(2)*ones(1,p(2))]);
+  uknot = [xrange(1)*ones(1,p(1)), linspace(xrange(1),xrange(2),nel(1)+1), xrange(2)*ones(1,p(1))] / xrange(2);
+  vknot = [yrange(1)*ones(1,p(2)), linspace(yrange(1),yrange(2),nel(2)+1), yrange(2)*ones(1,p(2))] / yrange(2);
+  lr = LRSplineSurface(p,uknot, vknot);
+  newCP = lr.cp;
+  newCP(1,:) = lr.cp(1,:) * Problem.Geometry_param;
+  lr.setControlPoints(newCP);
 
 elseif(strcmp(name, 'square_hole') || strcmp(name, 'cylinder_hole'))
   xrange = [-Problem.Geometry_param,2*Problem.Geometry_param];
@@ -188,7 +193,7 @@ end
 
 
 %%%  refining geometry (corners)
-if ~strcmp(name, 'backstep') && ~strcmp(name, 'square_hole') && ~strcmp(name, 'cylinder_hole') && ~strcmp(name, 'benchmark_cylinder')
+if ~strcmp(name, 'channel') && ~strcmp(name, 'backstep') && ~strcmp(name, 'square_hole') && ~strcmp(name, 'cylinder_hole') && ~strcmp(name, 'benchmark_cylinder')
   disp 'Refining geometry';
   actual_h_max = max(max(lr.elements(:,3:4)-lr.elements(:,1:2))); % in contrast to the *requested* h_max given by Problem.H_Max
   nRef = ceil(log2(actual_h_max / Problem.H_Min));

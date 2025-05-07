@@ -28,14 +28,15 @@ fprintf('(  0%%)');
 
 % for all elements
 for el=1:nel,
-  fprintf('\b\b\b\b\b%3d%%)', floor(el/nel*100)); % print progress to screen
+  % fprintf('\b\b\b\b\b%3d%%)', floor(el/nel*100)); % print progress to screen
+  fprintf('=== Element #%d ===\n', el);
 
   el_du = lr.elements(el,3) - lr.elements(el,1);
   el_dv = lr.elements(el,4) - lr.elements(el,2);
 
   % figure out integration points
-  [xg wxg] = GaussLegendre(gauss_n(1));
-  [yg wyg] = GaussLegendre(gauss_n(2));
+  [xg, wxg] = GaussLegendre(gauss_n(1));
+  [yg, wyg] = GaussLegendre(gauss_n(2));
   xg = (xg+1)/2.0*el_du + lr.elements(el,1);
   yg = (yg+1)/2.0*el_dv + lr.elements(el,2);
 
@@ -70,6 +71,9 @@ for el=1:nel,
   Cu = lru.getBezierExtraction(el_u);
   Cv = lrv.getBezierExtraction(el_v);
   Cp = lrp.getBezierExtraction(el_p);
+  ui = getTensorIndex(lru, el_u);
+  vi = getTensorIndex(lrv, el_v);
+  pi = getTensorIndex(lrp, el_p);
 
   % over all gauss points
   for gauss_i=1:gauss_n(1),
@@ -88,7 +92,13 @@ for el=1:nel,
         disp ' execution stop by pausing. Break now and start debugging'
         pause
       end
+      fprintf('  Gauss pt (%d,%d) = (%.4f, %.4f)\n', gauss_i, gauss_j, map.x(1), map.x(2));
+      fprintf('    J        = [%.12f, %.12f; %.12f, %.12f]\n', map.J(:));
+      fprintf('    detJ     = %.12f\n', map.detJ(:));
+      fprintf('    H(1,:,:) = [%.12f, %.12f; %.12f, %.12f]\n', map.H(1,:,:));
+      fprintf('    H(2,:,:) = [%.12f, %.12f; %.12f, %.12f]\n', map.H(2,:,:));
 
+      
       detJw = map.detJ*wxg(gauss_i)*wyg(gauss_j) * el_du*el_dv / 4.0;
 
       % create the proper vector representation of basis functions
@@ -97,6 +107,22 @@ for el=1:nel,
       testVel = [Nu(1,:), zeros(1,sup2); zeros(1,sup1), Nv(1,:)];    % vector basis functions
       gradVel = [Nu(2:3,:), zeros(2,sup2);zeros(2,sup1), Nv(2:3,:)]; % 
       gradVel = gradVel([1,3,2,4],:);                                % row-wise: u_1,1  u_2,1  u_1,2  u_2,2
+
+      fprintf('    Nu       = [');
+      fprintf('%.12f, ', testVel(1,ui)); fprintf('%.12f, ', testVel(1,vi+numel(ui))); fprintf(']\n');
+      fprintf('               [');
+      fprintf('%.12f, ', testVel(2,ui)); fprintf('%.12f, ', testVel(2,vi+numel(ui))); fprintf(']\n');
+      
+      fprintf('    dNu/dx   = [');
+      fprintf('%.12f, ', gradVel(1,ui)); fprintf('%.12f, ', gradVel(1,vi+numel(ui))); fprintf(']\n');
+      fprintf('               [');
+      fprintf('%.12f, ', gradVel(3,ui)); fprintf('%.12f, ', gradVel(3,vi+numel(ui))); fprintf(']\n');
+      fprintf('    dNu/dy   = [');
+      fprintf('%.12f, ', gradVel(2,ui)); fprintf('%.12f, ', gradVel(2,vi+numel(ui))); fprintf(']\n');
+      fprintf('               [');
+      fprintf('%.12f, ', gradVel(4,ui)); fprintf('%.12f, ', gradVel(4,vi+numel(ui))); fprintf(']\n');
+      fprintf('    p        = ['); fprintf('%.12f, ', Np(1,pi)); fprintf(']\n');      
+
 
       % alter through piola mapping
       [testP   gradP]   = piolaTransform(map, testP,   gradP);

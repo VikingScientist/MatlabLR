@@ -12,6 +12,7 @@ if Problem.Static
   end
   fprintf('| uh |_H1      = %10.4g\n', sqrt(sum(uh_H1_norm_squared)));
   fprintf('| ph |_L2      = %10.4g\n', sqrt(sum(ph_L2_norm_squared)));
+  fprintf('\\int ph dA     = %10.4g\n', sum(u(n1+n2+1:end)' * avg_p));
   fprintf('|div(uh)|_L2   = %10.4g\n', sqrt(sum(div_u_L2_norm_squared)));
   fprintf('|div(uh)|_inf  = %10.4g\n', max(div_u_inf_norm));
   
